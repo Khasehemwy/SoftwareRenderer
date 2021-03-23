@@ -23,6 +23,7 @@ public:
 
 	void draw_pixel(int x, int y, UINT32 color);
 	void draw_line(int x1, int y1, int x2, int y2, UINT32 color);
-	int display_primitive(const vertex_t* v1, const vertex_t* v2, const vertex_t* v3);
+	int display_primitive(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
+	void transform_update();
 };
 

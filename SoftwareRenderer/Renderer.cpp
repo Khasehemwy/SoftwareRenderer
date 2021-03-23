@@ -90,24 +90,29 @@ void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 }
 
 //绘制原始三角形
-int Renderer::display_primitive(const vertex_t* v1, const vertex_t* v2, const vertex_t* v3)
+int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
 {
 	point_t p1, p2, p3;
 
 	// 将点映射到屏幕坐标
-	p1 = (v1->pos) * (this->transform);
-	p2 = (v2->pos) * (this->transform);
-	p3 = (v3->pos) * (this->transform);
+	p1 = (this->transform) * (v1.pos);
+	p2 = (this->transform) * (v2.pos);
+	p3 = (this->transform) * (v3.pos);
 
 	//裁剪检测
-	if (check_cvv(&p1) != 0)return 1;
-	if (check_cvv(&p2) != 0)return 1;
-	if (check_cvv(&p3) != 0)return 1;
+	int cvv_jug = 0;
+	if (check_cvv(p1) != 0)cvv_jug = 1;
+	if (check_cvv(p2) != 0)cvv_jug = 1;
+	if (check_cvv(p3) != 0)cvv_jug = 1;
+	if (cvv_jug) {
+		std::cout << "cvv cut\n";
+		return 1;
+	}
 
 	//得到屏幕坐标
-	p1 = viewport_transform(&p1, &this->transform);
-	p2 = viewport_transform(&p2, &this->transform);
-	p3 = viewport_transform(&p3, &this->transform);
+	p1 = viewport_transform(p1, this->transform);
+	p2 = viewport_transform(p2, this->transform);
+	p3 = viewport_transform(p3, this->transform);
 
 	//TODO
 	//纹理或者色彩绘制
@@ -120,4 +125,9 @@ int Renderer::display_primitive(const vertex_t* v1, const vertex_t* v2, const ve
 	}
 
 	return 0;
+}
+
+void Renderer::transform_update()
+{
+	this->transform.transform = transform.projection * transform.view * transform.model;
 }

@@ -1,6 +1,8 @@
 #pragma once
 #include"Includes.h"
 
+#define PI 3.1415926f
+
 typedef unsigned int UINT32;
 
 typedef struct { float m[4][4]; } matrix_t;
@@ -11,9 +13,9 @@ typedef struct { float r, g, b, a; } color_t;
 typedef struct { point_t pos; color_t color; float rhw; } vertex_t;
 
 typedef struct {
-	matrix_t world;         // 世界坐标变换
+	matrix_t model;         // 世界坐标变换
 	matrix_t view;          // 摄影机坐标变换
 	matrix_t projection;    // 投影变换
-	matrix_t transform;     // transform = world * view * projection;
+	matrix_t transform;     // transform = model * view * projection;
 	float w, h;             // 屏幕大小
 }	transform_t;
