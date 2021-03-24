@@ -8,6 +8,6 @@ public:
 	vector_t target;
 
 	void init_target_zero(const vector_t& pos);
-	matrix_t set_lookat(const vector_t& pos, const vector_t& target, const vector_t& up);
+	matrix_t set_lookat(const vector_t& eye, const vector_t& at, const vector_t& up);
 };
 

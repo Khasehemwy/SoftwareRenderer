@@ -39,14 +39,14 @@ void Renderer::destroy()
 void Renderer::clear()
 {
 	int height = this->height;
-	for (int x = 0; x < this->height; x++) {
-		for (int y = 0; y < this->width; y++) {
-			this->frame_buffer[x][y] = this->background;
+	for (int y = 0; y < this->height; y++) {
+		for (int x = 0; x < this->width; x++) {
+			this->frame_buffer[y][x] = this->background;
 		}
 	}
-	for (int x = 0; x < this->height; x++) {
-		for (int y = 0; y < this->width; y++) {
-			this->z_buffer[x][y] = 0.0f;
+	for (int y = 0; y < this->height; y++) {
+		for (int x = 0; x < this->width; x++) {
+			this->z_buffer[y][x] = 0.0f;
 		}
 	}
 }
@@ -54,7 +54,7 @@ void Renderer::clear()
 void Renderer::draw_pixel(int x, int y, UINT32 color)
 {
 	if (((UINT32)x) < (UINT32)this->width && ((UINT32)y) < (UINT32)this->height) {
-		this->frame_buffer[x][y] = color;
+		this->frame_buffer[y][x] = color;
 	}
 }
 
@@ -69,7 +69,9 @@ void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 			rem += dy;
 			if (rem >= dx) {
 				rem -= dx;
+				//this->draw_pixel(x, y, color);
 				y += (y2 > y1) ? 1 : -1;
+				//this->draw_pixel(x-1, y, color);
 			}
 			this->draw_pixel(x, y, color);
 		}
@@ -80,7 +82,9 @@ void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 			rem += dx;
 			if (rem >= dy) {
 				rem -= dy;
+				//this->draw_pixel(x, y, color);
 				x += (x2 > x1) ? 1 : -1;
+				//this->draw_pixel(x, y-1, color);
 			}
 			this->draw_pixel(x, y, color);
 		}
@@ -94,10 +98,10 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 {
 	point_t p1, p2, p3;
 
-	// ½«µãÓ³Éäµ½ÆÁÄ»×ø±ê
-	p1 = (this->transform) * (v1.pos);
-	p2 = (this->transform) * (v2.pos);
-	p3 = (this->transform) * (v3.pos);
+	// ½«µãÓ³Éäµ½²Ã¼ô¿Õ¼ä
+	p1 = (v1.pos) * (this->transform);
+	p2 = (v2.pos) * (this->transform);
+	p3 = (v3.pos) * (this->transform);
 
 	//²Ã¼ô¼ì²â
 	int cvv_jug = 0;
@@ -105,7 +109,7 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 	if (check_cvv(p2) != 0)cvv_jug = 1;
 	if (check_cvv(p3) != 0)cvv_jug = 1;
 	if (cvv_jug) {
-		std::cout << "cvv cut\n";
+		//std::cout << "cvv cut\n";
 		return 1;
 	}
 
@@ -129,5 +133,5 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 
 void Renderer::transform_update()
 {
-	this->transform.transform = transform.projection * transform.view * transform.model;
+	this->transform.transform = transform.model * transform.view * transform.projection;
 }

@@ -10,14 +10,12 @@ void matrix_set_zero(matrix_t* m) {
 matrix_t matrix_mul(const matrix_t& left, const matrix_t& right)
 {
 	matrix_t z;
-	matrix_t m_tmpl = right;
-	matrix_t m_tmpr = left;
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
-			z.m[j][i] = (m_tmpl.m[j][0] * m_tmpr.m[0][i]) +
-				(m_tmpl.m[j][1] * m_tmpr.m[1][i]) +
-				(m_tmpl.m[j][2] * m_tmpr.m[2][i]) +
-				(m_tmpl.m[j][3] * m_tmpr.m[3][i]);
+			z.m[i][j] = (left.m[i][0] * right.m[0][j]) +
+				(left.m[i][1] * right.m[1][j]) +
+				(left.m[i][2] * right.m[2][j]) +
+				(left.m[i][3] * right.m[3][j]);
 		}
 	}
 	return z;
@@ -27,7 +25,7 @@ matrix_t operator*(const matrix_t& left, const matrix_t& right)
 	return matrix_mul(left, right);
 }
 
-vector_t matrix_apply(const matrix_t& m, const vector_t& x)
+vector_t matrix_apply(const vector_t& x, const matrix_t& m)
 {
 	vector_t y;
 	float X = x.x, Y = x.y, Z = x.z, W = x.w;
@@ -38,21 +36,21 @@ vector_t matrix_apply(const matrix_t& m, const vector_t& x)
 	return y;
 }
 
-vector_t operator*(const matrix_t& m, const vector_t& x)
+vector_t operator*(const vector_t& x, const matrix_t& m)
 {
-	return matrix_apply(m,x);
+	return matrix_apply(x,m);
 }
 
-matrix_t matrix_translate(const matrix_t& m, const vector_t& v)
+matrix_t matrix_translate_build(float x, float y, float z)
 {
-	matrix_t z = m;
-	z.m[3][0] = v.x;
-	z.m[3][1] = v.y;
-	z.m[3][2] = v.z;
-	return z;
+	matrix_t m_ret;
+	m_ret.m[3][0] = x;
+	m_ret.m[3][1] = y;
+	m_ret.m[3][2] = z;
+	return m_ret;
 }
 
-matrix_t matrix_rotate(const matrix_t& m, float angle, const vector_t& v)
+matrix_t matrix_rotate_build(float angle, const vector_t& v)
 {
 	float x = v.x, y = v.y, z = v.z;
 	float qsin = (float)sin(angle * 0.5f);
@@ -79,14 +77,26 @@ matrix_t matrix_rotate(const matrix_t& m, float angle, const vector_t& v)
 	return m_ret;
 }
 
-vector_t transform_apply(const transform_t& ts, const vector_t& x)
+//return (matrix)T
+matrix_t matrix_transpose(const matrix_t& m)
 {
-	return (ts.transform)*(x);
+	matrix_t z;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			z.m[i][j] = m.m[j][i];
+		}
+	}
+	return z;
 }
 
-vector_t operator*(const transform_t& ts, const vector_t& x)
+vector_t transform_apply(const vector_t& x, const transform_t& ts)
 {
-	return transform_apply(ts,x);
+	return (x)*(ts.transform);
+}
+
+vector_t operator*(const vector_t& x, const transform_t& ts)
+{
+	return transform_apply(x,ts);
 }
 
 //return x-y
@@ -155,21 +165,22 @@ void matrix_set_identity(matrix_t* m) {
 void matrix_set_perspective(matrix_t* m, float fovy, float aspect, float z_near, float z_far){
 	float fax = 1.0f / (float)tan(fovy * 0.5f);
 	matrix_set_zero(m);
+	//matrix_set_identity(m);//»áµ¼ÖÂ²Ã¼ôÊ§Ð§
 	m->m[0][0] = (float)(fax / aspect);
 	m->m[1][1] = (float)(fax);
 	m->m[2][2] = z_far / (z_far - z_near);
-	m->m[3][2] = -z_near * z_far / (z_far - z_near);
 	m->m[2][3] = 1;
+	m->m[3][2] = -z_near * z_far / (z_far - z_near);
 }
 
 void transform_init(transform_t* ts, int width, int height) {
 	float aspect = (float)width / ((float)height);
 	matrix_set_identity(&ts->model);
 	matrix_set_identity(&ts->view);
-	matrix_set_perspective(&ts->projection, PI * 0.5f, aspect, 1.0f, 500.0f);
+	matrix_set_perspective(&ts->projection, 45.0f, aspect, 0.1f, 200.0f);
 	ts->w = (float)width;
 	ts->h = (float)height;
-	ts->transform = ts->projection * ts->view * ts->model;//update
+	ts->transform = ts->model * ts->view * ts->projection;//update
 }
 
 vector_t viewport_transform(const vector_t& x, const transform_t& ts)
