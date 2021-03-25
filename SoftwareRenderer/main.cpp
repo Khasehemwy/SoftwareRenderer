@@ -25,10 +25,10 @@ void draw_box_line(Renderer& renderer)
 	}
 	draw_square(renderer, vert[0], vert[1], vert[2], vert[3]);
 	draw_square(renderer, vert[1], vert[5], vert[6], vert[2]);
-	draw_square(renderer, vert[0], vert[4], vert[7], vert[3]);
-	draw_square(renderer, vert[0], vert[1], vert[5], vert[4]);
+	draw_square(renderer, vert[0], vert[3], vert[7], vert[4]);
+	draw_square(renderer, vert[0], vert[4], vert[5], vert[1]);
 	draw_square(renderer, vert[3], vert[2], vert[6], vert[7]);
-	draw_square(renderer, vert[4], vert[5], vert[6], vert[7]);
+	draw_square(renderer, vert[4], vert[7], vert[6], vert[5]);
 }
 
 int main()
@@ -55,11 +55,12 @@ int main()
 	vert[4].pos = p[4];
 
 	Camera camera;
-	camera.init_target_zero({ 0,0,5,1 });
+	float pos = -5;
+	camera.init_target_zero({ 0,0,pos,1 });
 
 	float angle = 1;
 	vector_t rotate_axis = { 1,-0.5,0.5,1 };
-	float pos = 5;
+	renderer.camera = &camera;
 
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
 		window.screen_dispatch();
@@ -74,8 +75,8 @@ int main()
 		
 		renderer.transform_update();
 
-		if (window.screen_keys[VK_UP]) pos -= 0.01f;
-		if (window.screen_keys[VK_DOWN]) pos += 0.01f;
+		if (window.screen_keys[VK_UP]) pos += 0.01f;
+		if (window.screen_keys[VK_DOWN]) pos -= 0.01f;
 		if (window.screen_keys[VK_LEFT])angle += 0.01f;
 		if (window.screen_keys[VK_RIGHT])angle -= 0.01f;
 		camera.camera_pos.z = pos;

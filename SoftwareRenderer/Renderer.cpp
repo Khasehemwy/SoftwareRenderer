@@ -98,10 +98,22 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 {
 	point_t p1, p2, p3;
 
-	// 将点映射到裁剪空间
-	p1 = (v1.pos) * (this->transform);
-	p2 = (v2.pos) * (this->transform);
-	p3 = (v3.pos) * (this->transform);
+	// 将点映射到世界空间,以进行背面剔除
+	p1 = (v1.pos) * this->transform.model;
+	p2 = (v2.pos) * this->transform.model;
+	p3 = (v3.pos) * this->transform.model;
+
+	vector_t p1_p2 = p2 - p1, p1_p3 = p3 - p1;
+	vector_t v_normal = vector_cross(p1_p2, p1_p3);
+	vector_t v_view = this->camera->camera_pos - p1;
+	float backCull_jug = v_normal * v_view;
+	if (backCull_jug <= 0.0f)return 1;
+
+
+	//将点映射到裁剪空间
+	p1 = p1 * this->transform.view * this->transform.projection;
+	p2 = p2 * this->transform.view * this->transform.projection;
+	p3 = p3 * this->transform.view * this->transform.projection;
 
 	//裁剪检测
 	int cvv_jug = 0;

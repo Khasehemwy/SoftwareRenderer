@@ -7,6 +7,7 @@ class Renderer
 {
 public:
 	transform_t transform;      // 坐标变换器
+	const Camera* camera = nullptr;
 	float width, height;
 
 	UINT32** frame_buffer;		// 像素缓存：framebuffer[y] 代表第 y行

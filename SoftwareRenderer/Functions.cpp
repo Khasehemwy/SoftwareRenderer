@@ -177,7 +177,7 @@ void transform_init(transform_t* ts, int width, int height) {
 	float aspect = (float)width / ((float)height);
 	matrix_set_identity(&ts->model);
 	matrix_set_identity(&ts->view);
-	matrix_set_perspective(&ts->projection, 45.0f, aspect, 0.1f, 200.0f);
+	matrix_set_perspective(&ts->projection, 45.0f, aspect, 0.1f, 100.0f);
 	ts->w = (float)width;
 	ts->h = (float)height;
 	ts->transform = ts->model * ts->view * ts->projection;//update
