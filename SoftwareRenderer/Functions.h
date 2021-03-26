@@ -27,3 +27,5 @@ void transform_init(transform_t* ts, int width, int height);
 
 vector_t viewport_transform(const vector_t& x, const transform_t& ts);
 int check_cvv(const vector_t& v);
+
+int CMID(int x, int min, int max);

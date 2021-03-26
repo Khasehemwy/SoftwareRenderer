@@ -1,7 +1,13 @@
 #pragma once
 #include"Includes.h"
 
-#define RENDER_STATE_WIREFRAME      1		// 渲染线框
+
+//渲染模式
+#define RENDER_STATE_WIREFRAME 1	// 渲染线框
+#define RENDER_STATE_COLOR 2	//渲染颜色
+
+//特性
+#define RENDER_FEATURE_BACK_CULLING 1	//背面剔除
 
 class Renderer
 {
@@ -18,12 +24,18 @@ public:
 
 	int render_state = RENDER_STATE_WIREFRAME;           // 渲染状态
 
+	std::map<int, int> features;	//特性
+
+	Renderer();
+
 	void init(int width, int height, void* fb);
 	void destroy();
 	void clear();
 
 	void draw_pixel(int x, int y, UINT32 color);
 	void draw_line(int x1, int y1, int x2, int y2, UINT32 color);
+	void draw_triangle_StandardAlgorithm(vertex_t v1, vertex_t v2, vertex_t v3);
+	void draw_triangle_flat(vertex_t top, vertex_t left, vertex_t right);
 	int display_primitive(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
 	void transform_update();
 };

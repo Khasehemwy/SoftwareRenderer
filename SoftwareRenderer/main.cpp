@@ -7,17 +7,17 @@ void draw_square(Renderer& renderer, vertex_t lb, vertex_t rb, vertex_t rt, vert
 	renderer.display_primitive(rt, lt, lb);
 }
 
-void draw_box_line(Renderer& renderer)
+void draw_box(Renderer& renderer)
 {
 	point_t p[8];
-	p[0] = { -1,-1,1,1 };
-	p[1] = { 1,-1,1,1 };
-	p[2] = { 1,1,1,1 };
-	p[3] = { -1,1,1,1 };
-	p[4] = { -1,-1,-1,1 };
-	p[5] = { 1,-1,-1,1 };
-	p[6] = { 1,1,-1,1 };
-	p[7] = { -1,1,-1,1 };
+	p[0] = { -1,-1,-1,1 };
+	p[1] = { 1,-1,-1,1 };
+	p[2] = { 1,1,-1,1 };
+	p[3] = { -1,1,-1,1 };
+	p[4] = { -1,-1,1,1 };
+	p[5] = { 1,-1,1,1 };
+	p[6] = { 1,1,1,1 };
+	p[7] = { -1,1,1,1 };
 
 	vertex_t vert[8];
 	for (int i = 0; i < 8; i++) {
@@ -39,21 +39,6 @@ int main()
 	Renderer renderer;
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
 
-	point_t p[5];
-	//p[1] = { 0,-1,-1,1 };
-	//p[2] = { 0,1,-1,1 };
-	//p[3] = { 0,1,1,1 };
-	//p[4] = { 0,-1,1,1 };
-	p[1] = { -1,-1,0,1 };
-	p[2] = { 1,-1,0,1 };
-	p[3] = { 1,1,0,1 };
-	p[4] = { -1,1,0,1 };
-	vertex_t vert[5];
-	vert[1].pos = p[1];
-	vert[2].pos = p[2];
-	vert[3].pos = p[3];
-	vert[4].pos = p[4];
-
 	Camera camera;
 	float pos = -5;
 	camera.init_target_zero({ 0,0,pos,1 });
@@ -61,6 +46,14 @@ int main()
 	float angle = 1;
 	vector_t rotate_axis = { 1,-0.5,0.5,1 };
 	renderer.camera = &camera;
+	//renderer.render_state = RENDER_STATE_WIREFRAME;
+	renderer.render_state = RENDER_STATE_COLOR;
+	//renderer.features[RENDER_FEATURE_BACK_CULLING] = false;
+
+	vertex_t v1, v2, v3;
+	v1.pos = { -1,1,0,1 };
+	v2.pos = { 0,0,0,1 };
+	v3.pos = { 1,2,0,1 };
 
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
 		window.screen_dispatch();
@@ -84,9 +77,11 @@ int main()
 		//renderer.display_primitive(vert[1], vert[2], vert[3]);
 		//renderer.display_primitive(vert[1], vert[3], vert[4]);
 
-		draw_box_line(renderer);
+		draw_box(renderer);
+		//renderer.display_primitive(v1, v2, v3);
 
-		renderer.draw_line(10, 10, 10, 1000, 0x0);
+		renderer.draw_line(10, 10, 20, 10, 0x0);
+		renderer.draw_line(10, 10, 10, 20, 0x0);
 
 		window.screen_update();
 	}
