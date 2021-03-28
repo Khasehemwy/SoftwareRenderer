@@ -43,7 +43,7 @@ int main()
 	float pos = -5;
 	camera.init_target_zero({ 0,0,pos,1 });
 
-	float angle = 1;
+	float angle = 0;
 	vector_t rotate_axis = { 1,-0.5,0.5,1 };
 	renderer.camera = &camera;
 	//renderer.render_state = RENDER_STATE_WIREFRAME;
@@ -51,9 +51,9 @@ int main()
 	//renderer.features[RENDER_FEATURE_BACK_CULLING] = false;
 
 	vertex_t v1, v2, v3;
-	v1.pos = { -1,1,0,1 };
-	v2.pos = { 0,0,0,1 };
-	v3.pos = { 1,2,0,1 };
+	v1.pos = { -1,0,0,1 };
+	v2.pos = { 1,0,0,1 };
+	v3.pos = { 0,1,0,1 };
 
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
 		window.screen_dispatch();

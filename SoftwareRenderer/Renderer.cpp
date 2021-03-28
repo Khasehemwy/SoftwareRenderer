@@ -63,20 +63,45 @@ void Renderer::draw_pixel(int x, int y, UINT32 color)
 	}
 }
 
+//Bresenham算法
 void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 {
 	int dx = std::abs(x1 - x2);
 	int dy = std::abs(y1 - y2);
-	int rem = 0;
+	int rem = 0;//令e=d-0.5,每次x增加时y增加dyx(k),然后再令rem=(2e(dx)+(dx))/2,那么rem的范围就是[0,dx],每次增加dy.
+
+	if (y2 < y1) { std::swap(y1, y2); std::swap(x1, x2); }
+	int x = x1, y = y1;
+
+	//直线均从上往下绘制
+	for (; y <= y2 && x >= min(x1, x2) && x <= max(x1, x2);) {
+		if (dx > dy) {
+			rem += dy;
+			if (rem >= dx) {
+				rem -= dx;
+				y++;
+			}
+		}
+		else {
+			rem += dx;
+			if (rem >= dy) {
+				rem -= dy;
+				x += (x2 > x1) ? 1 : -1;
+			}
+		}
+		this->draw_pixel(x, y, color);
+		if (dx > dy) { x += (x2 > x1) ? 1 : -1; }
+		else { y++; }
+	}
+	/* //和上分结果相同,比较次数更少
+	* //直线可能从上往下,可能从左往右
 	if (dx > dy) {
 		if (x2 < x1) { std::swap(x1, x2); std::swap(y1, y2); }
 		for (int x = x1, y = y1; x <= x2; x++) {
 			rem += dy;
 			if (rem >= dx) {
 				rem -= dx;
-				//this->draw_pixel(x, y, color);
 				y += (y2 > y1) ? 1 : -1;
-				//this->draw_pixel(x-1, y, color);
 			}
 			this->draw_pixel(x, y, color);
 		}
@@ -87,19 +112,18 @@ void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 			rem += dx;
 			if (rem >= dy) {
 				rem -= dy;
-				//this->draw_pixel(x, y, color);
 				x += (x2 > x1) ? 1 : -1;
-				//this->draw_pixel(x, y-1, color);
 			}
 			this->draw_pixel(x, y, color);
 		}
-	}
+	}*/ //
+
 	this->draw_pixel(x1, y1, color);
 	this->draw_pixel(x2, y2, color);
 }
 
 //经典算法,有缺陷
-void Renderer::draw_triangle_StandardAlgorithm(vertex_t v1, vertex_t v2, vertex_t v3)
+void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 {
 	if (v1.pos.y > v2.pos.y) { std::swap(v1, v2); }
 	if (v1.pos.y > v3.pos.y) { std::swap(v1, v3); }
@@ -113,13 +137,13 @@ void Renderer::draw_triangle_StandardAlgorithm(vertex_t v1, vertex_t v2, vertex_
 	if (y1 == y2) {
 		//平顶三角
 		if (x1 > x2)std::swap(v1, v2);
-		draw_triangle_flat(v3, v1, v2);
+		draw_triangle_BresenhamAlgorithm(v3, v1, v2);
 		return;
 	}
 	if (y2 == y3) {
 		//平底三角
 		if (x2 > x3)std::swap(v2, v3);
-		draw_triangle_flat(v1, v2, v3);
+		draw_triangle_BresenhamAlgorithm(v1, v2, v3);
 		return;
 	}
 
@@ -129,20 +153,19 @@ void Renderer::draw_triangle_StandardAlgorithm(vertex_t v1, vertex_t v2, vertex_
 	v4.pos.x = (y2 - y1) * dxy + x1;
 	float x4 = v4.pos.x, y4 = y2;
 	if (x2 <= x4) {
-		draw_triangle_flat(v1, v2, v4);
-		draw_triangle_flat(v3, v2, v4);
+		draw_triangle_BresenhamAlgorithm(v1, v2, v4);
+		draw_triangle_BresenhamAlgorithm(v3, v2, v4);
 	}
 	else {
-		draw_triangle_flat(v1, v4, v2);
-		draw_triangle_flat(v3, v4, v2);
+		draw_triangle_BresenhamAlgorithm(v1, v4, v2);
+		draw_triangle_BresenhamAlgorithm(v3, v4, v2);
 	}
 }
 
-void Renderer::draw_triangle_flat(vertex_t top, vertex_t left, vertex_t right)
+void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right)
 {
 	float dxy_left = (top.pos.x - left.pos.x) / (top.pos.y - left.pos.y);
 	float dxy_right = (top.pos.x - right.pos.x) / (top.pos.y - right.pos.y);
-
 	float xs, xe;
 	int y0 = (int)(top.pos.y + 0.5f);
 	int y1 = (int)(left.pos.y + 0.5f);
@@ -166,7 +189,6 @@ void Renderer::draw_triangle_flat(vertex_t top, vertex_t left, vertex_t right)
 		//平底
 		xs = xe = top.pos.x;
 		for (int y = y0; y <= y1; y++) {
-			//std::cout << "?";
 			this->draw_line(xs + 0.5f, y, xe + 0.5f, y, color);
 			xs += dxy_left;
 			xe += dxy_right;
@@ -174,13 +196,106 @@ void Renderer::draw_triangle_flat(vertex_t top, vertex_t left, vertex_t right)
 	}
 	else {
 		//平顶
-		xs = left.pos.x; xe = right.pos.x;
+		xs = left.pos.x;// +(ceil(y1) - y1) * dxy_left;
+		xe = right.pos.x;// +(ceil(y1) - y1) * dxy_right;
 		for (int y = y1; y <= y0; y++) {
 			this->draw_line(xs + 0.5f, y, xe + 0.5f, y, color);
 			xs += dxy_left;
 			xe += dxy_right;
 		}
 	}
+}
+
+void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right)
+{
+	int x1_s = top.pos.x, y1_s = top.pos.y;
+	int x1_e = top.pos.x, y1_e = top.pos.y;
+	int x2 = left.pos.x, y2 = left.pos.y;
+	int x3 = right.pos.x, y3 = right.pos.y;
+
+	//TODO
+	//颜色插值
+	float r, g, b, a;
+	r = top.color.r;
+	g = top.color.g;
+	b = top.color.b;
+	int R = (int)(r * 255.0f);
+	int G = (int)(g * 255.0f);
+	int B = (int)(b * 255.0f);
+	R = CMID(R, 0, 255);
+	G = CMID(G, 0, 255);
+	B = CMID(B, 0, 255);
+	UINT color = (R << 16) | (G << 8) | (B);
+
+	int dx_s = std::abs(x1_s - x2), dx_e = std::abs(x1_e - x3);
+	int dy = std::abs(y1_s - y2);
+	int y_s = min(y1_s, y2);
+	int y_e = y_s;
+	int rem_s = 0, rem_e = 0;
+	int x_s, x_e;
+
+	this->draw_pixel(x1_s, y1_s, color);
+	this->draw_pixel(x2, y2, color);
+	this->draw_pixel(x3, y3, color);
+
+	//left edge
+	if (y2 < y1_s) { std::swap(y1_s, y2); std::swap(x1_s, x2); }
+	x_s = x1_s; y_s = y1_s;
+	//right edge
+	if (y3 < y1_e) { std::swap(y1_e, y3); std::swap(x1_e, x3); }
+	x_e = x1_e; y_e = y1_e;
+
+	while ((y_s <= y2 && x_s >= min(x1_s, x2) && x_s <= max(x1_s, x2))
+		|| (y_e <= y2 && x_e >= min(x1_e, x3) && x_e <= max(x1_e, x3)))
+	{
+		if (y_s == y_e) {
+			this->draw_line(x_s, y_s, x_e, y_e, color);
+		}
+		//left
+		if (y_s <= y_e) {
+			if (dx_s > dy) {
+				rem_s += dy;
+				if (rem_s >= dx_s) {
+					rem_s -= dx_s;
+					y_s++;
+				}
+			}
+			else {
+				rem_s += dx_s;
+				if (rem_s >= dy) {
+					rem_s -= dy;
+					x_s += (x2 > x1_s) ? 1 : -1;
+				}
+			}
+			this->draw_pixel(x_s, y_s, color);
+			if (dx_s > dy) { x_s += (x2 > x1_s) ? 1 : -1; }
+			else { y_s++; }
+		}
+		if (y_s == y_e) {
+			this->draw_line(x_s, y_s, x_e, y_e, color);
+		}
+		//right
+		if (y_e <= y_s) {
+			if (dx_e > dy) {
+				rem_e += dy;
+				if (rem_e >= dx_e) {
+					rem_e -= dx_e;
+					y_e++;
+				}
+			}
+			else {
+				rem_e += dx_e;
+				if (rem_e >= dy) {
+					rem_e -= dy;
+					x_e += (x3 > x1_e) ? 1 : -1;
+				}
+			}
+			this->draw_pixel(x_e, y_e, color);
+			if (dx_e > dy) { x_e += (x3 > x1_e) ? 1 : -1; }
+			else { y_e++; }
+		}
+	}
+
 }
 
 //绘制原始三角形
@@ -239,7 +354,7 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		v1_tmp.pos = p1; 
 		v2_tmp.pos = p2;
 		v3_tmp.pos = p3;
-		this->draw_triangle_StandardAlgorithm(v1_tmp, v2_tmp, v3_tmp);
+		this->draw_triangle(v1_tmp, v2_tmp, v3_tmp);
 	}
 
 	return 0;
