@@ -245,12 +245,18 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 	if (y3 < y1_e) { std::swap(y1_e, y3); std::swap(x1_e, x3); }
 	x_e = x1_e; y_e = y1_e;
 
+	int jug_draw_scanline = true;
+
 	while ((y_s <= y2 && x_s >= min(x1_s, x2) && x_s <= max(x1_s, x2))
 		|| (y_e <= y2 && x_e >= min(x1_e, x3) && x_e <= max(x1_e, x3)))
 	{
-		if (y_s == y_e) {
-			this->draw_line(x_s, y_s, x_e, y_e, color);
+		if (y_s == y_e) {//相同y值的扫描线只画一次
+			if (jug_draw_scanline == true) {
+				this->draw_line(x_s, y_s, x_e, y_e, color);
+				jug_draw_scanline = false;
+			}
 		}
+		else { jug_draw_scanline = true; }
 		//left
 		if (y_s <= y_e) {
 			if (dx_s > dy) {
@@ -272,8 +278,12 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 			else { y_s++; }
 		}
 		if (y_s == y_e) {
-			this->draw_line(x_s, y_s, x_e, y_e, color);
+			if (jug_draw_scanline == true) {
+				this->draw_line(x_s, y_s, x_e, y_e, color);
+				jug_draw_scanline = false;
+			}
 		}
+		else { jug_draw_scanline = true; }
 		//right
 		if (y_e <= y_s) {
 			if (dx_e > dy) {
@@ -295,7 +305,60 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 			else { y_e++; }
 		}
 	}
+}
 
+//判断点是否在三角形内
+float sign(const point_t& p1, const point_t& p2, const point_t& p3)
+{
+	return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+}
+bool PointInTriangle(const point_t &pt, const point_t& v1, const point_t& v2, const point_t& v3)
+{
+	float d1, d2, d3;
+	bool has_neg, has_pos;
+
+	d1 = sign(pt, v1, v2);
+	d2 = sign(pt, v2, v3);
+	d3 = sign(pt, v3, v1);
+
+	has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+	has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+	return !(has_neg && has_pos);
+}
+void Renderer::draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
+{
+	//TODO
+	//颜色插值
+	float r, g, b, a;
+	r = v1.color.r;
+	g = v1.color.g;
+	b = v1.color.b;
+	int R = (int)(r * 255.0f);
+	int G = (int)(g * 255.0f);
+	int B = (int)(b * 255.0f);
+	R = CMID(R, 0, 255);
+	G = CMID(G, 0, 255);
+	B = CMID(B, 0, 255);
+	UINT color = (R << 16) | (G << 8) | (B);
+
+	int maxX = max(v1.pos.x, max(v2.pos.x, v3.pos.x));
+	int minX = min(v1.pos.x, min(v2.pos.x, v3.pos.x));
+	int maxY = max(v1.pos.y, max(v2.pos.y, v3.pos.y));
+	int minY = min(v1.pos.y, min(v2.pos.y, v3.pos.y));
+
+	vector_t vec1 = v2.pos - v1.pos;
+	vector_t vec2 = v3.pos - v1.pos;
+
+	for (int y = minY; y <= maxY; y++) {
+		for (int x = minX; x <= maxX; x++) {
+			point_t p; p.x = x; p.y = y;
+			if(PointInTriangle(p,v1.pos,v2.pos,v3.pos))
+			{ /* inside triangle */
+				this->draw_pixel(x, y, color);
+			}
+		}
+	}
 }
 
 //绘制原始三角形
@@ -354,7 +417,10 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		v1_tmp.pos = p1; 
 		v2_tmp.pos = p2;
 		v3_tmp.pos = p3;
-		this->draw_triangle(v1_tmp, v2_tmp, v3_tmp);
+		if (render_shader_state == RENDER_SHADER_PIXEL_SCANLINE)
+			this->draw_triangle(v1_tmp, v2_tmp, v3_tmp);
+		else if (render_shader_state == RENDER_SHADER_PIXEL_BOUNDINGBOX)
+			this->draw_triangle_BoundingBox(v1_tmp, v2_tmp, v3_tmp);
 	}
 
 	return 0;
