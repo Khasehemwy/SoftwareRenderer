@@ -122,7 +122,7 @@ void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 	this->draw_pixel(x2, y2, color);
 }
 
-//经典算法,有缺陷
+//拆分一般三角为特殊三角
 void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 {
 	if (v1.pos.y > v2.pos.y) { std::swap(v1, v2); }
@@ -137,13 +137,13 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 	if (y1 == y2) {
 		//平顶三角
 		if (x1 > x2)std::swap(v1, v2);
-		draw_triangle_BresenhamAlgorithm(v3, v1, v2);
+		draw_triangle_StandardAlgorithm(v3, v1, v2);
 		return;
 	}
 	if (y2 == y3) {
 		//平底三角
 		if (x2 > x3)std::swap(v2, v3);
-		draw_triangle_BresenhamAlgorithm(v1, v2, v3);
+		draw_triangle_StandardAlgorithm(v1, v2, v3);
 		return;
 	}
 
@@ -153,12 +153,12 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 	v4.pos.x = (y2 - y1) * dxy + x1;
 	float x4 = v4.pos.x, y4 = y2;
 	if (x2 <= x4) {
-		draw_triangle_BresenhamAlgorithm(v1, v2, v4);
-		draw_triangle_BresenhamAlgorithm(v3, v2, v4);
+		draw_triangle_StandardAlgorithm(v1, v2, v4);
+		draw_triangle_StandardAlgorithm(v3, v2, v4);
 	}
 	else {
-		draw_triangle_BresenhamAlgorithm(v1, v4, v2);
-		draw_triangle_BresenhamAlgorithm(v3, v4, v2);
+		draw_triangle_StandardAlgorithm(v1, v4, v2);
+		draw_triangle_StandardAlgorithm(v3, v4, v2);
 	}
 }
 
@@ -167,8 +167,8 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	float dxy_left = (top.pos.x - left.pos.x) / (top.pos.y - left.pos.y);
 	float dxy_right = (top.pos.x - right.pos.x) / (top.pos.y - right.pos.y);
 	float xs, xe;
-	int y0 = (int)(top.pos.y + 0.5f);
-	int y1 = (int)(left.pos.y + 0.5f);
+	int y0 = (int)(ceil(top.pos.y));
+	int y1 = (int)(ceil(left.pos.y));
 
 	//TODO
 	//颜色插值
@@ -187,19 +187,20 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	//绘制平底或平顶三角形
 	if (y0 <= y1) {
 		//平底
-		xs = xe = top.pos.x;
-		for (int y = y0; y <= y1; y++) {
-			this->draw_line(xs + 0.5f, y, xe + 0.5f, y, color);
+		xs = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxy_left;
+		xe = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxy_right;
+		for (int y = y0; y <= y1-1; y++) {
+			this->draw_line(ceil(xs), y, ceil(xe), y, color);
 			xs += dxy_left;
 			xe += dxy_right;
 		}
 	}
 	else {
 		//平顶
-		xs = left.pos.x;// +(ceil(y1) - y1) * dxy_left;
-		xe = right.pos.x;// +(ceil(y1) - y1) * dxy_right;
-		for (int y = y1; y <= y0; y++) {
-			this->draw_line(xs + 0.5f, y, xe + 0.5f, y, color);
+		xs = left.pos.x + (ceil(left.pos.y) - left.pos.y) * dxy_left;
+		xe = right.pos.x + (ceil(right.pos.y) - right.pos.y) * dxy_right;
+		for (int y = y1; y <= y0-1; y++) {
+			this->draw_line(ceil(xs), y, ceil(xe), y, color);
 			xs += dxy_left;
 			xe += dxy_right;
 		}
@@ -213,19 +214,10 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 	int x2 = left.pos.x, y2 = left.pos.y;
 	int x3 = right.pos.x, y3 = right.pos.y;
 
-	//TODO
-	//颜色插值
-	float r, g, b, a;
-	r = top.color.r;
-	g = top.color.g;
-	b = top.color.b;
-	int R = (int)(r * 255.0f);
-	int G = (int)(g * 255.0f);
-	int B = (int)(b * 255.0f);
-	R = CMID(R, 0, 255);
-	G = CMID(G, 0, 255);
-	B = CMID(B, 0, 255);
-	UINT color = (R << 16) | (G << 8) | (B);
+	//color_t color1_s = top.color;
+	//color_t color1_e = top.color;
+	//color_t color2 = left.color;
+	//color_t color3 = right.color;
 
 	int dx_s = std::abs(x1_s - x2), dx_e = std::abs(x1_e - x3);
 	int dy = std::abs(y1_s - y2);
@@ -234,15 +226,15 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 	int rem_s = 0, rem_e = 0;
 	int x_s, x_e;
 
-	this->draw_pixel(x1_s, y1_s, color);
-	this->draw_pixel(x2, y2, color);
-	this->draw_pixel(x3, y3, color);
+	this->draw_pixel(x1_s, y1_s, 0x0);
+	this->draw_pixel(x2, y2, 0x0);
+	this->draw_pixel(x3, y3, 0x0);
 
 	//left edge
-	if (y2 < y1_s) { std::swap(y1_s, y2); std::swap(x1_s, x2); }
+	if (y2 < y1_s) { std::swap(y1_s, y2); std::swap(x1_s, x2); /*std::swap(color1_s, color2);*/ }
 	x_s = x1_s; y_s = y1_s;
 	//right edge
-	if (y3 < y1_e) { std::swap(y1_e, y3); std::swap(x1_e, x3); }
+	if (y3 < y1_e) { std::swap(y1_e, y3); std::swap(x1_e, x3); /*std::swap(color1_e, color3);*/ }
 	x_e = x1_e; y_e = y1_e;
 
 	int jug_draw_scanline = true;
@@ -250,13 +242,41 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 	while ((y_s <= y2 && x_s >= min(x1_s, x2) && x_s <= max(x1_s, x2))
 		|| (y_e <= y2 && x_e >= min(x1_e, x3) && x_e <= max(x1_e, x3)))
 	{
+		//用于线性插值
+		float s1, s2, p1, p2;
+		if (dx_s > dy) { s1 = max(x1_s, x2) - min(x1_s, x2); p1 = x_s; }
+		else { s1 = y2 - y1_s; p1 = y_s; }
+		if (dx_e > dy) { s2 = max(x1_e, x3) - min(x1_e, x3); p2 = x_e; }
+		else { s2 = y3 - y1_e; p2 = y_e; }
+
 		if (y_s == y_e) {//相同y值的扫描线只画一次
 			if (jug_draw_scanline == true) {
-				this->draw_line(x_s, y_s, x_e, y_e, color);
+				//FIX ME
+				//color_t color_left, color_right;
+				//int x = x_s, y = y_s;
+				//color_left.r = interp(s1, p1, color1_s.r, color2.r);
+				//color_left.g = interp(s1, p1, color1_s.g, color2.g);
+				//color_left.b = interp(s1, p1, color1_s.b, color2.b);
+				//color_left.a = interp(s1, p1, color1_s.a, color2.a);
+				//color_right.r = interp(s1, p2, color1_e.r, color2.r);
+				//color_right.g = interp(s1, p2, color1_e.g, color2.g);
+				//color_right.b = interp(s1, p2, color1_e.b, color2.b);
+				//color_right.a = interp(s1, p2, color1_e.a, color2.a);
+				//float length_x = x_e - x_s;
+				//for (; x <= x_e; x++) {
+				//	color_t color;
+				//	color.r = interp(length_x, x - x_s, color_left.r, color_right.r);
+				//	color.g = interp(length_x, x - x_s, color_left.g, color_right.g);
+				//	color.b = interp(length_x, x - x_s, color_left.b, color_right.b);
+				//	color.a = interp(length_x, x - x_s, color_left.a, color_right.a);
+				//	this->draw_pixel(x, y, color_trans_255(color));
+				//}
+				this->draw_line(x_s, y_s, x_e, y_e, 0x0);
 				jug_draw_scanline = false;
 			}
 		}
 		else { jug_draw_scanline = true; }
+
 		//left
 		if (y_s <= y_e) {
 			if (dx_s > dy) {
@@ -273,17 +293,19 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 					x_s += (x2 > x1_s) ? 1 : -1;
 				}
 			}
-			this->draw_pixel(x_s, y_s, color);
+			this->draw_pixel(x_s, y_s, 0x0);
 			if (dx_s > dy) { x_s += (x2 > x1_s) ? 1 : -1; }
 			else { y_s++; }
 		}
-		if (y_s == y_e) {
+
+		if (y_s == y_e) {//相同y值的扫描线只画一次
 			if (jug_draw_scanline == true) {
-				this->draw_line(x_s, y_s, x_e, y_e, color);
+				this->draw_line(x_s, y_s, x_e, y_e, 0x0);
 				jug_draw_scanline = false;
 			}
 		}
 		else { jug_draw_scanline = true; }
+
 		//right
 		if (y_e <= y_s) {
 			if (dx_e > dy) {
@@ -300,7 +322,7 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 					x_e += (x3 > x1_e) ? 1 : -1;
 				}
 			}
-			this->draw_pixel(x_e, y_e, color);
+			this->draw_pixel(x_e, y_e, 0x0);
 			if (dx_e > dy) { x_e += (x3 > x1_e) ? 1 : -1; }
 			else { y_e++; }
 		}
@@ -366,7 +388,7 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 {
 	point_t p1, p2, p3;
 
-	// 将点映射到世界空间,进行背面剔除
+	// 将点映射到世界空间,进行背面剔除(点的排列必须为右手螺旋后法向量朝外)
 	p1 = (v1.pos) * this->transform.model;
 	p2 = (v2.pos) * this->transform.model;
 	p3 = (v3.pos) * this->transform.model;
@@ -417,7 +439,7 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		v1_tmp.pos = p1; 
 		v2_tmp.pos = p2;
 		v3_tmp.pos = p3;
-		if (render_shader_state == RENDER_SHADER_PIXEL_SCANLINE)
+		if (render_shader_state == RENDER_SHADER_PIXEL_SCANLINE)//default
 			this->draw_triangle(v1_tmp, v2_tmp, v3_tmp);
 		else if (render_shader_state == RENDER_SHADER_PIXEL_BOUNDINGBOX)
 			this->draw_triangle_BoundingBox(v1_tmp, v2_tmp, v3_tmp);

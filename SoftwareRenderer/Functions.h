@@ -28,4 +28,14 @@ void transform_init(transform_t* ts, int width, int height);
 vector_t viewport_transform(const vector_t& x, const transform_t& ts);
 int check_cvv(const vector_t& v);
 
-int CMID(int x, int min, int max);
+inline int CMID(int x, int min, int max) { return (x < min) ? min : ((x > max) ? max : x); }
+
+float interp(float length_total, float length_place, float x1, float x2);
+
+inline UINT32 color_trans_255(const color_t &color) {
+	int R = CMID((int)(color.r * 255.0f), 0, 255);
+	int G = CMID((int)(color.g * 255.0f), 0, 255);
+	int B = CMID((int)(color.b * 255.0f), 0, 255);
+	int A = CMID((int)(color.a * 255.0f), 0, 255);
+	return (UINT32)((A << 24) | (R << 16) | (G << 8) | (B));
+}

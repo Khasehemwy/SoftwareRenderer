@@ -1,7 +1,5 @@
 #include"Functions.h"
 
-int CMID(int x, int min, int max) { return (x < min) ? min : ((x > max) ? max : x); }
-
 void matrix_set_zero(matrix_t* m) {
 	m->m[0][0] = m->m[0][1] = m->m[0][2] = m->m[0][3] = 0.0f;
 	m->m[1][0] = m->m[1][1] = m->m[1][2] = m->m[1][3] = 0.0f;
@@ -207,5 +205,11 @@ int check_cvv(const vector_t& v)
 	if (v.y < -w) check |= 16;
 	if (v.y > w) check |= 32;
 	return check;
+}
+
+float interp(float length_total, float length_place, float x1, float x2)
+{
+	float t = length_place / length_total;
+	return (x1 + (x2 - x1) * t);
 }
 

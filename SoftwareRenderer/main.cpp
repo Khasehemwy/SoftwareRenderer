@@ -23,6 +23,14 @@ void draw_box(Renderer& renderer)
 	for (int i = 0; i < 8; i++) {
 		vert[i].pos = p[i];
 	}
+	//vert[0].color = { 0.2,0.3,0.1,1 };
+	//vert[1].color = { 0.5,0.1,0.1,1 };
+	//vert[2].color = { 0.8,0.2,0.1,1 };
+	//vert[3].color = { 0.1,0.6,0.3,1 };
+	//vert[4].color = { 0.2,0.1,0.8,1 };
+	//vert[5].color = { 0.6,0.3,0.8,1 };
+	//vert[6].color = { 0.1,0.1,0.0,1 };
+	//vert[7].color = { 0.4,0.1,0.2,1 };
 	draw_square(renderer, vert[0], vert[1], vert[2], vert[3]);
 	draw_square(renderer, vert[1], vert[5], vert[6], vert[2]);
 	draw_square(renderer, vert[0], vert[3], vert[7], vert[4]);
