@@ -24,6 +24,18 @@ vector_t transform_apply(const vector_t& x, const transform_t& ts);
 vector_t operator*(const vector_t& x, const transform_t& ts);
 void transform_init(transform_t* ts, int width, int height);
 
+color_t color_add(const color_t& x, const color_t& y);
+color_t operator+(const color_t& x, const color_t& y);
+color_t color_mul(const color_t& x, const float& y);
+color_t operator*(const color_t& x, const float& y);
+color_t operator*(const float& y, const color_t& x);
+color_t color_sub(const color_t& x, const color_t& y);
+color_t operator-(const color_t& x, const color_t& y);
+color_t color_div(const color_t& x, const float& y);
+color_t operator/(const color_t& x, const float& y);
+
+
+
 
 vector_t viewport_transform(const vector_t& x, const transform_t& ts);
 int check_cvv(const vector_t& v);

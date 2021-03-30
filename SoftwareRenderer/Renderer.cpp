@@ -134,6 +134,7 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 	x2 = v2.pos.x; y2 = v2.pos.y;
 	x3 = v3.pos.x; y3 = v3.pos.y;
 
+	if (y1 == y2 && y2 == y3)return;
 	if (y1 == y2) {
 		//平顶三角
 		if (x1 > x2)std::swap(v1, v2);
@@ -152,6 +153,10 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 	float dxy = (x3 - x1) / (y3 - y1);
 	v4.pos.x = (y2 - y1) * dxy + x1;
 	float x4 = v4.pos.x, y4 = y2;
+	//计算v4的颜色
+	float t = (y4 - y1) / (y3 - y1);
+	v4.color = v1.color + (v3.color - v1.color) * t;
+
 	if (x2 <= x4) {
 		draw_triangle_StandardAlgorithm(v1, v2, v4);
 		draw_triangle_StandardAlgorithm(v3, v2, v4);
@@ -170,54 +175,72 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	int y0 = (int)(ceil(top.pos.y));
 	int y1 = (int)(ceil(left.pos.y));
 
-	//TODO
 	//颜色插值
-	float r, g, b, a;
-	r = top.color.r;
-	g = top.color.g;
-	b = top.color.b;
-	int R = (int)(r * 255.0f);
-	int G = (int)(g * 255.0f);
-	int B = (int)(b * 255.0f);
-	R = CMID(R, 0, 255);
-	G = CMID(G, 0, 255);
-	B = CMID(B, 0, 255);
-	UINT color = (R << 16) | (G << 8) | (B);
+	//左侧颜色强度梯度(y增加1时,颜色增加dildy)
+	color_t dildy = (left.color - top.color) / (left.pos.y - top.pos.y);
+	//右侧
+	color_t dirdy = (right.color - top.color) / (left.pos.y - top.pos.y);
 
 	//绘制平底或平顶三角形
 	if (y0 <= y1) {
-		//平底
+		//平底三角形
+		//x值修正
 		xs = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxy_left;
 		xe = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxy_right;
-		for (int y = y0; y <= y1-1; y++) {
-			this->draw_line(ceil(xs), y, ceil(xe), y, color);
+		//颜色
+		//颜色也同样因为浮点数转换整数需要修正
+		color_t color_left = top.color + (ceil(top.pos.y) - top.pos.y) * dildy;
+		color_t color_right = top.color + (ceil(top.pos.y) - top.pos.y) * dirdy;
+
+		for (int y = y0; y < y1; y++) {
+			color_t dix = (color_right - color_left) / (xe - xs);
+			color_t color = color_left + (ceil(xs) - xs) * dix;
+			for (int x = ceil(xs); x <= ceil(xe); x++) {
+				this->draw_pixel(x, y, color_trans_255(color));
+				color = color + dix;
+			}
 			xs += dxy_left;
 			xe += dxy_right;
+			color_left = color_left + dildy;
+			color_right = color_right + dirdy;
 		}
 	}
 	else {
-		//平顶
+		//平顶,类似平底三角形
 		xs = left.pos.x + (ceil(left.pos.y) - left.pos.y) * dxy_left;
 		xe = right.pos.x + (ceil(right.pos.y) - right.pos.y) * dxy_right;
-		for (int y = y1; y <= y0-1; y++) {
-			this->draw_line(ceil(xs), y, ceil(xe), y, color);
+		//颜色
+		color_t color_left = left.color + (ceil(left.pos.y) - left.pos.y) * dildy;
+		color_t color_right = right.color + (ceil(right.pos.y) - right.pos.y) * dirdy;
+
+		for (int y = y1; y < y0; y++) {
+			color_t dix = (color_right - color_left) / (xe - xs);
+			color_t color = color_left + (ceil(xs) - xs) * dix;
+			for (int x = ceil(xs); x <= ceil(xe); x++) {
+				this->draw_pixel(x, y, color_trans_255(color));
+				color = color + dix;
+			}
 			xs += dxy_left;
 			xe += dxy_right;
+			color_left = color_left + dildy;
+			color_right = color_right + dirdy;
 		}
 	}
 }
 
 void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right)
 {
+	//FIX ME
+	//没有完善颜色插值
 	int x1_s = top.pos.x, y1_s = top.pos.y;
 	int x1_e = top.pos.x, y1_e = top.pos.y;
 	int x2 = left.pos.x, y2 = left.pos.y;
 	int x3 = right.pos.x, y3 = right.pos.y;
 
-	//color_t color1_s = top.color;
-	//color_t color1_e = top.color;
-	//color_t color2 = left.color;
-	//color_t color3 = right.color;
+	color_t color1_s = top.color;
+	color_t color1_e = top.color;
+	color_t color2 = left.color;
+	color_t color3 = right.color;
 
 	int dx_s = std::abs(x1_s - x2), dx_e = std::abs(x1_e - x3);
 	int dy = std::abs(y1_s - y2);
@@ -231,10 +254,10 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 	this->draw_pixel(x3, y3, 0x0);
 
 	//left edge
-	if (y2 < y1_s) { std::swap(y1_s, y2); std::swap(x1_s, x2); /*std::swap(color1_s, color2);*/ }
+	if (y2 < y1_s) { std::swap(y1_s, y2); std::swap(x1_s, x2); std::swap(color1_s, color2); }
 	x_s = x1_s; y_s = y1_s;
 	//right edge
-	if (y3 < y1_e) { std::swap(y1_e, y3); std::swap(x1_e, x3); /*std::swap(color1_e, color3);*/ }
+	if (y3 < y1_e) { std::swap(y1_e, y3); std::swap(x1_e, x3); std::swap(color1_e, color3); }
 	x_e = x1_e; y_e = y1_e;
 
 	int jug_draw_scanline = true;
@@ -252,26 +275,26 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 		if (y_s == y_e) {//相同y值的扫描线只画一次
 			if (jug_draw_scanline == true) {
 				//FIX ME
-				//color_t color_left, color_right;
-				//int x = x_s, y = y_s;
-				//color_left.r = interp(s1, p1, color1_s.r, color2.r);
-				//color_left.g = interp(s1, p1, color1_s.g, color2.g);
-				//color_left.b = interp(s1, p1, color1_s.b, color2.b);
-				//color_left.a = interp(s1, p1, color1_s.a, color2.a);
-				//color_right.r = interp(s1, p2, color1_e.r, color2.r);
-				//color_right.g = interp(s1, p2, color1_e.g, color2.g);
-				//color_right.b = interp(s1, p2, color1_e.b, color2.b);
-				//color_right.a = interp(s1, p2, color1_e.a, color2.a);
-				//float length_x = x_e - x_s;
-				//for (; x <= x_e; x++) {
-				//	color_t color;
-				//	color.r = interp(length_x, x - x_s, color_left.r, color_right.r);
-				//	color.g = interp(length_x, x - x_s, color_left.g, color_right.g);
-				//	color.b = interp(length_x, x - x_s, color_left.b, color_right.b);
-				//	color.a = interp(length_x, x - x_s, color_left.a, color_right.a);
-				//	this->draw_pixel(x, y, color_trans_255(color));
-				//}
-				this->draw_line(x_s, y_s, x_e, y_e, 0x0);
+				color_t color_left, color_right;
+				int x = x_s, y = y_s;
+				color_left.r = interp(s1, p1, color1_s.r, color2.r);
+				color_left.g = interp(s1, p1, color1_s.g, color2.g);
+				color_left.b = interp(s1, p1, color1_s.b, color2.b);
+				color_left.a = interp(s1, p1, color1_s.a, color2.a);
+				color_right.r = interp(s1, p2, color1_e.r, color2.r);
+				color_right.g = interp(s1, p2, color1_e.g, color2.g);
+				color_right.b = interp(s1, p2, color1_e.b, color2.b);
+				color_right.a = interp(s1, p2, color1_e.a, color2.a);
+				float length_x = x_e - x_s;
+				for (; x <= x_e; x++) {
+					color_t color;
+					color.r = interp(length_x, x - x_s, color_left.r, color_right.r);
+					color.g = interp(length_x, x - x_s, color_left.g, color_right.g);
+					color.b = interp(length_x, x - x_s, color_left.b, color_right.b);
+					color.a = interp(length_x, x - x_s, color_left.a, color_right.a);
+					this->draw_pixel(x, y, color_trans_255(color));
+				}
+				//this->draw_line(x_s, y_s, x_e, y_e, 0x0);
 				jug_draw_scanline = false;
 			}
 		}
@@ -300,7 +323,27 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 
 		if (y_s == y_e) {//相同y值的扫描线只画一次
 			if (jug_draw_scanline == true) {
-				this->draw_line(x_s, y_s, x_e, y_e, 0x0);
+				//FIX ME
+				color_t color_left, color_right;
+				int x = x_s, y = y_s;
+				color_left.r = interp(s1, p1, color1_s.r, color2.r);
+				color_left.g = interp(s1, p1, color1_s.g, color2.g);
+				color_left.b = interp(s1, p1, color1_s.b, color2.b);
+				color_left.a = interp(s1, p1, color1_s.a, color2.a);
+				color_right.r = interp(s1, p2, color1_e.r, color2.r);
+				color_right.g = interp(s1, p2, color1_e.g, color2.g);
+				color_right.b = interp(s1, p2, color1_e.b, color2.b);
+				color_right.a = interp(s1, p2, color1_e.a, color2.a);
+				float length_x = x_e - x_s;
+				for (; x <= x_e; x++) {
+					color_t color;
+					color.r = interp(length_x, x - x_s, color_left.r, color_right.r);
+					color.g = interp(length_x, x - x_s, color_left.g, color_right.g);
+					color.b = interp(length_x, x - x_s, color_left.b, color_right.b);
+					color.a = interp(length_x, x - x_s, color_left.a, color_right.a);
+					this->draw_pixel(x, y, color_trans_255(color));
+				}
+				//this->draw_line(x_s, y_s, x_e, y_e, 0x0);
 				jug_draw_scanline = false;
 			}
 		}
@@ -351,7 +394,7 @@ bool PointInTriangle(const point_t &pt, const point_t& v1, const point_t& v2, co
 void Renderer::draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
 {
 	//TODO
-	//颜色插值
+	//没有颜色插值
 	float r, g, b, a;
 	r = v1.color.r;
 	g = v1.color.g;
