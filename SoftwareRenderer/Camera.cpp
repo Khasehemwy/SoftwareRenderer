@@ -6,7 +6,7 @@ matrix_t Camera::set_lookat(const vector_t& eye, const vector_t& at, const vecto
 
 	Zaxis = vector_normalize(at - eye);
 	Xaxis = vector_normalize(vector_cross(up, Zaxis));
-	Yaxis = vector_cross(Zaxis, Xaxis);
+	Yaxis = vector_cross(Xaxis, Zaxis);
 
 	matrix_t m;
 	m.m[0][0] = Xaxis.x;

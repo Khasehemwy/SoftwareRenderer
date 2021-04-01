@@ -9,8 +9,9 @@ typedef struct { float m[4][4]; } matrix_t;
 typedef struct { float x, y, z, w; } vector_t;
 typedef vector_t point_t;
 typedef struct { float r, g, b, a; } color_t;
+typedef struct { float u, v; } texcoord_t;
 
-typedef struct { point_t pos; color_t color; float rhw; } vertex_t;
+typedef struct { point_t pos; color_t color; texcoord_t tex; float rhw; } vertex_t;
 
 typedef struct {
 	matrix_t model;         // 世界坐标变换

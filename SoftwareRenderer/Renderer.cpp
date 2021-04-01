@@ -12,9 +12,13 @@ void Renderer::init(int width, int height, void* fb)
 	assert(ptr);
 	char* framebuf, * zbuf;
 
+	tex_limit_size = 1024;
+
 	this->frame_buffer = (UINT**)ptr;
 	this->z_buffer = (float**)(ptr + sizeof(void*) * height);
 	ptr += sizeof(void*) * height * 2;
+	this->texture = (UINT32**)ptr;
+	ptr += sizeof(void*) * tex_limit_size;
 	framebuf = (char*)ptr;
 	zbuf = (char*)ptr + width * height * 4;
 	ptr += width * height * 8;
@@ -29,6 +33,14 @@ void Renderer::init(int width, int height, void* fb)
 	this->background = 0x1D4E89;
 	this->foreground = 0x0;
 
+	this->texture[0] = (UINT32*)ptr;
+	this->texture[1] = (UINT32*)(ptr + 16);
+	memset(this->texture[0], 0, 64);
+	this->tex_width = 2;
+	this->tex_height = 2;
+	this->tex_max_u = 1.0f;
+	this->tex_max_v = 1.0f;
+
 	transform_init(&this->transform, width, height);
 	this->render_state = RENDER_STATE_WIREFRAME;
 }
@@ -39,6 +51,7 @@ void Renderer::destroy()
 		free(this->frame_buffer);
 	this->frame_buffer = nullptr;
 	this->z_buffer = nullptr;
+	this->texture = nullptr;
 }
 
 void Renderer::clear()
@@ -54,6 +67,29 @@ void Renderer::clear()
 			this->z_buffer[y][x] = 0.0f;
 		}
 	}
+}
+
+void Renderer::set_texture(void* bits, long pitch, int w, int h)
+{
+	char* ptr = (char*)bits;
+	assert(w <= tex_limit_size && h <= tex_limit_size);
+	for (int j = 0; j < h; ptr += pitch, j++) 	// 重新计算每行纹理的指针
+		this->texture[j] = (UINT32*)ptr;
+	this->tex_width = w;
+	this->tex_height = h;
+	this->tex_max_u = (float)(w - 1);
+	this->tex_max_v = (float)(h - 1);
+}
+
+UINT32 Renderer::texture_read(float u, float v)
+{
+	u = u * this->tex_max_u;
+	v = v * this->tex_max_v;
+	int x = (int)(u + 0.5f);
+	int y = (int)(v + 0.5f);
+	x = CMID(x, 0, this->tex_width - 1);
+	y = CMID(y, 0, this->tex_height - 1);
+	return this->texture[y][x];
 }
 
 void Renderer::draw_pixel(int x, int y, UINT32 color)
@@ -74,27 +110,28 @@ void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 	int x = x1, y = y1;
 
 	//直线均从上往下绘制
-	for (; y <= y2 && x >= min(x1, x2) && x <= max(x1, x2);) {
-		if (dx > dy) {
-			rem += dy;
-			if (rem >= dx) {
-				rem -= dx;
-				y++;
-			}
-		}
-		else {
-			rem += dx;
-			if (rem >= dy) {
-				rem -= dy;
-				x += (x2 > x1) ? 1 : -1;
-			}
-		}
-		this->draw_pixel(x, y, color);
-		if (dx > dy) { x += (x2 > x1) ? 1 : -1; }
-		else { y++; }
-	}
-	/* //和上分结果相同,比较次数更少
-	* //直线可能从上往下,可能从左往右
+	//for (; y <= y2 && x >= min(x1, x2) && x <= max(x1, x2);) {
+	//	if (dx > dy) {
+	//		rem += dy;
+	//		if (rem >= dx) {
+	//			rem -= dx;
+	//			y++;
+	//		}
+	//	}
+	//	else {
+	//		rem += dx;
+	//		if (rem >= dy) {
+	//			rem -= dy;
+	//			x += (x2 > x1) ? 1 : -1;
+	//		}
+	//	}
+	//	this->draw_pixel(x, y, color);
+	//	if (dx > dy) { x += (x2 > x1) ? 1 : -1; }
+	//	else { y++; }
+	//}
+	//和下方结果相同,比较次数更多,效率低一些
+	 
+	//直线可能从上往下,可能从左往右
 	if (dx > dy) {
 		if (x2 < x1) { std::swap(x1, x2); std::swap(y1, y2); }
 		for (int x = x1, y = y1; x <= x2; x++) {
@@ -116,7 +153,7 @@ void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 			}
 			this->draw_pixel(x, y, color);
 		}
-	}*/ //
+	}
 
 	this->draw_pixel(x1, y1, color);
 	this->draw_pixel(x2, y2, color);
@@ -156,6 +193,8 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 	//计算v4的颜色
 	float t = (y4 - y1) / (y3 - y1);
 	v4.color = v1.color + (v3.color - v1.color) * t;
+	v4.tex.u = v1.tex.u + (v3.tex.u - v1.tex.u) * t;
+	v4.tex.v = v1.tex.v + (v3.tex.v - v1.tex.v) * t;
 
 	if (x2 <= x4) {
 		draw_triangle_StandardAlgorithm(v1, v2, v4);
@@ -169,62 +208,83 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 
 void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right)
 {
-	float dxy_left = (top.pos.x - left.pos.x) / (top.pos.y - left.pos.y);
-	float dxy_right = (top.pos.x - right.pos.x) / (top.pos.y - right.pos.y);
-	float xs, xe;
-	int y0 = (int)(ceil(top.pos.y));
-	int y1 = (int)(ceil(left.pos.y));
+	//基于y的梯度,y增加1时,对应x/u/v/i增加的值
+	float dxdy_l = (top.pos.x - left.pos.x) / (top.pos.y - left.pos.y);
+	float dudy_l = (top.tex.u - left.tex.u) / (top.pos.y - left.pos.y);
+	float dvdy_l = (top.tex.v - left.tex.v) / (top.pos.y - left.pos.y);
+	float dxdy_r = (top.pos.x - right.pos.x) / (top.pos.y - right.pos.y);
+	float dudy_r = (top.tex.u - right.tex.u) / (top.pos.y - right.pos.y);
+	float dvdy_r = (top.tex.v - right.tex.v) / (top.pos.y - right.pos.y);
+	float xl, ul, vl;
+	float xr, ur, vr;
 
 	//颜色插值
-	//左侧颜色强度梯度(y增加1时,颜色增加dildy)
-	color_t dildy = (left.color - top.color) / (left.pos.y - top.pos.y);
-	//右侧
-	color_t dirdy = (right.color - top.color) / (left.pos.y - top.pos.y);
+	color_t didy_l = (top.color - left.color) / (top.pos.y - left.pos.y);
+	color_t didy_r = (top.color - right.color) / (top.pos.y - right.pos.y);
+	color_t color_left, color_right;
 
+	int y0 = (int)(ceil(top.pos.y));
+	int y1 = (int)(ceil(left.pos.y));
 	//绘制平底或平顶三角形
 	if (y0 <= y1) {
-		//平底三角形
-		//x值修正
-		xs = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxy_left;
-		xe = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxy_right;
+		/*平底三角形*/
+		//赋左右x值初始值并修正(浮点数转换整数需要修正)
+		xl = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxdy_l;
+		xr = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxdy_r;
+		//纹理
+		ul = top.tex.u + (ceil(top.pos.y) - top.pos.y) * dudy_l;
+		vl = top.tex.v + (ceil(top.pos.y) - top.pos.y) * dvdy_l;
+		ur = top.tex.u + (ceil(top.pos.y) - top.pos.y) * dudy_r;
+		vr = top.tex.v + (ceil(top.pos.y) - top.pos.y) * dvdy_r;
 		//颜色
-		//颜色也同样因为浮点数转换整数需要修正
-		color_t color_left = top.color + (ceil(top.pos.y) - top.pos.y) * dildy;
-		color_t color_right = top.color + (ceil(top.pos.y) - top.pos.y) * dirdy;
-
-		for (int y = y0; y < y1; y++) {
-			color_t dix = (color_right - color_left) / (xe - xs);
-			color_t color = color_left + (ceil(xs) - xs) * dix;
-			for (int x = ceil(xs); x <= ceil(xe); x++) {
-				this->draw_pixel(x, y, color_trans_255(color));
-				color = color + dix;
-			}
-			xs += dxy_left;
-			xe += dxy_right;
-			color_left = color_left + dildy;
-			color_right = color_right + dirdy;
-		}
+		color_left = top.color + (ceil(top.pos.y) - top.pos.y) * didy_l;
+		color_right = top.color + (ceil(top.pos.y) - top.pos.y) * didy_r;
 	}
 	else {
-		//平顶,类似平底三角形
-		xs = left.pos.x + (ceil(left.pos.y) - left.pos.y) * dxy_left;
-		xe = right.pos.x + (ceil(right.pos.y) - right.pos.y) * dxy_right;
-		//颜色
-		color_t color_left = left.color + (ceil(left.pos.y) - left.pos.y) * dildy;
-		color_t color_right = right.color + (ceil(right.pos.y) - right.pos.y) * dirdy;
+		/*平顶三角形,类似平底三角形*/
+		std::swap(y0, y1);
+		xl = left.pos.x + (ceil(left.pos.y) - left.pos.y) * dxdy_l;
+		xr = right.pos.x + (ceil(right.pos.y) - right.pos.y) * dxdy_r;
 
-		for (int y = y1; y < y0; y++) {
-			color_t dix = (color_right - color_left) / (xe - xs);
-			color_t color = color_left + (ceil(xs) - xs) * dix;
-			for (int x = ceil(xs); x <= ceil(xe); x++) {
+		ul = left.tex.u + (ceil(left.pos.y) - left.pos.y) * dudy_l;
+		vl = left.tex.v + (ceil(left.pos.y) - left.pos.y) * dvdy_l;
+		ur = right.tex.u + (ceil(right.pos.y) - right.pos.y) * dudy_r;
+		vr = right.tex.v + (ceil(right.pos.y) - right.pos.y) * dvdy_r;
+
+		color_left = left.color + (ceil(left.pos.y) - left.pos.y) * didy_l;
+		color_right = right.color + (ceil(right.pos.y) - right.pos.y) * didy_r;
+	}
+
+	//从上往下绘制
+	for (int y = y0; y < y1; y++) {
+		float dx = xr - xl;
+		float dux = (ur - ul) / dx;
+		float dvx = (vr - vl) / dx;
+		float ui = ul;// +(ceil(ul) - ul) * dux;
+		float vi = vl;// +(ceil(vl) - vl) * dvx;
+		color_t dix = (color_right - color_left) / dx;
+		color_t color = color_left + (ceil(xl) - xl) * dix;
+
+		for (int x = ceil(xl); x <= ceil(xr); x++) {
+			if (this->render_state == RENDER_STATE_COLOR) {
 				this->draw_pixel(x, y, color_trans_255(color));
 				color = color + dix;
 			}
-			xs += dxy_left;
-			xe += dxy_right;
-			color_left = color_left + dildy;
-			color_right = color_right + dirdy;
+			if (this->render_state == RENDER_STATE_TEXTURE) {
+				this->draw_pixel(x, y, this->texture_read(ui, vi));
+				ui += dux;
+				vi += dvx;
+			}
 		}
+
+		xl += dxdy_l;
+		ul += dudy_l;
+		vl += dvdy_l;
+		ur += dudy_r;
+		vr += dvdy_r;
+		xr += dxdy_r;
+		color_left = color_left + didy_l;
+		color_right = color_right + didy_r;
 	}
 }
 
@@ -476,12 +536,15 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		this->draw_line((int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, this->foreground);
 		this->draw_line((int)p2.x, (int)p2.y, (int)p3.x, (int)p3.y, this->foreground);
 	}
-	else if (this->render_state == RENDER_STATE_COLOR) {
+	else if(this->render_state) {
 		vertex_t v1_tmp, v2_tmp, v3_tmp;
 		v1_tmp = v1; v2_tmp = v2; v3_tmp = v3;
 		v1_tmp.pos = p1; 
 		v2_tmp.pos = p2;
 		v3_tmp.pos = p3;
+		//vertex_set_rhw(v1_tmp);
+		//vertex_set_rhw(v2_tmp);
+		//vertex_set_rhw(v3_tmp);
 		if (render_shader_state == RENDER_SHADER_PIXEL_SCANLINE)//default
 			this->draw_triangle(v1_tmp, v2_tmp, v3_tmp);
 		else if (render_shader_state == RENDER_SHADER_PIXEL_BOUNDINGBOX)

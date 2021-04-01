@@ -154,6 +154,17 @@ float operator*(const vector_t& x, const vector_t& y)
 	return vector_dotProduct(x,y);
 }
 
+void vertex_set_rhw(vertex_t& v)
+{
+	float rhw = 1.0f / v.pos.w;
+	v.rhw = rhw;
+	v.tex.u *= rhw;
+	v.tex.v *= rhw;
+	//v.color.r *= rhw;
+	//v.color.g *= rhw;
+	//v.color.b *= rhw;
+}
+
 void matrix_set_identity(matrix_t* m) {
 	m->m[0][0] = m->m[1][1] = m->m[2][2] = m->m[3][3] = 1.0f;
 	m->m[0][1] = m->m[0][2] = m->m[0][3] = 0.0f;
@@ -255,7 +266,7 @@ vector_t viewport_transform(const vector_t& x, const transform_t& ts)
 	y.x = (x.x * rhw + 1.0f) * ts.w * 0.5f;
 	y.y = (1.0f - x.y * rhw) * ts.h * 0.5f;
 	y.z = x.z * rhw;
-	y.w = 1.0f;
+	y.w = x.w;
 	return y;
 }
 

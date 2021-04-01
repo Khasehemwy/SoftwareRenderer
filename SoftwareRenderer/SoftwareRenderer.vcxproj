@@ -141,15 +141,19 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Functions.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Functions.h" />
     <ClInclude Include="Includes.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>

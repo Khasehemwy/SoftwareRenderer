@@ -8,6 +8,7 @@ float vector_length(const vector_t& v);
 vector_t vector_cross(const vector_t& x, const vector_t& y);
 float vector_dotProduct(const vector_t& x, const vector_t& y);
 float operator*(const vector_t& x, const vector_t& y);
+void vertex_set_rhw(vertex_t& v);
 
 void matrix_set_identity(matrix_t* m);
 void matrix_set_perspective(matrix_t* m, float fovy, float aspect, float z_near, float z_far);
