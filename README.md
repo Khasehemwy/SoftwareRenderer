@@ -9,3 +9,4 @@
 * 背面剔除 - Back culling
 * 片段着色器 - Fragment Shader (像素着色器 - Pixel Shader)
 * 高洛德着色 - Gouraud Shading
+* 仿射纹理映射 - Affine texture mapping(暂时只支持手动创建的纹理)
