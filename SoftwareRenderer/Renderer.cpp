@@ -195,6 +195,7 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 	v4.color = v1.color + (v3.color - v1.color) * t;
 	v4.tex.u = v1.tex.u + (v3.tex.u - v1.tex.u) * t;
 	v4.tex.v = v1.tex.v + (v3.tex.v - v1.tex.v) * t;
+	v4.rhw = v1.rhw + (v3.rhw - v1.rhw) * t;
 
 	if (x2 <= x4) {
 		draw_triangle_StandardAlgorithm(v1, v2, v4);
@@ -212,11 +213,13 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	float dxdy_l = (top.pos.x - left.pos.x) / (top.pos.y - left.pos.y);
 	float dudy_l = (top.tex.u - left.tex.u) / (top.pos.y - left.pos.y);
 	float dvdy_l = (top.tex.v - left.tex.v) / (top.pos.y - left.pos.y);
+	float drhwdy_l = (top.rhw - left.rhw) / (top.pos.y - left.pos.y);
 	float dxdy_r = (top.pos.x - right.pos.x) / (top.pos.y - right.pos.y);
 	float dudy_r = (top.tex.u - right.tex.u) / (top.pos.y - right.pos.y);
 	float dvdy_r = (top.tex.v - right.tex.v) / (top.pos.y - right.pos.y);
-	float xl, ul, vl;
-	float xr, ur, vr;
+	float drhwdy_r = (top.rhw - right.rhw) / (top.pos.y - left.pos.y);
+	float xl, ul, vl, rhwl;
+	float xr, ur, vr, rhwr;
 
 	//颜色插值
 	color_t didy_l = (top.color - left.color) / (top.pos.y - left.pos.y);
@@ -228,7 +231,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	//绘制平底或平顶三角形
 	if (y0 <= y1) {
 		/*平底三角形*/
-		//赋左右x值初始值并修正(浮点数转换整数需要修正)
+		//x初始值,并修正(浮点数转换整数需要修正)
 		xl = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxdy_l;
 		xr = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxdy_r;
 		//纹理
@@ -239,6 +242,9 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		//颜色
 		color_left = top.color + (ceil(top.pos.y) - top.pos.y) * didy_l;
 		color_right = top.color + (ceil(top.pos.y) - top.pos.y) * didy_r;
+		//深度
+		rhwl = top.rhw + (ceil(top.pos.y) - top.pos.y) * drhwdy_l;
+		rhwr = top.rhw + (ceil(top.pos.y) - top.pos.y) * drhwdy_r;
 	}
 	else {
 		/*平顶三角形,类似平底三角形*/
@@ -253,6 +259,9 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 
 		color_left = left.color + (ceil(left.pos.y) - left.pos.y) * didy_l;
 		color_right = right.color + (ceil(right.pos.y) - right.pos.y) * didy_r;
+
+		rhwl = left.rhw + (ceil(left.pos.y) - left.pos.y) * drhwdy_l;
+		rhwr = right.rhw + (ceil(right.pos.y) - right.pos.y) * drhwdy_r;
 	}
 
 	//从上往下绘制
@@ -260,21 +269,25 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		float dx = xr - xl;
 		float dux = (ur - ul) / dx;
 		float dvx = (vr - vl) / dx;
-		float ui = ul;// +(ceil(ul) - ul) * dux;
-		float vi = vl;// +(ceil(vl) - vl) * dvx;
+		float drhwdx = (rhwr - rhwl) / dx;
+		float ui = ul;
+		float vi = vl;
+		float rhwi = rhwl;
 		color_t dix = (color_right - color_left) / dx;
 		color_t color = color_left + (ceil(xl) - xl) * dix;
 
 		for (int x = ceil(xl); x <= ceil(xr); x++) {
+			float wi = 1.0 / rhwi;
 			if (this->render_state == RENDER_STATE_COLOR) {
-				this->draw_pixel(x, y, color_trans_255(color));
+				this->draw_pixel(x, y, color_trans_255(color * wi));
 				color = color + dix;
 			}
 			if (this->render_state == RENDER_STATE_TEXTURE) {
-				this->draw_pixel(x, y, this->texture_read(ui, vi));
+				this->draw_pixel(x, y, this->texture_read(ui * wi, vi * wi));
 				ui += dux;
 				vi += dvx;
 			}
+			rhwi += drhwdx;
 		}
 
 		xl += dxdy_l;
@@ -285,6 +298,8 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		xr += dxdy_r;
 		color_left = color_left + didy_l;
 		color_right = color_right + didy_r;
+		rhwl += drhwdy_l;
+		rhwr += drhwdy_r;
 	}
 }
 
@@ -542,9 +557,9 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		v1_tmp.pos = p1; 
 		v2_tmp.pos = p2;
 		v3_tmp.pos = p3;
-		//vertex_set_rhw(v1_tmp);
-		//vertex_set_rhw(v2_tmp);
-		//vertex_set_rhw(v3_tmp);
+		vertex_set_rhw(&v1_tmp);
+		vertex_set_rhw(&v2_tmp);
+		vertex_set_rhw(&v3_tmp);
 		if (render_shader_state == RENDER_SHADER_PIXEL_SCANLINE)//default
 			this->draw_triangle(v1_tmp, v2_tmp, v3_tmp);
 		else if (render_shader_state == RENDER_SHADER_PIXEL_BOUNDINGBOX)

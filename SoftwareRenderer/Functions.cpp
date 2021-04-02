@@ -154,15 +154,16 @@ float operator*(const vector_t& x, const vector_t& y)
 	return vector_dotProduct(x,y);
 }
 
-void vertex_set_rhw(vertex_t& v)
+void vertex_set_rhw(vertex_t* v)
 {
-	float rhw = 1.0f / v.pos.w;
-	v.rhw = rhw;
-	v.tex.u *= rhw;
-	v.tex.v *= rhw;
-	//v.color.r *= rhw;
-	//v.color.g *= rhw;
-	//v.color.b *= rhw;
+	float rhw = 1.0f / v->pos.w;
+	v->rhw = rhw;
+	v->tex.u *= rhw;
+	v->tex.v *= rhw;
+	v->color.r *= rhw;
+	v->color.g *= rhw;
+	v->color.b *= rhw;
+	v->color.a *= rhw;
 }
 
 void matrix_set_identity(matrix_t* m) {

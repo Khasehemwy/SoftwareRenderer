@@ -28,7 +28,7 @@ void draw_box(Renderer& renderer, Light& light)
 	vert[1].color = { 1,0,0,1 };
 	vert[2].color = { 1,0,0,1 };
 	vert[3].color = { 1,0,0,1 };
-	vert[4].color = { 0.2,1,1,1 };
+	vert[4].color = { 0,0,1,1 };
 	vert[5].color = { 0,0,1,1 };
 	vert[6].color = { 0,0,1,1 };
 	vert[7].color = { 0,0,1,1 };
@@ -110,11 +110,13 @@ int main()
 		if (window.screen_keys[0x57]) { light.pos.y -= 0.01f; }
 		if (window.screen_keys[0x53]) { light.pos.y += 0.01f; }
 		camera.camera_pos.z = pos;
+		draw_box(renderer,light);
 
+
+		matrix_set_identity(&model);
+		renderer.transform.model = model;
 		//renderer.display_primitive(vert[1], vert[2], vert[3]);
 		//renderer.display_primitive(vert[1], vert[3], vert[4]);
-
-		draw_box(renderer,light);
 		//renderer.display_primitive(v1, v2, v3);
 
 		renderer.draw_line(10, 10, 20, 10, 0x0);
