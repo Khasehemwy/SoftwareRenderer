@@ -303,6 +303,11 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	}
 }
 
+void Renderer::add_light(const Light& light)
+{
+	this->lights.push_back(&light);
+}
+
 void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right)
 {
 	//FIX ME
@@ -506,27 +511,64 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 {
 	point_t p1, p2, p3;
 
-	// 将点映射到世界空间,进行背面剔除(点的排列必须为右手螺旋后法向量朝外)
+	/* 将点映射到世界空间 */
 	p1 = (v1.pos) * this->transform.model;
 	p2 = (v2.pos) * this->transform.model;
 	p3 = (v3.pos) * this->transform.model;
 
+	// 进行背面剔除(点的排列必须为右手螺旋后法向量朝外)
+	vector_t p1_p2 = p2 - p1, p1_p3 = p3 - p1;
+	vector_t v_normal = vector_cross(p1_p2, p1_p3);
+	vector_t v_view = p1 - this->camera->camera_pos;
 	if (features[RENDER_FEATURE_BACK_CULLING]) {
-		vector_t p1_p2 = p2 - p1, p1_p3 = p3 - p1;
-		vector_t v_normal = vector_cross(p1_p2, p1_p3);
-		vector_t v_view = p1 - this->camera->camera_pos;
-
-		float backCull_jug = v_normal * v_view;
+		float backCull_jug = vector_dot(v_normal, v_view);
 		if (backCull_jug <= 0.0f)return 1;
 	}
 
 
-	//将点映射到裁剪空间
-	p1 = p1 * this->transform.view * this->transform.projection;
-	p2 = p2 * this->transform.view * this->transform.projection;
-	p3 = p3 * this->transform.view * this->transform.projection;
+	/* 将点映射到观察空间 */
+	p1 = p1 * this->transform.view;
+	p2 = p2 * this->transform.view;
+	p3 = p3 * this->transform.view;
 
-	//裁剪检测
+	vertex_t v1_tmp, v2_tmp, v3_tmp;
+	v1_tmp = v1; v2_tmp = v2; v3_tmp = v3;
+	for (auto& light : lights) {
+		//环境光
+		color_t ambient1 = light->ambient * v1.color;
+		color_t ambient2 = light->ambient * v2.color;
+		color_t ambient3 = light->ambient * v3.color;
+		//漫反射
+		vector_t norm = vector_normalize(v_normal);
+		vector_t light_dir;
+		float diff;
+		light_dir = vector_normalize(p1 - light->pos);
+		diff = max(vector_dot(norm, light_dir), 0.0f);
+		color_t diffuse1 = light->diffuse * diff * v1.color;
+		light_dir = vector_normalize(p2 - light->pos);
+		diff = max(vector_dot(norm, light_dir), 0.0f);
+		color_t diffuse2 = light->diffuse * diff * v2.color;
+		light_dir = vector_normalize(p3 - light->pos);
+		diff = max(vector_dot(norm, light_dir), 0.0f);
+		color_t diffuse3 = light->diffuse * diff * v3.color;
+		//镜面反射
+		//TODO
+		color_t specular1 = { 0,0,0,0 };
+		color_t specular2 = { 0,0,0,0 };
+		color_t specular3 = { 0,0,0,0 };
+
+		//光照运算
+		v1_tmp.color = (ambient1 + diffuse1 + specular1);
+		v2_tmp.color = (ambient2 + diffuse2 + specular2);
+		v3_tmp.color = (ambient3 + diffuse3 + specular3);
+	}
+
+	/* 将点映射到裁剪空间 */
+	p1 = p1 * this->transform.projection;
+	p2 = p2 * this->transform.projection;
+	p3 = p3 * this->transform.projection;
+
+	// 裁剪检测
 	int cvv_jug = 0;
 	if (check_cvv(p1) != 0)cvv_jug = 1;
 	if (check_cvv(p2) != 0)cvv_jug = 1;
@@ -552,8 +594,6 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		this->draw_line((int)p2.x, (int)p2.y, (int)p3.x, (int)p3.y, this->foreground);
 	}
 	else if(this->render_state) {
-		vertex_t v1_tmp, v2_tmp, v3_tmp;
-		v1_tmp = v1; v2_tmp = v2; v3_tmp = v3;
 		v1_tmp.pos = p1; 
 		v2_tmp.pos = p2;
 		v3_tmp.pos = p3;

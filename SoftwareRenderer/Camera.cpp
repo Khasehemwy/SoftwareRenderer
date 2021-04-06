@@ -12,17 +12,17 @@ matrix_t Camera::set_lookat(const vector_t& eye, const vector_t& at, const vecto
 	m.m[0][0] = Xaxis.x;
 	m.m[1][0] = Xaxis.y;
 	m.m[2][0] = Xaxis.z;
-	m.m[3][0] = -(Xaxis*(eye));
+	m.m[3][0] = -(vector_dot(Xaxis, eye));
 	 
 	m.m[0][1] = Yaxis.x;
 	m.m[1][1] = Yaxis.y;
 	m.m[2][1] = Yaxis.z;
-	m.m[3][1] = -(Yaxis*(eye));
+	m.m[3][1] = -(vector_dot(Yaxis, eye));
 	 
 	m.m[0][2] = Zaxis.x;
 	m.m[1][2] = Zaxis.y;
 	m.m[2][2] = Zaxis.z;
-	m.m[3][2] = -(Zaxis*(eye));
+	m.m[3][2] = -(vector_dot(Zaxis, eye));
 	 
 	m.m[0][3] = m.m[1][3] = m.m[2][3] = 0.0f;
 	m.m[3][3] = 1.0f;

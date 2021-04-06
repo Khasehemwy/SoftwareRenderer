@@ -40,6 +40,8 @@ public:
 
 	std::map<int, int> features;	//Ьиад
 
+	std::vector<const Light*>lights;
+
 	Renderer();
 
 	void init(int width, int height, void* fb);
@@ -48,6 +50,7 @@ public:
 
 	void set_texture(void* bits, long pitch, int w, int h);
 	UINT32 texture_read(float u, float v);
+	void add_light(const Light& light);
 
 	void draw_pixel(int x, int y, UINT32 color);
 	void draw_line(int x1, int y1, int x2, int y2, UINT32 color);

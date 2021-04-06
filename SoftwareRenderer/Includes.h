@@ -9,6 +9,7 @@
 #include<tchar.h>
 
 class Camera;
+class Light;
 
 #include"Types.h"
 #include"Functions.h"

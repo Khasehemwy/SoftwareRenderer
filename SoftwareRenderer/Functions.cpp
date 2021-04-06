@@ -89,6 +89,24 @@ matrix_t matrix_transpose(const matrix_t& m)
 	return z;
 }
 
+matrix_t matrix_scale(const matrix_t& m, const vector_t& v)
+{
+	matrix_t y = m;
+	y.m[0][0] *= v.x;
+	y.m[1][1] *= v.y;
+	y.m[2][2] *= v.z;
+	return y;
+}
+
+matrix_t matrix_translate(const matrix_t& m, const vector_t& v)
+{
+	matrix_t y = m;
+	y.m[3][0] += v.x;
+	y.m[3][1] += v.y;
+	y.m[3][2] += v.z;
+	return y;
+}
+
 vector_t transform_apply(const vector_t& x, const transform_t& ts)
 {
 	return (x)*(ts.transform);
@@ -144,14 +162,9 @@ vector_t vector_cross(const vector_t& x, const vector_t& y)
 	return z;
 }
 
-float vector_dotProduct(const vector_t& x, const vector_t& y)
+float vector_dot(const vector_t& x, const vector_t& y)
 {
 	return x.x * y.x + x.y * y.y + x.z * y.z;;
-}
-
-float operator*(const vector_t& x, const vector_t& y)
-{
-	return vector_dotProduct(x,y);
 }
 
 void vertex_set_rhw(vertex_t* v)
@@ -210,7 +223,7 @@ color_t operator+(const color_t& x, const color_t& y)
 	return color_add(x, y);
 }
 
-color_t color_mul(const color_t& x, const float& y)
+color_t color_mul_num(const color_t& x, const float& y)
 {
 	color_t z;
 	z.r = x.r * y;
@@ -222,12 +235,27 @@ color_t color_mul(const color_t& x, const float& y)
 
 color_t operator*(const color_t& x, const float& y)
 {
-	return color_mul(x, y);
+	return color_mul_num(x, y);
 }
 
 color_t operator*(const float& y, const color_t& x)
 {
-	return color_mul(x, y);
+	return color_mul_num(x, y);
+}
+
+color_t color_mul_color(const color_t& x, const color_t& y)
+{
+	color_t z;
+	z.r = x.r * y.r;
+	z.g = x.g * y.g;
+	z.b = x.b * y.b;
+	z.a = x.a * y.a;
+	return z;
+}
+
+color_t operator*(const color_t& x, const color_t& y)
+{
+	return color_mul_color(x, y);
 }
 
 color_t color_sub(const color_t& x, const color_t& y)
