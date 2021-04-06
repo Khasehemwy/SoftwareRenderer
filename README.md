@@ -12,3 +12,4 @@
 * 光照(平行光源+环境光照+漫反射光照) - Lighting(Parallel light + Ambient light + Diffuse light)
 * 仿射/透视纹理映射 - Affine texture mapping (暂时只支持手动创建的纹理)
 * 透视修正 - Perspective correction
+* 深度缓存(1/z) - Depth buffer(1/z-buffer)
