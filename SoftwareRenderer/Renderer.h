@@ -22,8 +22,8 @@ public:
 	const Camera* camera = nullptr;
 	float width, height;
 
-	UINT32** frame_buffer;		// 像素缓存：framebuffer[y] 代表第 y行
-	float** z_buffer;			// 深度缓存：zbuffer[y] 为第 y行指针
+	UINT32** frame_buffer;		// 像素缓存：frame_buffer[y] 代表第 y行,像素缓存为不同Renderer共用
+	float** z_buffer;			// 深度缓存：z_buffer[y] 为第 y行指针,深度缓存为每个Renderer独用
 
 	UINT32** texture;			// 纹理：每行索引
 	int tex_width;              // 纹理宽度

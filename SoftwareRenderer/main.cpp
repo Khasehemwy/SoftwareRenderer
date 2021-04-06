@@ -88,6 +88,7 @@ int main()
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
 	Renderer renderer_light;
 	renderer_light.init(window.screen_width, window.screen_height, window.screen_fb);
+	renderer_light.z_buffer = renderer.z_buffer;//因为深度缓存是每个Renderer独用的,但是现在想让它们一起显示.
 
 	Camera camera;
 	float posz = -7;

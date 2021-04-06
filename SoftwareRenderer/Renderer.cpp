@@ -190,7 +190,7 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 	float dxy = (x3 - x1) / (y3 - y1);
 	v4.pos.x = (y2 - y1) * dxy + x1;
 	float x4 = v4.pos.x, y4 = y2;
-	//计算v4的颜色
+	//插值计算v4的相关数值
 	float t = (y4 - y1) / (y3 - y1);
 	v4.color = v1.color + (v3.color - v1.color) * t;
 	v4.tex.u = v1.tex.u + (v3.tex.u - v1.tex.u) * t;
@@ -277,16 +277,19 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		color_t color = color_left + (ceil(xl) - xl) * dix;
 
 		for (int x = ceil(xl); x <= ceil(xr); x++) {
-			float wi = 1.0 / rhwi;
-			if (this->render_state == RENDER_STATE_COLOR) {
-				this->draw_pixel(x, y, color_trans_255(color * wi));
-				color = color + dix;
+			if (rhwi >= this->z_buffer[y][x]) {
+				this->z_buffer[y][x] = rhwi;
+				float wi = 1.0 / rhwi;
+				if (this->render_state == RENDER_STATE_COLOR) {
+					this->draw_pixel(x, y, color_trans_255(color * wi));
+				}
+				if (this->render_state == RENDER_STATE_TEXTURE) {
+					this->draw_pixel(x, y, this->texture_read(ui * wi, vi * wi));
+				}
 			}
-			if (this->render_state == RENDER_STATE_TEXTURE) {
-				this->draw_pixel(x, y, this->texture_read(ui * wi, vi * wi));
-				ui += dux;
-				vi += dvx;
-			}
+			color = color + dix;
+			ui += dux;
+			vi += dvx;
 			rhwi += drhwdx;
 		}
 
@@ -525,7 +528,6 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		if (backCull_jug <= 0.0f)return 1;
 	}
 
-
 	/* 将点映射到观察空间 */
 	p1 = p1 * this->transform.view;
 	p2 = p2 * this->transform.view;
@@ -535,33 +537,34 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 	v1_tmp = v1; v2_tmp = v2; v3_tmp = v3;
 	for (auto& light : lights) {
 		//环境光
-		color_t ambient1 = light->ambient * v1.color;
-		color_t ambient2 = light->ambient * v2.color;
-		color_t ambient3 = light->ambient * v3.color;
+		color_t ambient1 = light->ambient * v1_tmp.color;
+		color_t ambient2 = light->ambient * v2_tmp.color;
+		color_t ambient3 = light->ambient * v3_tmp.color;
 		//漫反射
 		vector_t norm = vector_normalize(v_normal);
 		vector_t light_dir;
 		float diff;
 		light_dir = vector_normalize(p1 - light->pos);
 		diff = max(vector_dot(norm, light_dir), 0.0f);
-		color_t diffuse1 = light->diffuse * diff * v1.color;
+		color_t diffuse1 = light->diffuse * diff * v1_tmp.color;
 		light_dir = vector_normalize(p2 - light->pos);
 		diff = max(vector_dot(norm, light_dir), 0.0f);
-		color_t diffuse2 = light->diffuse * diff * v2.color;
+		color_t diffuse2 = light->diffuse * diff * v2_tmp.color;
 		light_dir = vector_normalize(p3 - light->pos);
 		diff = max(vector_dot(norm, light_dir), 0.0f);
-		color_t diffuse3 = light->diffuse * diff * v3.color;
+		color_t diffuse3 = light->diffuse * diff * v3_tmp.color;
 		//镜面反射
 		//TODO
 		color_t specular1 = { 0,0,0,0 };
 		color_t specular2 = { 0,0,0,0 };
 		color_t specular3 = { 0,0,0,0 };
 
-		//光照运算
+		////光照运算
 		v1_tmp.color = (ambient1 + diffuse1 + specular1);
 		v2_tmp.color = (ambient2 + diffuse2 + specular2);
 		v3_tmp.color = (ambient3 + diffuse3 + specular3);
 	}
+
 
 	/* 将点映射到裁剪空间 */
 	p1 = p1 * this->transform.projection;
@@ -583,9 +586,6 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 	p2 = viewport_transform(p2, this->transform);
 	p3 = viewport_transform(p3, this->transform);
 
-	//TODO
-	//纹理或者色彩绘制
-	//draw_triangle(v1, v2, v3);
 
 	// 线框绘制
 	if (this->render_state == RENDER_STATE_WIREFRAME) {
