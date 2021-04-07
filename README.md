@@ -1,9 +1,10 @@
 # SoftwareRenderer3D
 
-**3D软件渲染器**
+3D软件渲染器
 
 ## 博客:
-**[软渲染器记录](https://blog.csdn.net/Khasehemwy/article/details/115186533)**
+
+[软渲染器记录](https://blog.csdn.net/Khasehemwy/article/details/115186533)
 
 ## 功能:
 * 线框绘制(顶点着色器和几何着色器) - Wireframe drawing (Vertex Shader and Geometry shader)
