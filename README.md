@@ -15,3 +15,10 @@
 * 仿射/透视纹理映射 - Affine texture mapping (暂时只支持手动创建的纹理)
 * 透视修正 - Perspective correction
 * 深度缓存(1/z) - Depth buffer(1/z-buffer)
+
+## 展示:
+<image src="https://user-images.githubusercontent.com/57032017/114022261-2ce20300-98a4-11eb-8940-c42f300ea451.gif" width=60%>
+<image src="https://user-images.githubusercontent.com/57032017/114022285-323f4d80-98a4-11eb-8c01-f21ad017de0d.gif" width=60%>
+<image src="https://user-images.githubusercontent.com/57032017/114022350-3f5c3c80-98a4-11eb-8b6c-98abb6e14a1f.gif" width=60%>
+<image src="https://user-images.githubusercontent.com/57032017/114022481-661a7300-98a4-11eb-8b3b-0b181aba7251.gif" width=60%>
+<image src="https://user-images.githubusercontent.com/57032017/114022515-6e72ae00-98a4-11eb-82af-701380da90c6.gif" width=60%>
