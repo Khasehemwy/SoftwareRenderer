@@ -11,7 +11,7 @@
 * 背面剔除 - Back culling
 * 片段着色器(像素着色器) - Fragment Shader (Pixel Shader)
 * 高洛德着色 - Gouraud Shading
-* 光照(平行光源+环境光照+漫反射光照) - Lighting(Parallel light + Ambient light + Diffuse light)
+* 使用高洛德着色的光照(平行光源+环境光照+漫反射光照+镜面光照) - Lighting(Parallel light + Ambient light + Diffuse light + Specular lighting)(use Gouraud Shading)
 * 仿射/透视纹理映射 - Affine texture mapping (暂时只支持手动创建的纹理)
 * 透视修正 - Perspective correction
 * 深度缓存(1/z) - Depth buffer(1/z-buffer)
