@@ -107,6 +107,25 @@ matrix_t matrix_translate(const matrix_t& m, const vector_t& v)
 	return y;
 }
 
+void matrix_set_identity(matrix_t* m) {
+	m->m[0][0] = m->m[1][1] = m->m[2][2] = m->m[3][3] = 1.0f;
+	m->m[0][1] = m->m[0][2] = m->m[0][3] = 0.0f;
+	m->m[1][0] = m->m[1][2] = m->m[1][3] = 0.0f;
+	m->m[2][0] = m->m[2][1] = m->m[2][3] = 0.0f;
+	m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;
+}
+
+void matrix_set_perspective(matrix_t* m, float fovy, float aspect, float z_near, float z_far) {
+	float fax = 1.0f / (float)tan(fovy * 0.5f);
+	matrix_set_zero(m);
+	//matrix_set_identity(m);//会导致裁剪失效
+	m->m[0][0] = (float)(fax / aspect);
+	m->m[1][1] = (float)(fax);
+	m->m[2][2] = z_far / (z_far - z_near);
+	m->m[2][3] = 1;	// 将z值储存在w中
+	m->m[3][2] = -z_near * z_far / (z_far - z_near);
+}
+
 vector_t transform_apply(const vector_t& x, const transform_t& ts)
 {
 	return (x)*(ts.transform);
@@ -131,6 +150,11 @@ vector_t vector_sub(const vector_t& x, const vector_t& y)
 vector_t operator-(const vector_t& x, const vector_t& y)
 {
 	return vector_sub(x,y);
+}
+
+const vector_t operator-(const vector_t& x)
+{
+	return (x * -1);
 }
 
 vector_t vector_normalize(const vector_t& v)
@@ -167,6 +191,24 @@ float vector_dot(const vector_t& x, const vector_t& y)
 	return x.x * y.x + x.y * y.y + x.z * y.z;;
 }
 
+vector_t operator*(const vector_t& x, const float y)
+{
+	vector_t z = x;
+	z.x *= y;
+	z.y *= y;
+	z.z *= y;
+	return z;
+}
+
+//I为从光源指向目标的方向向量,n为顶点法向量.返回以目标为起点的反射光向量
+vector_t vector_reflect(const vector_t& I, const vector_t& n)
+{
+	vector_t N = vector_normalize(n) * vector_dot(N, I);
+	vector_t I_ref = (I - N) - N;
+
+	return I_ref;
+}
+
 void vertex_set_rhw(vertex_t* v)
 {
 	float rhw = 1.0f / v->pos.w;
@@ -177,25 +219,6 @@ void vertex_set_rhw(vertex_t* v)
 	v->color.g *= rhw;
 	v->color.b *= rhw;
 	v->color.a *= rhw;
-}
-
-void matrix_set_identity(matrix_t* m) {
-	m->m[0][0] = m->m[1][1] = m->m[2][2] = m->m[3][3] = 1.0f;
-	m->m[0][1] = m->m[0][2] = m->m[0][3] = 0.0f;
-	m->m[1][0] = m->m[1][2] = m->m[1][3] = 0.0f;
-	m->m[2][0] = m->m[2][1] = m->m[2][3] = 0.0f;
-	m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;
-}
-
-void matrix_set_perspective(matrix_t* m, float fovy, float aspect, float z_near, float z_far){
-	float fax = 1.0f / (float)tan(fovy * 0.5f);
-	matrix_set_zero(m);
-	//matrix_set_identity(m);//会导致裁剪失效
-	m->m[0][0] = (float)(fax / aspect);
-	m->m[1][1] = (float)(fax);
-	m->m[2][2] = z_far / (z_far - z_near);
-	m->m[2][3] = 1;
-	m->m[3][2] = -z_near * z_far / (z_far - z_near);
 }
 
 void transform_init(transform_t* ts, int width, int height) {
@@ -273,6 +296,11 @@ color_t operator-(const color_t& x, const color_t& y)
 	return color_sub(x, y);
 }
 
+const color_t operator - (const color_t& x)
+{
+	return (x * -1);
+}
+
 color_t color_div(const color_t& x, const float& y)
 {
 	color_t z;
@@ -303,6 +331,8 @@ int check_cvv(const vector_t& v)
 {
 	float w = v.w;
 	int check = 0;
+	// 进行projection映射后,x/y都是x*z/y*z的形式,在projection以后x/y应该在[-1,1]之间,-
+	// -现在*z,所以x/y应该在[-z,z]之间,注意这里的z都是指projection以前的z值,即现在的w.
 	if (v.z < 0.0f) check |= 1;
 	if (v.z > w) check |= 2;
 	if (v.x < -w) check |= 4;

@@ -277,14 +277,16 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		color_t color = color_left + (ceil(xl) - xl) * dix;
 
 		for (int x = ceil(xl); x <= ceil(xr); x++) {
-			if (rhwi >= this->z_buffer[y][x]) {
-				this->z_buffer[y][x] = rhwi;
-				float wi = 1.0 / rhwi;
-				if (this->render_state == RENDER_STATE_COLOR) {
-					this->draw_pixel(x, y, color_trans_255(color * wi));
-				}
-				if (this->render_state == RENDER_STATE_TEXTURE) {
-					this->draw_pixel(x, y, this->texture_read(ui * wi, vi * wi));
+			if (x >= 0 && x < this->width && y >= 0 && y < this->height) {
+				if (rhwi >= this->z_buffer[y][x]) {
+					this->z_buffer[y][x] = rhwi;// 深度缓存
+					float wi = 1.0 / rhwi;
+					if (this->render_state == RENDER_STATE_COLOR) {
+						this->draw_pixel(x, y, color_trans_255(color * wi));
+					}
+					if (this->render_state == RENDER_STATE_TEXTURE) {
+						this->draw_pixel(x, y, this->texture_read(ui * wi, vi * wi));
+					}
 				}
 			}
 			color = color + dix;
@@ -521,8 +523,8 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 
 	// 进行背面剔除(点的排列必须为右手螺旋后法向量朝外)
 	vector_t p1_p2 = p2 - p1, p1_p3 = p3 - p1;
-	vector_t v_normal = vector_cross(p1_p2, p1_p3);
-	vector_t v_view = p1 - this->camera->camera_pos;
+	vector_t v_normal = vector_cross(p1_p3, p1_p2);
+	vector_t v_view = this->camera->camera_pos - p1;
 	if (features[RENDER_FEATURE_BACK_CULLING]) {
 		float backCull_jug = vector_dot(v_normal, v_view);
 		if (backCull_jug <= 0.0f)return 1;
@@ -536,30 +538,46 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 	vertex_t v1_tmp, v2_tmp, v3_tmp;
 	v1_tmp = v1; v2_tmp = v2; v3_tmp = v3;
 	for (auto& light : lights) {
-		//环境光
+		// 环境光
 		color_t ambient1 = light->ambient * v1_tmp.color;
 		color_t ambient2 = light->ambient * v2_tmp.color;
 		color_t ambient3 = light->ambient * v3_tmp.color;
-		//漫反射
+		// 漫反射
+		// 使用兰伯特余弦定律（Lambert' cosine law）计算漫反射
 		vector_t norm = vector_normalize(v_normal);
 		vector_t light_dir;
 		float diff;
-		light_dir = vector_normalize(p1 - light->pos);
+		light_dir = vector_normalize(light->pos - p1);
 		diff = max(vector_dot(norm, light_dir), 0.0f);
 		color_t diffuse1 = light->diffuse * diff * v1_tmp.color;
-		light_dir = vector_normalize(p2 - light->pos);
+
+		light_dir = vector_normalize(light->pos - p2);
 		diff = max(vector_dot(norm, light_dir), 0.0f);
 		color_t diffuse2 = light->diffuse * diff * v2_tmp.color;
-		light_dir = vector_normalize(p3 - light->pos);
+
+		light_dir = vector_normalize(light->pos - p3);
 		diff = max(vector_dot(norm, light_dir), 0.0f);
 		color_t diffuse3 = light->diffuse * diff * v3_tmp.color;
-		//镜面反射
-		//TODO
-		color_t specular1 = { 0,0,0,0 };
-		color_t specular2 = { 0,0,0,0 };
-		color_t specular3 = { 0,0,0,0 };
+		// 镜面反射
+		vector_t reflect_dir = vector_reflect(-light_dir, norm);
+		reflect_dir = vector_normalize(reflect_dir);
 
-		////光照运算
+		vector_t view_dir = vector_normalize(camera->camera_pos - p1);
+		float shininess = 32.0f;
+		float spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0), shininess);
+		color_t specular1 = light->specular * spec * v1_tmp.color;
+
+		view_dir = vector_normalize(camera->camera_pos - p2);
+		shininess = 32.0f;
+		spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0), shininess);
+		color_t specular2 = light->specular * spec * v2_tmp.color;
+
+		view_dir = vector_normalize(camera->camera_pos - p3);
+		shininess = 32.0f;
+		spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0), shininess);
+		color_t specular3 = light->specular * spec * v3_tmp.color;
+
+		//光照运算
 		v1_tmp.color = (ambient1 + diffuse1 + specular1);
 		v2_tmp.color = (ambient2 + diffuse2 + specular2);
 		v3_tmp.color = (ambient3 + diffuse3 + specular3);
@@ -573,9 +591,7 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 
 	// 裁剪检测
 	int cvv_jug = 0;
-	if (check_cvv(p1) != 0)cvv_jug = 1;
-	if (check_cvv(p2) != 0)cvv_jug = 1;
-	if (check_cvv(p3) != 0)cvv_jug = 1;
+	if (check_cvv(p1) != 0 && check_cvv(p2) != 0 && check_cvv(p3) != 0)cvv_jug = 1;
 	if (cvv_jug) {
 		//std::cout << "cvv cut\n";
 		return 1;

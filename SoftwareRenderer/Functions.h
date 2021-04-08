@@ -3,10 +3,13 @@
 
 vector_t vector_sub(const vector_t& x, const vector_t& y);
 vector_t operator - (const vector_t& x, const vector_t& y);
+const vector_t operator - (const vector_t& x);
 vector_t vector_normalize(const vector_t& v);
 float vector_length(const vector_t& v);
 vector_t vector_cross(const vector_t& x, const vector_t& y);
 float vector_dot(const vector_t& x, const vector_t& y);
+vector_t operator*(const vector_t& v, const float value);
+vector_t vector_reflect(const vector_t& I, const vector_t& n);
 void vertex_set_rhw(vertex_t* v);
 
 void matrix_set_identity(matrix_t* m);
@@ -35,6 +38,7 @@ color_t color_mul_color(const color_t& x, const color_t& y);
 color_t operator*(const color_t& x, const color_t& y);
 color_t color_sub(const color_t& x, const color_t& y);
 color_t operator-(const color_t& x, const color_t& y);
+const color_t operator - (const color_t& x);
 color_t color_div(const color_t& x, const float& y);
 color_t operator/(const color_t& x, const float& y);
 

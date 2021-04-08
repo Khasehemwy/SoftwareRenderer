@@ -24,14 +24,14 @@ void draw_box(Renderer& renderer)
 	p[7] = { -1,1,1,1 };
 
 	vertex_t vert[8];
-	vert[0].color = { 1,0,0,1 };
-	vert[1].color = { 1,0,0,1 };
-	vert[2].color = { 1,0,0,1 };
-	vert[3].color = { 1,0,0,1 };
-	vert[4].color = { 0,0,1,1 };
-	vert[5].color = { 0,0,1,1 };
-	vert[6].color = { 0,0,1,1 };
-	vert[7].color = { 0,0,1,1 };
+	vert[0].color = { 0.8,0,0,1 };
+	vert[1].color = { 0.8,0,0,1 };
+	vert[2].color = { 0.8,0,0,1 };
+	vert[3].color = { 0.8,0,0,1 };
+	vert[4].color = { 0,0,0.8,1 };
+	vert[5].color = { 0,0,0.8,1 };
+	vert[6].color = { 0,0,0.8,1 };
+	vert[7].color = { 0,0,0.8,1 };
 	for (int i = 0; i < 8; i++) {
 		vert[i].pos = p[i];
 	}
@@ -114,7 +114,7 @@ int main()
 
 	Light light;
 	light.pos = { 2,0,0,1 };
-	light.ambient = { 0.1f,0.1f,0.1f,1 };
+	light.ambient = { 0.2f,0.2f,0.2f,1 };
 	light.diffuse = { 0.8f,0.8f,0.8f,1 };
 	light.specular = { 1.0f,1.0f,1.0f,1 };
 	renderer.add_light(light);
