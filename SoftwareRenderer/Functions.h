@@ -37,6 +37,7 @@ color_t operator+(const color_t& x, const color_t& y);
 color_t color_mul_num(const color_t& x, const float& y);
 color_t operator*(const color_t& x, const float& y);
 color_t operator*(const float& y, const color_t& x);
+void operator*=(color_t& x, const float y);
 color_t color_mul_color(const color_t& x, const color_t& y);
 color_t operator*(const color_t& x, const color_t& y);
 color_t color_sub(const color_t& x, const color_t& y);

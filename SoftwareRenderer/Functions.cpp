@@ -290,6 +290,11 @@ color_t operator*(const float& y, const color_t& x)
 	return color_mul_num(x, y);
 }
 
+void operator*=(color_t& x, const float y)
+{
+	x = x * y;
+}
+
 color_t color_mul_color(const color_t& x, const color_t& y)
 {
 	color_t z;

@@ -530,11 +530,6 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		if (backCull_jug <= 0.0f)return 1;
 	}
 
-	/* 将点映射到观察空间 */
-	p1 = p1 * this->transform.view;
-	p2 = p2 * this->transform.view;
-	p3 = p3 * this->transform.view;
-
 	vertex_t v1_tmp, v2_tmp, v3_tmp;
 	v1_tmp = v1; v2_tmp = v2; v3_tmp = v3;
 	for (auto& light : lights) {
@@ -566,32 +561,55 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		diff = max(vector_dot(norm, light_dir3), 0.0f);
 		color_t diffuse3 = light->diffuse * diff * v3_tmp.color;
 		// 镜面反射
-		vector_t reflect_dir = vector_normalize(vector_reflect(-light_dir1, norm));
-		vector_t view_dir = vector_normalize(camera->pos - p1);
+		vector_t reflect_dir1, reflect_dir2, reflect_dir3;
+		vector_t view_dir1, view_dir2, view_dir3;
+		reflect_dir1 = vector_normalize(vector_reflect(-light_dir1, norm));
+		reflect_dir2 = vector_normalize(vector_reflect(-light_dir2, norm));
+		reflect_dir3 = vector_normalize(vector_reflect(-light_dir3, norm));
+		view_dir1 = vector_normalize(camera->pos - p1);
+		view_dir2 = vector_normalize(camera->pos - p2);
+		view_dir3 = vector_normalize(camera->pos - p3);
 		float shininess = 32.0f;
-		float spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0), shininess);
+
+		float spec = pow(max(vector_dot(view_dir1, reflect_dir1), 0.0), shininess);
 		color_t specular1 = light->specular * spec * v1_tmp.color;
 
-		reflect_dir = vector_normalize(vector_reflect(-light_dir2, norm));
-		view_dir = vector_normalize(camera->pos - p2);
-		shininess = 32.0f;
-		spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0), shininess);
+		spec = pow(max(vector_dot(view_dir2, reflect_dir2), 0.0), shininess);
 		color_t specular2 = light->specular * spec * v2_tmp.color;
 
-		reflect_dir = vector_normalize(vector_reflect(-light_dir3, norm));
-		view_dir = vector_normalize(camera->pos - p3);
-		shininess = 32.0f;
-		spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0), shininess);
+		spec = pow(max(vector_dot(view_dir3, reflect_dir3), 0.0), shininess);
 		color_t specular3 = light->specular * spec * v3_tmp.color;
 
 		//specular1 = specular2 = specular3 = { 0,0,0,0 };
 
 		//光照运算
-		v1_tmp.color = v1_tmp.color * (ambient1 + diffuse1 + specular1);
-		v2_tmp.color = v2_tmp.color * (ambient2 + diffuse2 + specular2);
-		v3_tmp.color = v3_tmp.color * (ambient3 + diffuse3 + specular3);
+		if (light->light_state == LIGHT_STATE_POINT) {
+			//点光源
+			float distance1 = vector_length(light->pos - p1);
+			float distance2 = vector_length(light->pos - p2);
+			float distance3 = vector_length(light->pos - p3);
+			float attenuation1 = 1.0 / (light->constant + light->linear * distance1 +
+				light->quadratic * (distance1 * distance1));
+			float attenuation2 = 1.0 / (light->constant + light->linear * distance2 +
+				light->quadratic * (distance2 * distance2));
+			float attenuation3 = 1.0 / (light->constant + light->linear * distance3 +
+				light->quadratic * (distance3 * distance3));
+			v1_tmp.color = (ambient1 + diffuse1 + specular1) * attenuation1;
+			v2_tmp.color = (ambient2 + diffuse2 + specular2) * attenuation2;
+			v3_tmp.color = (ambient3 + diffuse3 + specular3) * attenuation3;
+		}
+		else {
+			v1_tmp.color = v1_tmp.color * (ambient1 + diffuse1 + specular1);
+			v2_tmp.color = v2_tmp.color * (ambient2 + diffuse2 + specular2);
+			v3_tmp.color = v3_tmp.color * (ambient3 + diffuse3 + specular3);
+		}
 	}
 
+
+	/* 将点映射到观察空间 */
+	p1 = p1 * this->transform.view;
+	p2 = p2 * this->transform.view;
+	p3 = p3 * this->transform.view;
 
 	/* 将点映射到裁剪空间 */
 	p1 = p1 * this->transform.projection;
