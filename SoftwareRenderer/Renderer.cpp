@@ -521,10 +521,10 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 	p2 = (v2.pos) * this->transform.model;
 	p3 = (v3.pos) * this->transform.model;
 
-	// 进行背面剔除(点的排列必须为右手螺旋后法向量朝外)
+	// 进行背面剔除(点的排列必须为左手螺旋后法向量朝外)
 	vector_t p1_p2 = p2 - p1, p1_p3 = p3 - p1;
 	vector_t v_normal = vector_cross(p1_p3, p1_p2);
-	vector_t v_view = this->camera->camera_pos - p1;
+	vector_t v_view = this->camera->pos - p1;
 	if (features[RENDER_FEATURE_BACK_CULLING]) {
 		float backCull_jug = vector_dot(v_normal, v_view);
 		if (backCull_jug <= 0.0f)return 1;
@@ -545,42 +545,51 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		// 漫反射
 		// 使用兰伯特余弦定律（Lambert' cosine law）计算漫反射
 		vector_t norm = vector_normalize(v_normal);
-		vector_t light_dir;
+		vector_t light_dir1, light_dir2, light_dir3;
 		float diff;
-		light_dir = vector_normalize(light->pos - p1);
-		diff = max(vector_dot(norm, light_dir), 0.0f);
+		if (light->light_state == LIGHT_STATE_DIRECTIONAL) {
+			light_dir1 = vector_normalize(-light->direction);
+			light_dir3 = light_dir2 = light_dir1;
+		}
+		else if (light->light_state == LIGHT_STATE_POINT) {
+			light_dir1 = vector_normalize(light->pos - p1);
+			light_dir2 = vector_normalize(light->pos - p2);
+			light_dir3 = vector_normalize(light->pos - p3);
+		}
+
+		diff = max(vector_dot(norm, light_dir1), 0.0f);
 		color_t diffuse1 = light->diffuse * diff * v1_tmp.color;
 
-		light_dir = vector_normalize(light->pos - p2);
-		diff = max(vector_dot(norm, light_dir), 0.0f);
+		diff = max(vector_dot(norm, light_dir2), 0.0f);
 		color_t diffuse2 = light->diffuse * diff * v2_tmp.color;
 
-		light_dir = vector_normalize(light->pos - p3);
-		diff = max(vector_dot(norm, light_dir), 0.0f);
+		diff = max(vector_dot(norm, light_dir3), 0.0f);
 		color_t diffuse3 = light->diffuse * diff * v3_tmp.color;
 		// 镜面反射
-		vector_t reflect_dir = vector_reflect(-light_dir, norm);
-		reflect_dir = vector_normalize(reflect_dir);
-
-		vector_t view_dir = vector_normalize(camera->camera_pos - p1);
+		vector_t reflect_dir = vector_normalize(vector_reflect(-light_dir1, norm));
+		vector_t view_dir = vector_normalize(camera->pos - p1);
 		float shininess = 32.0f;
 		float spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0), shininess);
 		color_t specular1 = light->specular * spec * v1_tmp.color;
 
-		view_dir = vector_normalize(camera->camera_pos - p2);
+		reflect_dir = vector_normalize(vector_reflect(-light_dir2, norm));
+		view_dir = vector_normalize(camera->pos - p2);
 		shininess = 32.0f;
 		spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0), shininess);
 		color_t specular2 = light->specular * spec * v2_tmp.color;
 
-		view_dir = vector_normalize(camera->camera_pos - p3);
+		reflect_dir = vector_normalize(vector_reflect(-light_dir3, norm));
+		view_dir = vector_normalize(camera->pos - p3);
 		shininess = 32.0f;
 		spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0), shininess);
 		color_t specular3 = light->specular * spec * v3_tmp.color;
 
+		//specular1 = specular2 = specular3 = { 0,0,0,0 };
+
 		//光照运算
-		v1_tmp.color = (ambient1 + diffuse1 + specular1);
-		v2_tmp.color = (ambient2 + diffuse2 + specular2);
-		v3_tmp.color = (ambient3 + diffuse3 + specular3);
+		v1_tmp.color = v1_tmp.color * (ambient1 + diffuse1 + specular1);
+		v2_tmp.color = v2_tmp.color * (ambient2 + diffuse2 + specular2);
+		v3_tmp.color = v3_tmp.color * (ambient3 + diffuse3 + specular3);
 	}
 
 

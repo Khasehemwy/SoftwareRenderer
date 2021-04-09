@@ -136,6 +136,21 @@ vector_t operator*(const vector_t& x, const transform_t& ts)
 	return transform_apply(x,ts);
 }
 
+vector_t vector_add(const vector_t& x, const vector_t& y)
+{
+	vector_t z;
+	z.x = x.x + y.x;
+	z.y = x.y + y.y;
+	z.z = x.z + y.z;
+	z.w = 1.0;
+	return z;
+}
+
+vector_t operator+(const vector_t& x, const vector_t& y)
+{
+	return vector_add(x, y);
+}
+
 //return x-y
 vector_t vector_sub(const vector_t& x, const vector_t& y)
 {
@@ -192,6 +207,15 @@ float vector_dot(const vector_t& x, const vector_t& y)
 }
 
 vector_t operator*(const vector_t& x, const float y)
+{
+	vector_t z = x;
+	z.x *= y;
+	z.y *= y;
+	z.z *= y;
+	return z;
+}
+
+vector_t operator*(const float y, const vector_t& x)
 {
 	vector_t z = x;
 	z.x *= y;
@@ -314,6 +338,14 @@ color_t color_div(const color_t& x, const float& y)
 color_t operator/(const color_t& x, const float& y)
 {
 	return color_div(x, y);
+}
+
+float time_get()
+{
+	auto current_time = std::chrono::steady_clock::now();
+	auto duration_in_seconds = std::chrono::duration<double>(current_time.time_since_epoch());
+	float t = duration_in_seconds.count();
+	return t;
 }
 
 vector_t viewport_transform(const vector_t& x, const transform_t& ts)

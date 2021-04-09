@@ -7,6 +7,7 @@
 #include<bits/stdc++.h>
 #include<windows.h>
 #include<tchar.h>
+#include<chrono>
 
 class Camera;
 class Light;

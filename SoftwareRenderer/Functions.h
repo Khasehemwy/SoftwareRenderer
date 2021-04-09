@@ -1,6 +1,8 @@
 #pragma once
 #include"Includes.h"
 
+vector_t vector_add(const vector_t& x, const vector_t& y);
+vector_t operator+(const vector_t& x, const vector_t& y);
 vector_t vector_sub(const vector_t& x, const vector_t& y);
 vector_t operator - (const vector_t& x, const vector_t& y);
 const vector_t operator - (const vector_t& x);
@@ -9,6 +11,7 @@ float vector_length(const vector_t& v);
 vector_t vector_cross(const vector_t& x, const vector_t& y);
 float vector_dot(const vector_t& x, const vector_t& y);
 vector_t operator*(const vector_t& v, const float value);
+vector_t operator*(const float value, const vector_t& v);
 vector_t vector_reflect(const vector_t& I, const vector_t& n);
 void vertex_set_rhw(vertex_t* v);
 
@@ -42,8 +45,7 @@ const color_t operator - (const color_t& x);
 color_t color_div(const color_t& x, const float& y);
 color_t operator/(const color_t& x, const float& y);
 
-
-
+float time_get();
 
 vector_t viewport_transform(const vector_t& x, const transform_t& ts);
 int check_cvv(const vector_t& v);
@@ -59,3 +61,5 @@ inline UINT32 color_trans_255(const color_t &color) {
 	int A = CMID((int)(color.a * 255.0f), 0, 255);
 	return (UINT32)((A << 24) | (R << 16) | (G << 8) | (B));
 }
+
+inline float radians(float degrees) { return (degrees * 0.01745329251994329576923690768489); }

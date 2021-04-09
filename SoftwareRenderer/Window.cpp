@@ -4,7 +4,7 @@
 #define __Window
 int gl_screen_exit;
 int gl_screen_keys[512];
-static HWND screen_handle;
+static HWND st_screen_handle;
 static HDC screen_dc;			// ÅäÌ×µÄ HDC
 static HBITMAP screen_hb;		// DIB
 static HBITMAP screen_ob;		// ÀÏµÄ BITMAP
@@ -20,6 +20,7 @@ int Window::screen_init(float w, float h, const TCHAR* title)
 	int wx, wy, sx, sy;
 	LPVOID ptr;
 	HDC hDC;
+	this->screen_handle = &st_screen_handle;
 
 	screen_close();
 
@@ -28,15 +29,15 @@ int Window::screen_init(float w, float h, const TCHAR* title)
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	if (!RegisterClass(&wc)) return -1;
 
-	screen_handle = CreateWindow(_T("SoftwareRenderer"), title,
+	st_screen_handle = CreateWindow(_T("SoftwareRenderer"), title,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 		0, 0, 0, 0, NULL, NULL, wc.hInstance, NULL);
-	if (screen_handle == NULL) return -2;
+	if (st_screen_handle == NULL) return -2;
 
 	screen_exit = 0;
-	hDC = GetDC(screen_handle);
+	hDC = GetDC(st_screen_handle);
 	screen_dc = CreateCompatibleDC(hDC);
-	ReleaseDC(screen_handle, hDC);
+	ReleaseDC(st_screen_handle, hDC);
 
 	screen_hb = CreateDIBSection(screen_dc, &bi, DIB_RGB_COLORS, &ptr, 0, 0);
 	if (screen_hb == NULL) return -3;
@@ -47,16 +48,16 @@ int Window::screen_init(float w, float h, const TCHAR* title)
 	screen_height = h;
 	screen_pitch = w * 4;
 
-	AdjustWindowRect(&rect, GetWindowLong(screen_handle, GWL_STYLE), 0);
+	AdjustWindowRect(&rect, GetWindowLong(st_screen_handle, GWL_STYLE), 0);
 	wx = rect.right - rect.left;
 	wy = rect.bottom - rect.top;
 	sx = (GetSystemMetrics(SM_CXSCREEN) - wx) / 2;
 	sy = (GetSystemMetrics(SM_CYSCREEN) - wy) / 2;
 	if (sy < 0) sy = 0;
-	SetWindowPos(screen_handle, NULL, sx, sy, wx, wy, (SWP_NOCOPYBITS | SWP_NOZORDER | SWP_SHOWWINDOW));
-	SetForegroundWindow(screen_handle);
+	SetWindowPos(st_screen_handle, NULL, sx, sy, wx, wy, (SWP_NOCOPYBITS | SWP_NOZORDER | SWP_SHOWWINDOW));
+	SetForegroundWindow(st_screen_handle);
 
-	ShowWindow(screen_handle, SW_NORMAL);
+	ShowWindow(st_screen_handle, SW_NORMAL);
 	screen_dispatch();
 
 	memset(gl_screen_keys, 0, sizeof(int) * 512);
@@ -72,7 +73,8 @@ Window::Window()
 {
 	screen_exit = nullptr;
 	screen_keys = nullptr;
-	screen_handle = NULL;
+	screen_handle = nullptr;
+	st_screen_handle = NULL;
 	screen_dc = NULL;
 	screen_hb = NULL;
 	screen_ob = NULL;
@@ -93,9 +95,9 @@ int Window::screen_close(void)
 		DeleteObject(screen_hb);
 		screen_hb = NULL;
 	}
-	if (screen_handle) {
-		CloseWindow(screen_handle);
-		screen_handle = NULL;
+	if (st_screen_handle) {
+		CloseWindow(st_screen_handle);
+		st_screen_handle = NULL;
 	}
 	return 0;
 }
@@ -111,9 +113,9 @@ void Window::screen_dispatch(void) {
 
 void Window::screen_update(void)
 {
-	HDC hDC = GetDC(screen_handle);
+	HDC hDC = GetDC(st_screen_handle);
 	BitBlt(hDC, 0, 0, screen_width, screen_height, screen_dc, 0, 0, SRCCOPY);
-	ReleaseDC(screen_handle, hDC);
+	ReleaseDC(st_screen_handle, hDC);
 	screen_dispatch();
 }
 

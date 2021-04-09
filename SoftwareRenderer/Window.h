@@ -10,6 +10,8 @@ public:
 	unsigned char* screen_fb;		// frame buffer
 	long screen_pitch = 0;
 
+	HWND* screen_handle;
+
 	Window();
 	int screen_init(float w, float h, const TCHAR* title);	// ÆÁÄ»³õÊ¼»¯
 	int screen_close(void);								// ¹Ø±ÕÆÁÄ»
