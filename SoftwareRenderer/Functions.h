@@ -12,7 +12,7 @@ vector_t vector_cross(const vector_t& x, const vector_t& y);
 float vector_dot(const vector_t& x, const vector_t& y);
 vector_t operator*(const vector_t& v, const float value);
 vector_t operator*(const float value, const vector_t& v);
-vector_t vector_reflect(const vector_t& I, const vector_t& n);
+vector_t vector_reflect(const vector_t& I, const vector_t& N);
 void vertex_set_rhw(vertex_t* v);
 
 void matrix_set_identity(matrix_t* m);

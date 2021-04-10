@@ -560,12 +560,13 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 
 		diff = max(vector_dot(norm, light_dir3), 0.0f);
 		color_t diffuse3 = light->diffuse * diff * v3_tmp.color;
+
 		// ¾µÃæ·´Éä
 		vector_t reflect_dir1, reflect_dir2, reflect_dir3;
 		vector_t view_dir1, view_dir2, view_dir3;
-		reflect_dir1 = vector_normalize(vector_reflect(-light_dir1, norm));
-		reflect_dir2 = vector_normalize(vector_reflect(-light_dir2, norm));
-		reflect_dir3 = vector_normalize(vector_reflect(-light_dir3, norm));
+		reflect_dir1 = vector_reflect(-light_dir1, norm);
+		reflect_dir2 = vector_reflect(-light_dir2, norm);
+		reflect_dir3 = vector_reflect(-light_dir3, norm);
 		view_dir1 = vector_normalize(camera->pos - p1);
 		view_dir2 = vector_normalize(camera->pos - p2);
 		view_dir3 = vector_normalize(camera->pos - p3);
@@ -599,9 +600,9 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 			v3_tmp.color = (ambient3 + diffuse3 + specular3) * attenuation3;
 		}
 		else {
-			v1_tmp.color = v1_tmp.color * (ambient1 + diffuse1 + specular1);
-			v2_tmp.color = v2_tmp.color * (ambient2 + diffuse2 + specular2);
-			v3_tmp.color = v3_tmp.color * (ambient3 + diffuse3 + specular3);
+			v1_tmp.color = (ambient1 + diffuse1 + specular1);
+			v2_tmp.color = (ambient2 + diffuse2 + specular2);
+			v3_tmp.color = (ambient3 + diffuse3 + specular3);
 		}
 	}
 

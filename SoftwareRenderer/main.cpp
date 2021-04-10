@@ -157,9 +157,9 @@ int main()
 	renderer.set_texture(texture.texture, texture.max_size * 4, texture.max_size, texture.max_size);
 
 	Light light;
-	light.pos = { 1,0,0,1 };
+	light.pos = { 3,-1,0,1 };
 	light.ambient = { 0.2f,0.2f,0.2f,1 };
-	light.diffuse = { 0.8f,0.8f,0.8f,1 };
+	light.diffuse = { 0.9f,0.9f,0.9f,1 };
 	light.specular = { 1.0f,1.0f,1.0f,1 };
 	light.direction = { -30.0f,-30.0f,0.0f,1 };
 	light.light_state = LIGHT_STATE_POINT;

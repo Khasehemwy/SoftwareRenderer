@@ -224,13 +224,10 @@ vector_t operator*(const float y, const vector_t& x)
 	return z;
 }
 
-//I为从光源指向目标的方向向量,n为顶点法向量.返回以目标为起点的反射光向量
-vector_t vector_reflect(const vector_t& I, const vector_t& n)
+//I为从光源指向目标的方向向量,n为顶点单位法向量.返回以目标为起点的反射光向量
+vector_t vector_reflect(const vector_t& I, const vector_t& N)
 {
-	vector_t N = vector_normalize(n) * vector_dot(N, I);
-	vector_t I_ref = (I - N) - N;
-
-	return I_ref;
+	return I - 2 * N * vector_dot(N, I);
 }
 
 void vertex_set_rhw(vertex_t* v)
