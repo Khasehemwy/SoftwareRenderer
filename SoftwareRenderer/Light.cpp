@@ -1,7 +1,7 @@
 #include"Light.h"
 
 Light::Light():
-	cut_off(cos(radians(15.0f))),
-	outer_cut_off(cos(radians(20.0f)))
+	cut_off(cos(radians(12.5f))),
+	outer_cut_off(cos(radians(17.5f)))
 {
 }

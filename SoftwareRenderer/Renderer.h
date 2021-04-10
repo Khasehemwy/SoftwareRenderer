@@ -10,6 +10,7 @@
 
 //特性
 #define RENDER_FEATURE_BACK_CULLING 0b1	//背面剔除
+#define RENDER_FEATURE_LIGHT 0b10	//是否开启光照
 
 //片段着色器-着色算法
 #define RENDER_SHADER_PIXEL_SCANLINE 0b1		//扫描线算法-进行片段着色,更快但不够精准

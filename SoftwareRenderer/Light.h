@@ -1,9 +1,9 @@
 #pragma once
 #include"Includes.h"
 
-#define LIGHT_STATE_DIRECTIONAL 0x1 
-#define LIGHT_STATE_POINT 0x10 
-#define LIGHT_STATE_SPOTLIGHT 0x100
+#define LIGHT_STATE_DIRECTIONAL 0b1 
+#define LIGHT_STATE_POINT 0b10 
+#define LIGHT_STATE_SPOTLIGHT 0b100
 
 class Light {
 public:

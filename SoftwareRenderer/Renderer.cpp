@@ -3,6 +3,7 @@
 Renderer::Renderer()
 {
 	features[RENDER_FEATURE_BACK_CULLING] = true;
+	features[RENDER_FEATURE_LIGHT] = true;
 }
 
 void Renderer::init(int width, int height, void* fb)
@@ -532,107 +533,120 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 
 	vertex_t v1_tmp, v2_tmp, v3_tmp;
 	v1_tmp = v1; v2_tmp = v2; v3_tmp = v3;
-	for (auto& light : lights) {
-		// 环境光
-		color_t ambient1 = light->ambient * v1_tmp.color;
-		color_t ambient2 = light->ambient * v2_tmp.color;
-		color_t ambient3 = light->ambient * v3_tmp.color;
+	color_t color1, color2, color3;
+	if (this->features[RENDER_FEATURE_LIGHT] == true) {
+		color1 = color2 = color3 = { 0,0,0,0 };
+		for (auto& light : lights) {
+			// 环境光
+			color_t ambient1 = light->ambient * v1_tmp.color;
+			color_t ambient2 = light->ambient * v2_tmp.color;
+			color_t ambient3 = light->ambient * v3_tmp.color;
 
-		// 漫反射
-		// 使用兰伯特余弦定律（Lambert' cosine law）计算漫反射
-		vector_t norm = vector_normalize(v_normal);
-		vector_t light_dir1, light_dir2, light_dir3;
-		float diff;
-		if (light->light_state == LIGHT_STATE_DIRECTIONAL) {
-			light_dir1 = vector_normalize(-light->direction);
-			light_dir3 = light_dir2 = light_dir1;
-		}
-		else if (
-			light->light_state == LIGHT_STATE_POINT ||
-			light->light_state == LIGHT_STATE_SPOTLIGHT)
-		{
-			light_dir1 = vector_normalize(light->pos - p1);
-			light_dir2 = vector_normalize(light->pos - p2);
-			light_dir3 = vector_normalize(light->pos - p3);
-		}
-
-		diff = max(vector_dot(norm, light_dir1), 0.0f);
-		color_t diffuse1 = light->diffuse * diff * v1_tmp.color;
-
-		diff = max(vector_dot(norm, light_dir2), 0.0f);
-		color_t diffuse2 = light->diffuse * diff * v2_tmp.color;
-
-		diff = max(vector_dot(norm, light_dir3), 0.0f);
-		color_t diffuse3 = light->diffuse * diff * v3_tmp.color;
-
-		// 镜面反射
-		vector_t reflect_dir1, reflect_dir2, reflect_dir3;
-		vector_t view_dir1, view_dir2, view_dir3;
-		reflect_dir1 = vector_reflect(-light_dir1, norm);
-		reflect_dir2 = vector_reflect(-light_dir2, norm);
-		reflect_dir3 = vector_reflect(-light_dir3, norm);
-		view_dir1 = vector_normalize(camera->pos - p1);
-		view_dir2 = vector_normalize(camera->pos - p2);
-		view_dir3 = vector_normalize(camera->pos - p3);
-		float shininess = 32.0f;
-
-		float spec = pow(max(vector_dot(view_dir1, reflect_dir1), 0.0), shininess);
-		color_t specular1 = light->specular * spec * v1_tmp.color;
-
-		spec = pow(max(vector_dot(view_dir2, reflect_dir2), 0.0), shininess);
-		color_t specular2 = light->specular * spec * v2_tmp.color;
-
-		spec = pow(max(vector_dot(view_dir3, reflect_dir3), 0.0), shininess);
-		color_t specular3 = light->specular * spec * v3_tmp.color;
-
-		//specular1 = specular2 = specular3 = { 0,0,0,0 };
-
-
-		//光照运算
-		if (light->light_state == LIGHT_STATE_POINT ||
-			light->light_state == LIGHT_STATE_SPOTLIGHT)
-		{
-			//点光源衰减
-			float distance1 = vector_length(light->pos - p1);
-			float distance2 = vector_length(light->pos - p2);
-			float distance3 = vector_length(light->pos - p3);
-			float attenuation1 = 1.0 / (light->constant + light->linear * distance1 +
-				light->quadratic * (distance1 * distance1));
-			float attenuation2 = 1.0 / (light->constant + light->linear * distance2 +
-				light->quadratic * (distance2 * distance2));
-			float attenuation3 = 1.0 / (light->constant + light->linear * distance3 +
-				light->quadratic * (distance3 * distance3));
-
-			//聚光
-			if (light->light_state == LIGHT_STATE_SPOTLIGHT) {
-				float epsilon = light->cut_off - light->outer_cut_off;
-				float theta1, theta2, theta3;
-				float intensity1, intensity2, intensity3;
-				vector_t light_direction = vector_normalize(-light->direction);
-
-				theta1 = vector_dot(light_dir1, light_direction);
-				intensity1 = CMID((theta1 - light->outer_cut_off) / epsilon, 0.0, 1.0);
-				diffuse1 *= intensity1; specular1 *= intensity1;
-
-				theta2 = vector_dot(light_dir2, light_direction);
-				intensity2 = CMID((theta2 - light->outer_cut_off) / epsilon, 0.0, 1.0);
-				diffuse2 *= intensity2; specular2 *= intensity2;
-
-				theta3 = vector_dot(light_dir3, light_direction);
-				intensity3 = CMID((theta3 - light->outer_cut_off) / epsilon, 0.0, 1.0);
-				diffuse3 *= intensity3; specular3 *= intensity3;
+			// 漫反射
+			// 使用兰伯特余弦定律（Lambert' cosine law）计算漫反射
+			vector_t norm = vector_normalize(v_normal);
+			vector_t light_dir1, light_dir2, light_dir3;
+			float diff;
+			if (light->light_state == LIGHT_STATE_DIRECTIONAL) {
+				light_dir1 = vector_normalize(-light->direction);
+				light_dir3 = light_dir2 = light_dir1;
+			}
+			else if (
+				light->light_state == LIGHT_STATE_POINT ||
+				light->light_state == LIGHT_STATE_SPOTLIGHT)
+			{
+				light_dir1 = vector_normalize(light->pos - p1);
+				light_dir2 = vector_normalize(light->pos - p2);
+				light_dir3 = vector_normalize(light->pos - p3);
 			}
 
-			v1_tmp.color = (ambient1 + diffuse1 + specular1) * attenuation1;
-			v2_tmp.color = (ambient2 + diffuse2 + specular2) * attenuation2;
-			v3_tmp.color = (ambient3 + diffuse3 + specular3) * attenuation3;
-		}
-		else {
-			v1_tmp.color = (ambient1 + diffuse1 + specular1);
-			v2_tmp.color = (ambient2 + diffuse2 + specular2);
-			v3_tmp.color = (ambient3 + diffuse3 + specular3);
+			diff = max(vector_dot(norm, light_dir1), 0.0f);
+			color_t diffuse1 = light->diffuse * diff * v1_tmp.color;
+
+			diff = max(vector_dot(norm, light_dir2), 0.0f);
+			color_t diffuse2 = light->diffuse * diff * v2_tmp.color;
+
+			diff = max(vector_dot(norm, light_dir3), 0.0f);
+			color_t diffuse3 = light->diffuse * diff * v3_tmp.color;
+
+			// 镜面反射
+			vector_t reflect_dir1, reflect_dir2, reflect_dir3;
+			vector_t view_dir1, view_dir2, view_dir3;
+			reflect_dir1 = vector_reflect(-light_dir1, norm);
+			reflect_dir2 = vector_reflect(-light_dir2, norm);
+			reflect_dir3 = vector_reflect(-light_dir3, norm);
+			view_dir1 = vector_normalize(camera->pos - p1);
+			view_dir2 = vector_normalize(camera->pos - p2);
+			view_dir3 = vector_normalize(camera->pos - p3);
+			float shininess = 32.0f;
+
+			float spec = pow(max(vector_dot(view_dir1, reflect_dir1), 0.0), shininess);
+			color_t specular1 = light->specular * spec * v1_tmp.color;
+
+			spec = pow(max(vector_dot(view_dir2, reflect_dir2), 0.0), shininess);
+			color_t specular2 = light->specular * spec * v2_tmp.color;
+
+			spec = pow(max(vector_dot(view_dir3, reflect_dir3), 0.0), shininess);
+			color_t specular3 = light->specular * spec * v3_tmp.color;
+
+			//specular1 = specular2 = specular3 = { 0,0,0,0 };
+
+
+			//光照运算
+			if (light->light_state == LIGHT_STATE_POINT ||
+				light->light_state == LIGHT_STATE_SPOTLIGHT)
+			{
+				//点光源衰减
+				float distance1 = vector_length(light->pos - p1);
+				float distance2 = vector_length(light->pos - p2);
+				float distance3 = vector_length(light->pos - p3);
+				float attenuation1 = 1.0 / (light->constant + light->linear * distance1 +
+					light->quadratic * (distance1 * distance1));
+				float attenuation2 = 1.0 / (light->constant + light->linear * distance2 +
+					light->quadratic * (distance2 * distance2));
+				float attenuation3 = 1.0 / (light->constant + light->linear * distance3 +
+					light->quadratic * (distance3 * distance3));
+
+				//聚光
+				if (light->light_state == LIGHT_STATE_SPOTLIGHT) {
+					float epsilon = light->cut_off - light->outer_cut_off;
+					float theta1, theta2, theta3;
+					float intensity1, intensity2, intensity3;
+					vector_t light_direction = vector_normalize(-light->direction);
+
+					theta1 = vector_dot(light_dir1, light_direction);
+					intensity1 = CMID((theta1 - light->outer_cut_off) / epsilon, 0.0, 1.0);
+					ambient1 *= intensity1; diffuse1 *= intensity1; specular1 *= intensity1;
+
+					theta2 = vector_dot(light_dir2, light_direction);
+					intensity2 = CMID((theta2 - light->outer_cut_off) / epsilon, 0.0, 1.0);
+					ambient2 *= intensity2; diffuse2 *= intensity2; specular2 *= intensity2;
+
+					theta3 = vector_dot(light_dir3, light_direction);
+					intensity3 = CMID((theta3 - light->outer_cut_off) / epsilon, 0.0, 1.0);
+					ambient3 *= intensity3; diffuse3 *= intensity3; specular3 *= intensity3;
+				}
+
+				color1 += (ambient1 + diffuse1 + specular1) * attenuation1;
+				color2 += (ambient2 + diffuse2 + specular2) * attenuation2;
+				color3 += (ambient3 + diffuse3 + specular3) * attenuation3;
+			}
+			else {
+				color1 += (ambient1 + diffuse1 + specular1);
+				color2 += (ambient2 + diffuse2 + specular2);
+				color3 += (ambient3 + diffuse3 + specular3);
+			}
 		}
 	}
+	else {
+		color1 = v1_tmp.color;
+		color2 = v2_tmp.color;
+		color3 = v3_tmp.color;
+	}
+	
+	v1_tmp.color = color1;
+	v2_tmp.color = color2;
+	v3_tmp.color = color3;
 
 
 	/* 将点映射到观察空间 */
