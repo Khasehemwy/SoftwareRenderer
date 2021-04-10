@@ -34,10 +34,12 @@ void transform_init(transform_t* ts, int width, int height);
 
 color_t color_add(const color_t& x, const color_t& y);
 color_t operator+(const color_t& x, const color_t& y);
+void operator+=(color_t& x, const color_t& y);
 color_t color_mul_num(const color_t& x, const float& y);
 color_t operator*(const color_t& x, const float& y);
 color_t operator*(const float& y, const color_t& x);
 void operator*=(color_t& x, const float y);
+void operator*=(color_t& x, const color_t y);
 color_t color_mul_color(const color_t& x, const color_t& y);
 color_t operator*(const color_t& x, const color_t& y);
 color_t color_sub(const color_t& x, const color_t& y);
@@ -51,7 +53,8 @@ float time_get();
 vector_t viewport_transform(const vector_t& x, const transform_t& ts);
 int check_cvv(const vector_t& v);
 
-inline int CMID(int x, int min, int max) { return (x < min) ? min : ((x > max) ? max : x); }
+#define CMID(x,min,max) ((x<min)?min:((x>max)?max:x))
+//inline int CMID(int x, int min, int max) { return (x < min) ? min : ((x > max) ? max : x); }
 
 float interp(float length_total, float length_place, float x1, float x2);
 

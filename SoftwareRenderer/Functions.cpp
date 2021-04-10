@@ -267,6 +267,11 @@ color_t operator+(const color_t& x, const color_t& y)
 	return color_add(x, y);
 }
 
+void operator+=(color_t& x, const color_t& y)
+{
+	x = x + y;
+}
+
 color_t color_mul_num(const color_t& x, const float& y)
 {
 	color_t z;
@@ -288,6 +293,11 @@ color_t operator*(const float& y, const color_t& x)
 }
 
 void operator*=(color_t& x, const float y)
+{
+	x = x * y;
+}
+
+void operator*=(color_t& x, const color_t y)
 {
 	x = x * y;
 }

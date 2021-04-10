@@ -163,9 +163,16 @@ int main()
 	light.specular = { 1.0f,1.0f,1.0f,1 };
 	light.direction = { -30.0f,-30.0f,0.0f,1 };
 	light.light_state = LIGHT_STATE_POINT;
-	renderer.add_light(light);
+	//renderer.add_light(light);
 	renderer_light.camera = &camera;
 	renderer_light.render_state = RENDER_STATE_COLOR;
+
+	Light spotlight;
+	spotlight.light_state = LIGHT_STATE_SPOTLIGHT;
+	spotlight.ambient = { 0.1,0.1,0.1,1 };
+	spotlight.diffuse = { 0.8,0.8,0.8,1 };
+	spotlight.specular = { 0.9,0.9,0.9,1 };
+	renderer.add_light(spotlight);
 
 	//时间
 	float delta_time = 0.0f;
@@ -182,7 +189,7 @@ int main()
 		float current_frame = time_get();
 		delta_time = current_frame - last_frame;
 		last_frame = current_frame;
-		camera.speed = 3.0f * delta_time;
+		camera.speed = 5.0f * delta_time;
 
 		//鼠标
 		mouse_callback(camera);
@@ -217,10 +224,15 @@ int main()
 		if (window.screen_keys[KEY_I]) { light.pos.z += 0.01f; }
 		if (window.screen_keys[KEY_K]) { light.pos.z -= 0.01f; }
 
-
+		//更新摄像机
 		camera.target = camera.pos + camera.front;
 		matrix_t view = camera.set_lookat(camera.pos, camera.target, camera.up);
 		renderer.transform.view = view;
+
+		//设置聚光
+		spotlight.pos = camera.pos;
+		spotlight.direction = camera.front;
+
 		matrix_t model;
 		for (int i = 0; i < 10; i++) {
 			matrix_set_identity(&model);
@@ -231,7 +243,6 @@ int main()
 			draw_box(renderer);
 		}
 
-
 		//画光源
 		renderer_light.transform = renderer.transform;
 		matrix_set_identity(&model);
@@ -240,6 +251,7 @@ int main()
 		renderer_light.transform.model = model;
 		renderer_light.transform_update();
 		draw_light(renderer_light);
+
 
 		//renderer.display_primitive(vert[1], vert[2], vert[3]);
 		//renderer.display_primitive(vert[1], vert[3], vert[4]);

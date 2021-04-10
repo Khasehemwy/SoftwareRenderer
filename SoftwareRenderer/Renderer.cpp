@@ -537,6 +537,7 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		color_t ambient1 = light->ambient * v1_tmp.color;
 		color_t ambient2 = light->ambient * v2_tmp.color;
 		color_t ambient3 = light->ambient * v3_tmp.color;
+
 		// 漫反射
 		// 使用兰伯特余弦定律（Lambert' cosine law）计算漫反射
 		vector_t norm = vector_normalize(v_normal);
@@ -546,7 +547,10 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 			light_dir1 = vector_normalize(-light->direction);
 			light_dir3 = light_dir2 = light_dir1;
 		}
-		else if (light->light_state == LIGHT_STATE_POINT) {
+		else if (
+			light->light_state == LIGHT_STATE_POINT ||
+			light->light_state == LIGHT_STATE_SPOTLIGHT)
+		{
 			light_dir1 = vector_normalize(light->pos - p1);
 			light_dir2 = vector_normalize(light->pos - p2);
 			light_dir3 = vector_normalize(light->pos - p3);
@@ -583,9 +587,12 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 
 		//specular1 = specular2 = specular3 = { 0,0,0,0 };
 
+
 		//光照运算
-		if (light->light_state == LIGHT_STATE_POINT) {
-			//点光源
+		if (light->light_state == LIGHT_STATE_POINT ||
+			light->light_state == LIGHT_STATE_SPOTLIGHT)
+		{
+			//点光源衰减
 			float distance1 = vector_length(light->pos - p1);
 			float distance2 = vector_length(light->pos - p2);
 			float distance3 = vector_length(light->pos - p3);
@@ -595,6 +602,27 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 				light->quadratic * (distance2 * distance2));
 			float attenuation3 = 1.0 / (light->constant + light->linear * distance3 +
 				light->quadratic * (distance3 * distance3));
+
+			//聚光
+			if (light->light_state == LIGHT_STATE_SPOTLIGHT) {
+				float epsilon = light->cut_off - light->outer_cut_off;
+				float theta1, theta2, theta3;
+				float intensity1, intensity2, intensity3;
+				vector_t light_direction = vector_normalize(-light->direction);
+
+				theta1 = vector_dot(light_dir1, light_direction);
+				intensity1 = CMID((theta1 - light->outer_cut_off) / epsilon, 0.0, 1.0);
+				diffuse1 *= intensity1; specular1 *= intensity1;
+
+				theta2 = vector_dot(light_dir2, light_direction);
+				intensity2 = CMID((theta2 - light->outer_cut_off) / epsilon, 0.0, 1.0);
+				diffuse2 *= intensity2; specular2 *= intensity2;
+
+				theta3 = vector_dot(light_dir3, light_direction);
+				intensity3 = CMID((theta3 - light->outer_cut_off) / epsilon, 0.0, 1.0);
+				diffuse3 *= intensity3; specular3 *= intensity3;
+			}
+
 			v1_tmp.color = (ambient1 + diffuse1 + specular1) * attenuation1;
 			v2_tmp.color = (ambient2 + diffuse2 + specular2) * attenuation2;
 			v3_tmp.color = (ambient3 + diffuse3 + specular3) * attenuation3;
