@@ -54,7 +54,7 @@ public:
 	void add_light(const Light& light);
 
 	void draw_line(int x1, int y1, int x2, int y2, UINT32 color);
-	int display_primitive(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
+	int	display_primitive(vertex_t v1, vertex_t v2, vertex_t v3);
 	void transform_update();
 
 private:

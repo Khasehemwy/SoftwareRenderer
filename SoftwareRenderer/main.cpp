@@ -141,8 +141,8 @@ int main()
 	vector_t rotate_axis = { 1,-0.5,0.5,1 };
 	renderer.camera = &camera;
 	//renderer.render_state = RENDER_STATE_WIREFRAME;
-	renderer.render_state = RENDER_STATE_COLOR;
-	//renderer.render_state = RENDER_STATE_TEXTURE;
+	//renderer.render_state = RENDER_STATE_COLOR;
+	renderer.render_state = RENDER_STATE_TEXTURE;
 	//renderer.features[RENDER_FEATURE_BACK_CULLING] = false;
 	//renderer.features[RENDER_FEATURE_LIGHT] = false;
 	renderer_light.camera = &camera;
@@ -197,10 +197,10 @@ int main()
 
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
 		//时间,使移动速度不受帧率变化
-		float current_frame = time_get();
-		delta_time = current_frame - last_frame;
-		last_frame = current_frame;
-		camera.speed = 5.0f * delta_time;
+		//float current_frame = time_get();
+		//delta_time = current_frame - last_frame;
+		//last_frame = current_frame;
+		camera.speed = 0.1f;
 
 		//鼠标
 		mouse_callback(camera);

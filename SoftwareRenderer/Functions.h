@@ -66,4 +66,13 @@ inline UINT32 color_trans_255(const color_t &color) {
 	return (UINT32)((A << 24) | (R << 16) | (G << 8) | (B));
 }
 
+inline color_t color_trans_1f(const UINT32& color) {
+	int x = 0b11111111;
+	float R = CMID((float)((color & (x << 16)) >> 16) / 255.0f, 0.0f, 1.0f);
+	float G = CMID((float)((color & (x << 8)) >> 8) / 255.0f, 0.0f, 1.0f);
+	float B = CMID((float)((color & (x))) / 255.0f, 0.0f, 1.0f);
+	float A = CMID((float)((color & (x << 24)) >> 24) / 255.0f, 0.0f, 1.0f);
+	return { R, G, B, A };
+}
+
 inline float radians(float degrees) { return (degrees * 0.01745329251994329576923690768489); }

@@ -286,7 +286,8 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 						this->draw_pixel(x, y, color_trans_255(color * wi));
 					}
 					if (this->render_state == RENDER_STATE_TEXTURE) {
-						this->draw_pixel(x, y, this->texture_read(ui * wi, vi * wi));
+						color_t color_tmp = color * color_trans_1f(this->texture_read(ui * wi, vi * wi));
+						this->draw_pixel(x, y, color_trans_255(color_tmp * wi));
 					}
 				}
 			}
@@ -513,9 +514,21 @@ void Renderer::draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2,
 }
 
 //绘制原始三角形
-int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
+int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 {
 	point_t p1, p2, p3;
+
+	// 先裁剪检测,减小不必要计算
+	p1 = v1.pos * transform.model * transform.view * transform.projection;
+	p2 = v2.pos * transform.model * transform.view * transform.projection;
+	p3 = v3.pos * transform.model * transform.view * transform.projection;
+	int cvv_jug = 0;
+	if (check_cvv(p1) != 0 && check_cvv(p2) != 0 && check_cvv(p3) != 0)cvv_jug = 1;
+	if (cvv_jug) {
+		//std::cout << "cvv cut\n";
+		return 1;
+	}
+
 
 	/* 将点映射到世界空间 */
 	p1 = (v1.pos) * this->transform.model;
@@ -531,16 +544,18 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		if (backCull_jug <= 0.0f)return 1;
 	}
 
-	vertex_t v1_tmp, v2_tmp, v3_tmp;
-	v1_tmp = v1; v2_tmp = v2; v3_tmp = v3;
+	//光照处理
+	if (this->render_state == RENDER_STATE_TEXTURE) {
+		v1.color = v2.color = v3.color = { 1,1,1,1 };
+	}
 	color_t color1, color2, color3;
 	if (this->features[RENDER_FEATURE_LIGHT] == true) {
 		color1 = color2 = color3 = { 0,0,0,0 };
 		for (auto& light : lights) {
 			// 环境光
-			color_t ambient1 = light->ambient * v1_tmp.color;
-			color_t ambient2 = light->ambient * v2_tmp.color;
-			color_t ambient3 = light->ambient * v3_tmp.color;
+			color_t ambient1 = light->ambient * v1.color;
+			color_t ambient2 = light->ambient * v2.color;
+			color_t ambient3 = light->ambient * v3.color;
 
 			// 漫反射
 			// 使用兰伯特余弦定律（Lambert' cosine law）计算漫反射
@@ -561,13 +576,13 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 			}
 
 			diff = max(vector_dot(norm, light_dir1), 0.0f);
-			color_t diffuse1 = light->diffuse * diff * v1_tmp.color;
+			color_t diffuse1 = light->diffuse * diff * v1.color;
 
 			diff = max(vector_dot(norm, light_dir2), 0.0f);
-			color_t diffuse2 = light->diffuse * diff * v2_tmp.color;
+			color_t diffuse2 = light->diffuse * diff * v2.color;
 
 			diff = max(vector_dot(norm, light_dir3), 0.0f);
-			color_t diffuse3 = light->diffuse * diff * v3_tmp.color;
+			color_t diffuse3 = light->diffuse * diff * v3.color;
 
 			// 镜面反射
 			vector_t reflect_dir1, reflect_dir2, reflect_dir3;
@@ -581,13 +596,13 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 			float shininess = 32.0f;
 
 			float spec = pow(max(vector_dot(view_dir1, reflect_dir1), 0.0f), shininess);
-			color_t specular1 = light->specular * spec * v1_tmp.color;
+			color_t specular1 = light->specular * spec * v1.color;
 
 			spec = pow(max(vector_dot(view_dir2, reflect_dir2), 0.0f), shininess);
-			color_t specular2 = light->specular * spec * v2_tmp.color;
+			color_t specular2 = light->specular * spec * v2.color;
 
 			spec = pow(max(vector_dot(view_dir3, reflect_dir3), 0.0f), shininess);
-			color_t specular3 = light->specular * spec * v3_tmp.color;
+			color_t specular3 = light->specular * spec * v3.color;
 
 			//specular1 = specular2 = specular3 = { 0,0,0,0 };
 
@@ -639,14 +654,14 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		}
 	}
 	else {
-		color1 = v1_tmp.color;
-		color2 = v2_tmp.color;
-		color3 = v3_tmp.color;
+		color1 = v1.color;
+		color2 = v2.color;
+		color3 = v3.color;
 	}
 	
-	v1_tmp.color = color1;
-	v2_tmp.color = color2;
-	v3_tmp.color = color3;
+	v1.color = color1;
+	v2.color = color2;
+	v3.color = color3;
 
 
 	/* 将点映射到观察空间 */
@@ -658,14 +673,6 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 	p1 = p1 * this->transform.projection;
 	p2 = p2 * this->transform.projection;
 	p3 = p3 * this->transform.projection;
-
-	// 裁剪检测
-	int cvv_jug = 0;
-	if (check_cvv(p1) != 0 && check_cvv(p2) != 0 && check_cvv(p3) != 0)cvv_jug = 1;
-	if (cvv_jug) {
-		//std::cout << "cvv cut\n";
-		return 1;
-	}
 
 	//得到屏幕坐标
 	p1 = viewport_transform(p1, this->transform);
@@ -680,16 +687,16 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 		this->draw_line((int)p2.x, (int)p2.y, (int)p3.x, (int)p3.y, this->foreground);
 	}
 	else if(this->render_state) {
-		v1_tmp.pos = p1; 
-		v2_tmp.pos = p2;
-		v3_tmp.pos = p3;
-		vertex_set_rhw(&v1_tmp);
-		vertex_set_rhw(&v2_tmp);
-		vertex_set_rhw(&v3_tmp);
+		v1.pos = p1; 
+		v2.pos = p2;
+		v3.pos = p3;
+		vertex_set_rhw(&v1);
+		vertex_set_rhw(&v2);
+		vertex_set_rhw(&v3);
 		if (render_shader_state == RENDER_SHADER_PIXEL_SCANLINE)//default
-			this->draw_triangle(v1_tmp, v2_tmp, v3_tmp);
+			this->draw_triangle(v1, v2, v3);
 		else if (render_shader_state == RENDER_SHADER_PIXEL_BOUNDINGBOX)
-			this->draw_triangle_BoundingBox(v1_tmp, v2_tmp, v3_tmp);
+			this->draw_triangle_BoundingBox(v1, v2, v3);
 	}
 
 	return 0;
