@@ -50,6 +50,7 @@ matrix_t matrix_translate_build(float x, float y, float z)
 	return m_ret;
 }
 
+//使用弧度制的角度
 matrix_t matrix_rotate_build(float angle, const vector_t& v)
 {
 	float x = v.x, y = v.y, z = v.z;

@@ -580,13 +580,13 @@ int Renderer::display_primitive(const vertex_t& v1, const vertex_t& v2, const ve
 			view_dir3 = vector_normalize(camera->pos - p3);
 			float shininess = 32.0f;
 
-			float spec = pow(max(vector_dot(view_dir1, reflect_dir1), 0.0), shininess);
+			float spec = pow(max(vector_dot(view_dir1, reflect_dir1), 0.0f), shininess);
 			color_t specular1 = light->specular * spec * v1_tmp.color;
 
-			spec = pow(max(vector_dot(view_dir2, reflect_dir2), 0.0), shininess);
+			spec = pow(max(vector_dot(view_dir2, reflect_dir2), 0.0f), shininess);
 			color_t specular2 = light->specular * spec * v2_tmp.color;
 
-			spec = pow(max(vector_dot(view_dir3, reflect_dir3), 0.0), shininess);
+			spec = pow(max(vector_dot(view_dir3, reflect_dir3), 0.0f), shininess);
 			color_t specular3 = light->specular * spec * v3_tmp.color;
 
 			//specular1 = specular2 = specular3 = { 0,0,0,0 };

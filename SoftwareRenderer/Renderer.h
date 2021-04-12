@@ -53,13 +53,16 @@ public:
 	UINT32 texture_read(float u, float v);
 	void add_light(const Light& light);
 
-	void draw_pixel(int x, int y, UINT32 color);
 	void draw_line(int x1, int y1, int x2, int y2, UINT32 color);
+	int display_primitive(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
+	void transform_update();
+
+private:
+	void draw_pixel(int x, int y, UINT32 color);
 	void draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3);
 	void draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right);
 	void draw_triangle_BresenhamAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right);
 	void draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
-	int display_primitive(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
-	void transform_update();
+
 };
 
