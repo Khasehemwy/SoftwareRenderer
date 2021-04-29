@@ -22,7 +22,7 @@
 * 仿射/透视纹理映射 - Affine texture mapping (暂时只支持手动创建的纹理)
 * 透视修正 - Perspective correction
 * 深度缓存(1/z) - Depth buffer(1/z-buffer)
-* 简单CVV裁剪
+* 简单CVV裁剪 - Canonical View Volume Clip
 * 外部3D模型导入
 
 ## 展示:
@@ -34,4 +34,6 @@
 <image src="https://user-images.githubusercontent.com/57032017/114256731-0334f300-99ee-11eb-969d-69db3882f3a4.gif" width=60%>
 <image src="https://user-images.githubusercontent.com/57032017/114263461-21afe400-9a18-11eb-95a8-cdb0b2a91f79.gif" width=60%>
 <image src="https://user-images.githubusercontent.com/57032017/114267423-0c45b480-9a2e-11eb-92c2-e5833505c8de.png" width=60%>  
+<image src="https://user-images.githubusercontent.com/57032017/114396714-6ed6b600-9bd0-11eb-91f8-dd6c897d0652.gif" width=60%>  
 <image src="https://user-images.githubusercontent.com/57032017/114353745-f5bf6a80-9b9f-11eb-85ce-7937359b624b.png" width=60%>
+
