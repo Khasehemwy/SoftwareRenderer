@@ -4,6 +4,7 @@ Renderer::Renderer()
 {
 	features[RENDER_FEATURE_BACK_CULLING] = true;
 	features[RENDER_FEATURE_LIGHT] = true;
+	features[RENDER_FEATURE_CVV_CLIP] = true;
 }
 
 void Renderer::init(int width, int height, void* fb)
@@ -41,6 +42,10 @@ void Renderer::init(int width, int height, void* fb)
 	this->tex_height = 2;
 	this->tex_max_u = 1.0f;
 	this->tex_max_v = 1.0f;
+
+	this->min_clip_x = min_clip_y = 0;
+	this->max_clip_x = width;
+	this->max_clip_y = height;
 
 	transform_init(&this->transform, width, height);
 	this->render_state = RENDER_STATE_WIREFRAME;
@@ -227,46 +232,78 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	color_t didy_r = (top.color - right.color) / (top.pos.y - right.pos.y);
 	color_t color_left, color_right;
 
-	int y0 = (int)(ceil(top.pos.y));
-	int y1 = (int)(ceil(left.pos.y));
-	//绘制平底或平顶三角形
-	if (y0 <= y1) {
+	int y0 = 0, y1 = 0;
+	float y0f = top.pos.y, y1f = left.pos.y;
+	//赋初始值,暂不修正
+	//平底或平顶三角形
+	if (y0f <= y1f) {
 		/*平底三角形*/
-		//x初始值,并修正(浮点数转换整数需要修正)
-		xl = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxdy_l;
-		xr = top.pos.x + (ceil(top.pos.y) - top.pos.y) * dxdy_r;
+		xl = top.pos.x;
+		xr = top.pos.x;
 		//纹理
-		ul = top.tex.u + (ceil(top.pos.y) - top.pos.y) * dudy_l;
-		vl = top.tex.v + (ceil(top.pos.y) - top.pos.y) * dvdy_l;
-		ur = top.tex.u + (ceil(top.pos.y) - top.pos.y) * dudy_r;
-		vr = top.tex.v + (ceil(top.pos.y) - top.pos.y) * dvdy_r;
+		ul = top.tex.u;
+		vl = top.tex.v;
+		ur = top.tex.u;
+		vr = top.tex.v;
 		//颜色
-		color_left = top.color + (ceil(top.pos.y) - top.pos.y) * didy_l;
-		color_right = top.color + (ceil(top.pos.y) - top.pos.y) * didy_r;
+		color_left = top.color;
+		color_right = top.color;
 		//深度
-		rhwl = top.rhw + (ceil(top.pos.y) - top.pos.y) * drhwdy_l;
-		rhwr = top.rhw + (ceil(top.pos.y) - top.pos.y) * drhwdy_r;
+		rhwl = top.rhw;
+		rhwr = top.rhw;
 	}
 	else {
 		/*平顶三角形,类似平底三角形*/
 		std::swap(y0, y1);
-		xl = left.pos.x + (ceil(left.pos.y) - left.pos.y) * dxdy_l;
-		xr = right.pos.x + (ceil(right.pos.y) - right.pos.y) * dxdy_r;
-
-		ul = left.tex.u + (ceil(left.pos.y) - left.pos.y) * dudy_l;
-		vl = left.tex.v + (ceil(left.pos.y) - left.pos.y) * dvdy_l;
-		ur = right.tex.u + (ceil(right.pos.y) - right.pos.y) * dudy_r;
-		vr = right.tex.v + (ceil(right.pos.y) - right.pos.y) * dvdy_r;
-
-		color_left = left.color + (ceil(left.pos.y) - left.pos.y) * didy_l;
-		color_right = right.color + (ceil(right.pos.y) - right.pos.y) * didy_r;
-
-		rhwl = left.rhw + (ceil(left.pos.y) - left.pos.y) * drhwdy_l;
-		rhwr = right.rhw + (ceil(right.pos.y) - right.pos.y) * drhwdy_r;
+		std::swap(y0f, y1f);
+		xl = left.pos.x;
+		xr = right.pos.x;
+		ul = left.tex.u;
+		vl = left.tex.v;
+		ur = right.tex.u;
+		vr = right.tex.v;
+		color_left = left.color;
+		color_right = right.color;
+		rhwl = left.rhw;
+		rhwr = right.rhw;
 	}
+
+	//垂直裁剪
+	if (y1f < min_clip_y) { return; }
+	if (y0f < min_clip_y) {
+		float dy = min_clip_y - y0f;
+		xl += dxdy_l * dy;
+		xr += dxdy_r * dy;
+		ul += dudy_l * dy;
+		vl += dvdy_l * dy;
+		ur += dudy_r * dy;
+		vr += dvdy_r * dy;
+		color_left += didy_l * dy;
+		color_right += didy_r * dy;
+		rhwl += drhwdy_l * dy;
+		rhwr += drhwdy_r * dy;
+		y0f = min_clip_y;
+	}
+	y0 = (int)(ceil(y0f));
+	y1 = (int)(ceil(y1f));
+	//修正(浮点数转换整数需要修正)
+	float delta = y0 - y0f;
+	xl += delta * dxdy_l;
+	xr += delta * dxdy_r;
+	ul += delta * dudy_l;
+	vl += delta * dvdy_l;
+	ur += delta * dudy_r;
+	vr += delta * dvdy_r;
+	color_left += delta * didy_l;
+	color_right += delta * didy_r;
+	rhwl += delta * drhwdy_l;
+	rhwr += delta * drhwdy_r;
+
+
 
 	//从上往下绘制
 	for (int y = y0; y < y1; y++) {
+		if (y >= max_clip_y)break;
 		float dx = xr - xl;
 		float dux = (ur - ul) / dx;
 		float dvx = (vr - vl) / dx;
@@ -277,8 +314,42 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		color_t dix = (color_right - color_left) / dx;
 		color_t color = color_left + (ceil(xl) - xl) * dix;
 
-		for (int x = ceil(xl); x <= ceil(xr); x++) {
-			if (x >= 0 && x < this->width && y >= 0 && y < this->height) {
+		float xli = xl, xri = xr;
+		//调整到下一步
+		xl += dxdy_l;
+		ul += dudy_l;
+		vl += dvdy_l;
+		ur += dudy_r;
+		vr += dvdy_r;
+		xr += dxdy_r;
+		color_left = color_left + didy_l;
+		color_right = color_right + didy_r;
+		rhwl += drhwdy_l;
+		rhwr += drhwdy_r;
+
+		//水平裁剪
+		if (xri < min_clip_x) { continue; }
+		if (xli < min_clip_x) {
+			float dx = min_clip_x - xli;
+			color += dix * dx;
+			ui += dux * dx;
+			vi += dvx * dx;
+			rhwi += drhwdx * dx;
+			xli = min_clip_x;
+		}
+
+		//修正
+		int x0 = (int)ceil(xli);
+		int x1 = (int)ceil(xri);
+		float delta = x0 - xli;
+		color += delta * dix;
+		ui += delta * dux;
+		vi += delta * dvx;
+		rhwi += delta * drhwdx;
+
+		for (int x = x0; x <= x1; x++) {
+			if (x >= max_clip_x)break;
+			if (x >= 0 && y >= 0) {
 				if (rhwi >= this->z_buffer[y][x]) {
 					this->z_buffer[y][x] = rhwi;// 深度缓存
 					float wi = 1.0 / rhwi;
@@ -297,16 +368,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 			rhwi += drhwdx;
 		}
 
-		xl += dxdy_l;
-		ul += dudy_l;
-		vl += dvdy_l;
-		ur += dudy_r;
-		vr += dvdy_r;
-		xr += dxdy_r;
-		color_left = color_left + didy_l;
-		color_right = color_right + didy_r;
-		rhwl += drhwdy_l;
-		rhwr += drhwdy_r;
+
 	}
 }
 
@@ -519,16 +581,17 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	point_t p1, p2, p3;
 
 	// 先裁剪检测,减小不必要计算
-	p1 = v1.pos * transform.model * transform.view * transform.projection;
-	p2 = v2.pos * transform.model * transform.view * transform.projection;
-	p3 = v3.pos * transform.model * transform.view * transform.projection;
-	int cvv_jug = 0;
-	if (check_cvv(p1) != 0 && check_cvv(p2) != 0 && check_cvv(p3) != 0)cvv_jug = 1;
-	if (cvv_jug) {
-		//std::cout << "cvv cut\n";
-		return 1;
+	if (features[RENDER_FEATURE_CVV_CLIP]) {
+		p1 = v1.pos * transform.model * transform.view * transform.projection;
+		p2 = v2.pos * transform.model * transform.view * transform.projection;
+		p3 = v3.pos * transform.model * transform.view * transform.projection;
+		int cvv_jug = 0;
+		if (check_cvv(p1) != 0 && check_cvv(p2) != 0 && check_cvv(p3) != 0)cvv_jug = 1;
+		if (cvv_jug) {
+			//std::cout << "cvv cut\n";
+			return 1;
+		}
 	}
-
 
 	/* 将点映射到世界空间 */
 	p1 = (v1.pos) * this->transform.model;

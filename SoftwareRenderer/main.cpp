@@ -130,9 +130,12 @@ int main()
 	Renderer renderer_light;
 	renderer_light.init(window.screen_width, window.screen_height, window.screen_fb);
 	renderer_light.z_buffer = renderer.z_buffer;//因为深度缓存是每个Renderer独用的,但是现在想让它们一起显示.
+	Renderer renderer_ground;
+	renderer_ground.init(window.screen_width, window.screen_height, window.screen_fb);
+	renderer_ground.z_buffer = renderer.z_buffer;//因为深度缓存是每个Renderer独用的,但是现在想让它们一起显示.
 
 	Camera camera;
-	float posz = -7;
+	float posz = -15;
 	float posx = 0;
 	camera.init_target_zero({ posx,0,posz,1 });
 	camera.front = { 0,0,1,1 };
@@ -145,9 +148,17 @@ int main()
 	renderer.render_state = RENDER_STATE_TEXTURE;
 	//renderer.features[RENDER_FEATURE_BACK_CULLING] = false;
 	//renderer.features[RENDER_FEATURE_LIGHT] = false;
+
+	//renderer-light
 	renderer_light.camera = &camera;
 	renderer_light.render_state = RENDER_STATE_COLOR;
 	renderer_light.features[RENDER_FEATURE_LIGHT] = false;
+	//renderer-ground
+	renderer_ground.camera = &camera;
+	renderer_ground.render_state = RENDER_STATE_TEXTURE;
+	renderer_ground.features[RENDER_FEATURE_CVV_CLIP] = false;
+	//renderer_ground.features[RENDER_FEATURE_BACK_CULLING] = false;
+
 
 	vertex_t v1, v2, v3;
 	v1.pos = { -1,0,0,1 };
@@ -157,6 +168,7 @@ int main()
 	Texture texture;
 	texture.init();
 	renderer.set_texture(texture.texture, texture.max_size * 4, texture.max_size, texture.max_size);
+	renderer_ground.set_texture(texture.texture, texture.max_size * 4, texture.max_size, texture.max_size);
 
 	Light dir_light;
 	dir_light.direction = { -50,-50,-20,1 };
@@ -165,6 +177,7 @@ int main()
 	dir_light.specular = { 0.8f,0.7f,0.6f,1 };
 	dir_light.light_state = LIGHT_STATE_DIRECTIONAL;
 	renderer.add_light(dir_light);
+	renderer_ground.add_light(dir_light);
 
 	Light point_light;
 	point_light.pos = { 4,-1,1,1 };
@@ -173,6 +186,7 @@ int main()
 	point_light.specular = { 1.0f,1.0f,1.0f,1 };
 	point_light.light_state = LIGHT_STATE_POINT;
 	renderer.add_light(point_light);
+	renderer_ground.add_light(point_light);
 
 
 	Light spot_light;
@@ -184,6 +198,7 @@ int main()
 	spot_light.linear = 0.14;
 	spot_light.quadratic = 0.07;
 	renderer.add_light(spot_light);
+	renderer_ground.add_light(spot_light);
 
 	//时间
 	float delta_time = 0.0f;
@@ -255,6 +270,15 @@ int main()
 			draw_box(renderer);
 		}
 
+		//画地面
+		renderer_ground.transform = renderer.transform;
+		matrix_set_identity(&model);
+		model = matrix_scale(model, { 10,0.1,10,1 });
+		model = matrix_translate(model, { 0,-3,5,1 });
+		renderer_ground.transform.model = model;
+		renderer_ground.transform_update();
+		draw_box(renderer_ground);
+
 		//画点光源
 		renderer_light.transform = renderer.transform;
 		matrix_set_identity(&model);
@@ -271,6 +295,7 @@ int main()
 		renderer_light.transform.model = model;
 		renderer_light.transform_update();
 		draw_light(renderer_light);
+
 
 
 		//renderer.display_primitive(vert[1], vert[2], vert[3]);

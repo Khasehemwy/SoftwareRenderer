@@ -11,6 +11,7 @@
 //特性
 #define RENDER_FEATURE_BACK_CULLING 0b1	//背面剔除
 #define RENDER_FEATURE_LIGHT 0b10	//是否开启光照
+#define RENDER_FEATURE_CVV_CLIP 0b100	//是否开启cvv裁剪
 
 //片段着色器-着色算法
 #define RENDER_SHADER_PIXEL_SCANLINE 0b1		//扫描线算法-进行片段着色,更快但不够精准
@@ -32,6 +33,11 @@ public:
 	float tex_max_u;            // 纹理最大宽度：tex_width - 1
 	float tex_max_v;            // 纹理最大高度：tex_height - 1
 	int tex_limit_size;
+
+	float min_clip_x = 0;
+	float min_clip_y = 0;
+	float max_clip_x;
+	float max_clip_y;
 
 	UINT32 background;			// 背景颜色
 	UINT32 foreground;			// 线框颜色
