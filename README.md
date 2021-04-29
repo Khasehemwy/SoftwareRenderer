@@ -23,6 +23,7 @@
 * 透视修正 - Perspective correction
 * 深度缓存(1/z) - Depth buffer(1/z-buffer)
 * 简单CVV裁剪 - Canonical View Volume Clip
+* 水平裁剪,垂直裁剪 - Horizontal Clip and Vertical Clip
 * 外部3D模型导入
 
 ## 展示:
@@ -36,4 +37,5 @@
 <image src="https://user-images.githubusercontent.com/57032017/114267423-0c45b480-9a2e-11eb-92c2-e5833505c8de.png" width=60%>  
 <image src="https://user-images.githubusercontent.com/57032017/114396714-6ed6b600-9bd0-11eb-91f8-dd6c897d0652.gif" width=60%>  
 <image src="https://user-images.githubusercontent.com/57032017/114353745-f5bf6a80-9b9f-11eb-85ce-7937359b624b.png" width=60%>
+<image src="https://user-images.githubusercontent.com/57032017/116544593-ed965780-a921-11eb-9d71-d6a45c07503e.png" width=60%>
 
