@@ -5,39 +5,49 @@ Renderer::Renderer()
 	features[RENDER_FEATURE_BACK_CULLING] = true;
 	features[RENDER_FEATURE_LIGHT] = true;
 	features[RENDER_FEATURE_CVV_CLIP] = true;
+	features[RENDER_FEATURE_SHADOW] = true;
 }
 
 void Renderer::init(int width, int height, void* fb)
 {
-	__int32 need = sizeof(void*) * (height * 2 + 1024) + (width * height * 8);
+	//__int32 need = sizeof(UINT32) * (height * 2) + (width * height * 2);
+	//char* ptr = (char*)malloc(need + 64);
+	//assert(ptr);
+	//char* framebuf, * zbuf;
+
+	//this->frame_buffer = (UINT**)ptr;
+	//this->z_buffer = (float**)(ptr + sizeof(void*) * height);
+	//ptr += sizeof(void*) * height * 2;
+	//this->texture = (color_t**)ptr;
+	//framebuf = (char*)ptr;
+	//zbuf = (char*)ptr + width * height * sizeof(void*);
+	//if (fb != NULL)framebuf = (char*)fb;
+	//for (int j = 0; j < height; j++) {
+	//	this->frame_buffer[j] = (UINT32*)(framebuf + width * sizeof(void*) * j);
+	//	this->z_buffer[j] = (float*)(zbuf + width * sizeof(void*) * j);
+	//}
+	__int32 need = sizeof(UINT32) * ((height)+(width * height));
 	char* ptr = (char*)malloc(need + 64);
 	assert(ptr);
-	char* framebuf, * zbuf;
-
-	tex_limit_size = 1024;
-
-	this->frame_buffer = (UINT**)ptr;
-	this->z_buffer = (float**)(ptr + sizeof(void*) * height);
-	ptr += sizeof(void*) * height * 2;
-	this->texture = (UINT32**)ptr;
-	ptr += sizeof(void*) * tex_limit_size;
+	char* framebuf;
+	this->frame_buffer = (UINT32**)ptr;
+	ptr += sizeof(void*) * height;
 	framebuf = (char*)ptr;
-	zbuf = (char*)ptr + width * height * 4;
-	ptr += width * height * 8;
 	if (fb != NULL)framebuf = (char*)fb;
 	for (int j = 0; j < height; j++) {
-		this->frame_buffer[j] = (UINT32*)(framebuf + width * 4 * j);
-		this->z_buffer[j] = (float*)(zbuf + width * 4 * j);
+		this->frame_buffer[j] = (UINT32*)(framebuf + width * sizeof(void*) * j);
 	}
+
+	z_buffer = create_2D_array<float>(height, width);
 
 	this->width = width;
 	this->height = height;
 	this->background = 0x1D4E89;
 	this->foreground = 0x0;
 
-	this->texture[0] = (UINT32*)ptr;
-	this->texture[1] = (UINT32*)(ptr + 16);
-	memset(this->texture[0], 0, 64);
+	tex_limit_size = 8192;
+	this->texture = new Texture(width, height);
+
 	this->tex_width = 2;
 	this->tex_height = 2;
 	this->tex_max_u = 1.0f;
@@ -48,7 +58,7 @@ void Renderer::init(int width, int height, void* fb)
 	this->max_clip_y = height;
 
 	transform_init(&this->transform, width, height);
-	this->render_state = RENDER_STATE_WIREFRAME;
+	this->render_state = RENDER_STATE_COLOR;
 }
 
 void Renderer::destroy()
@@ -57,7 +67,7 @@ void Renderer::destroy()
 		free(this->frame_buffer);
 	this->frame_buffer = nullptr;
 	this->z_buffer = nullptr;
-	this->texture = nullptr;
+	this->texture->texture = nullptr;
 }
 
 void Renderer::clear()
@@ -75,27 +85,46 @@ void Renderer::clear()
 	}
 }
 
-void Renderer::set_texture(void* bits, long pitch, int w, int h)
+void Renderer::set_texture(const Texture& tex)
 {
-	char* ptr = (char*)bits;
+	texture->texture = tex.texture;
+	int w = tex.width;
+	int h = tex.height;
 	assert(w <= tex_limit_size && h <= tex_limit_size);
-	for (int j = 0; j < h; ptr += pitch, j++) 	// 重新计算每行纹理的指针
-		this->texture[j] = (UINT32*)ptr;
+	for (int j = 0; j < h; j++) 	// 重新计算每行纹理的指针
+		this->texture->texture[j] = (color_t*)(*texture->texture + w * j);
 	this->tex_width = w;
 	this->tex_height = h;
 	this->tex_max_u = (float)(w - 1);
 	this->tex_max_v = (float)(h - 1);
 }
 
-UINT32 Renderer::texture_read(float u, float v)
+color_t Renderer::texture_read(const Texture& tex, float u, float v)
 {
 	u = u * this->tex_max_u;
 	v = v * this->tex_max_v;
-	int x = (int)(u + 0.5f);
-	int y = (int)(v + 0.5f);
-	x = CMID(x, 0, this->tex_width - 1);
-	y = CMID(y, 0, this->tex_height - 1);
-	return this->texture[y][x];
+
+	//点采样
+	//int x = (int)(u + 0.5f);
+	//int y = (int)(v + 0.5f);
+	//x = CMID(x, 0, this->tex_width - 1);
+	//y = CMID(y, 0, this->tex_height - 1);
+	//return tex.texture[y][x];
+
+	//双线性滤波
+	int u_0 = CMID(floor(u), 0, this->tex_width - 1);
+	int u_1 = CMID(u_0 + 1, 0, this->tex_width - 1);
+	int v_0 = CMID(floor(v), 0, this->tex_height - 1);
+	int v_1 = CMID(v_0 + 1, 0, this->tex_height - 1);
+	float du_0 = u - floor(u);
+	float du_1 = floor(u) + 1 - u;
+	float dv_0 = v - floor(v);
+	float dv_1 = floor(v) + 1 - v;
+	color_t c_up, c_down, color;
+	c_up = tex.texture[v_0][u_0] * du_1 + tex.texture[v_0][u_1] * du_0;
+	c_down = tex.texture[v_1][u_0] * du_1 + tex.texture[v_1][u_1] * du_0;
+	color = c_up * dv_1 + c_down * dv_0;
+	return color;
 }
 
 void Renderer::draw_pixel(int x, int y, UINT32 color)
@@ -215,7 +244,7 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 
 void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right)
 {
-	//基于y的梯度,y增加1时,对应x/u/v/i增加的值
+	//基于y的梯度,y增加1时,对应x/u/v/i/rhw增加的值
 	float dxdy_l = (top.pos.x - left.pos.x) / (top.pos.y - left.pos.y);
 	float dudy_l = (top.tex.u - left.tex.u) / (top.pos.y - left.pos.y);
 	float dvdy_l = (top.tex.v - left.tex.v) / (top.pos.y - left.pos.y);
@@ -357,9 +386,32 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 						this->draw_pixel(x, y, color_trans_255(color * wi));
 					}
 					if (this->render_state == RENDER_STATE_TEXTURE) {
-						color_t color_tmp = color * color_trans_1f(this->texture_read(ui * wi, vi * wi));
+						color_t color_tmp = color * this->texture_read(*texture, ui * wi, vi * wi);
 						this->draw_pixel(x, y, color_trans_255(color_tmp * wi));
 					}
+					//阴影
+					//if (features[RENDER_FEATURE_SHADOW] == true) {
+						//point_t p_light_space;
+						//p_light_space.x = x;
+						//p_light_space.y = y;
+						//p_light_space.w = wi;
+						//p_light_space = anti_viewport_transform(p_light_space, this->transform);
+						//matrix_t inv_proj = matrix_get_inverse(transform.projection);
+						//matrix_t inv_view = matrix_get_inverse(transform.view);
+						//p_light_space = p_light_space * inv_proj;
+						//p_light_space = p_light_space * inv_view;
+						//////现在是世界空间的坐标,接下来变换到光源空间
+						//p_light_space = p_light_space * current_light->light_space_matrix;
+						//p_light_space = viewport_transform(p_light_space, this->transform);
+						//float rhwi_lt = 1.0f / p_light_space.w;
+						//int x_lt = p_light_space.x;
+						//int y_lt = p_light_space.y;
+						//if (rhwi_lt <= current_light->shadow_map->texture[y_lt][x_lt].r) {
+						//	UINT32 color_255 = frame_buffer[y][x];
+						//	color_t color_f = color_trans_1f(color_255);
+						//	this->draw_pixel(x, y, color_trans_255(current_light->ambient* color_f));
+						//}
+					//}
 				}
 			}
 			color = color + dix;
@@ -367,10 +419,9 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 			vi += dvx;
 			rhwi += drhwdx;
 		}
-
-
 	}
 }
+
 
 void Renderer::add_light(const Light& light)
 {
@@ -579,6 +630,7 @@ void Renderer::draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2,
 int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 {
 	point_t p1, p2, p3;
+	point_t p1_model, p2_model, p3_model;
 
 	// 先裁剪检测,减小不必要计算
 	if (features[RENDER_FEATURE_CVV_CLIP]) {
@@ -597,6 +649,9 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	p1 = (v1.pos) * this->transform.model;
 	p2 = (v2.pos) * this->transform.model;
 	p3 = (v3.pos) * this->transform.model;
+	p1_model = p1;
+	p2_model = p2;
+	p3_model = p3;
 
 	// 进行背面剔除(点的排列必须为左手螺旋后法向量朝外)
 	vector_t p1_p2 = p2 - p1, p1_p3 = p3 - p1;
@@ -604,7 +659,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	vector_t v_view = this->camera->pos - p1;
 	if (features[RENDER_FEATURE_BACK_CULLING]) {
 		float backCull_jug = vector_dot(v_normal, v_view);
-		if (backCull_jug <= 0.0f)return 1;
+		if (backCull_jug < 0.0f)return 1;
 	}
 
 	//光照处理
@@ -615,6 +670,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	if (this->features[RENDER_FEATURE_LIGHT] == true) {
 		color1 = color2 = color3 = { 0,0,0,0 };
 		for (auto& light : lights) {
+
 			// 环境光
 			color_t ambient1 = light->ambient * v1.color;
 			color_t ambient2 = light->ambient * v2.color;
@@ -745,6 +801,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 
 	// 线框绘制
 	if (this->render_state == RENDER_STATE_WIREFRAME) {
+		std::cout << "正在绘制线框\n";
 		this->draw_line((int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, this->foreground);
 		this->draw_line((int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, this->foreground);
 		this->draw_line((int)p2.x, (int)p2.y, (int)p3.x, (int)p3.y, this->foreground);
@@ -762,6 +819,33 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 			this->draw_triangle_BoundingBox(v1, v2, v3);
 	}
 
+	//if (features[RENDER_FEATURE_SHADOW] == true) {
+	//	if (render_state == RENDER_STATE_COLOR ||
+	//		render_state == RENDER_STATE_TEXTURE) {
+	//		//处理阴影
+	//		for (auto& light : this->lights) {
+	//			point_t p1, p2, p3;
+	//			p1 = p1_model * light->light_space_matrix;
+	//			p2 = p2_model * light->light_space_matrix;
+	//			p3 = p3_model * light->light_space_matrix;
+
+	//			p1 = viewport_transform(p1, this->transform);
+	//			p2 = viewport_transform(p2, this->transform);
+	//			p3 = viewport_transform(p3, this->transform);
+	//			vertex_t v1, v2, v3;
+	//			v1.pos = p1; v2.pos = p2; v3.pos = p3;
+	//			//v1.tex.u = p1.x; v1.tex.v = p1.y;
+	//			//v2.tex.u = p2.x; v2.tex.v = p2.y;
+	//			//v3.tex.u = p3.x; v3.tex.v = p3.y;
+	//			vertex_set_rhw(&v1);
+	//			vertex_set_rhw(&v2);
+	//			vertex_set_rhw(&v3);
+	//			current_light = light;
+	//			this->draw_triangle_shadow(v1, v2, v3);
+	//		}
+	//	}
+	//}
+
 	return 0;
 }
 
@@ -770,4 +854,32 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 void Renderer::transform_update()
 {
 	this->transform.transform = transform.model * transform.view * transform.projection;
+}
+
+void Renderer::FXAA(bool on)
+{
+	if (!on)return;
+	color_t color;
+	for (int j = 1; j < height-1; j++) {
+		for (int i = 1; i < width-1; i++) {
+			int cnt = 4;
+			color_t color_cur = color_trans_1f(frame_buffer[j][i])*4;
+			color = color_cur;
+			for (int jj = -1; jj <= 1; jj++) {
+				for (int ii = -1; ii <= 1; ii++) {
+					//float delta = 0;
+					//color_t color_aro = color_trans_1f(frame_buffer[j + jj][i + ii]);
+					//delta += abs(color_cur.r - color_aro.r);
+					//delta += abs(color_cur.g - color_aro.g);
+					//delta += abs(color_cur.b - color_aro.b);
+					//if (delta >= 0.75f) {
+						color += color_trans_1f(frame_buffer[j + jj][i + ii]);
+						cnt++;
+					//}
+				}
+			}
+			color = color / cnt;
+			frame_buffer[j][i] = color_trans_255(color);
+		}
+	}
 }

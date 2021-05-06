@@ -4,7 +4,7 @@ class Camera
 {
 public:
 	vector_t pos;
-	vector_t up, direction, right;
+	vector_t up, right;
 	vector_t front;
 	vector_t target;
 

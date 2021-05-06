@@ -3,9 +3,13 @@
 
 class Texture {
 public:
-	static const int max_size = 256;
-	UINT32 texture[max_size][max_size];
-	int w, h;
+	int width = 1024;
+	int height = 1024;
+	color_t** texture;
+
+	Texture();
+	Texture(int width, int height);
+	~Texture();
 
 	void init();
 };

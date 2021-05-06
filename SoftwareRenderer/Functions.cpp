@@ -38,7 +38,7 @@ vector_t matrix_apply(const vector_t& x, const matrix_t& m)
 
 vector_t operator*(const vector_t& x, const matrix_t& m)
 {
-	return matrix_apply(x,m);
+	return matrix_apply(x, m);
 }
 
 matrix_t matrix_translate_build(float x, float y, float z)
@@ -119,7 +119,6 @@ void matrix_set_identity(matrix_t* m) {
 void matrix_set_perspective(matrix_t* m, float fovy, float aspect, float z_near, float z_far) {
 	float fax = 1.0f / (float)tan(fovy * 0.5f);
 	matrix_set_zero(m);
-	//matrix_set_identity(m);//会导致裁剪失效
 	m->m[0][0] = (float)(fax / aspect);
 	m->m[1][1] = (float)(fax);
 	m->m[2][2] = z_far / (z_far - z_near);
@@ -127,14 +126,122 @@ void matrix_set_perspective(matrix_t* m, float fovy, float aspect, float z_near,
 	m->m[3][2] = -z_near * z_far / (z_far - z_near);
 }
 
+matrix_t matrix_ortho(float left, float right, float bottom, float top, float z_near, float z_far)
+{
+	matrix_t Result;
+	matrix_set_identity(&Result);
+	Result.m[0][0] = 2.0f / (right - left);
+	Result.m[1][1] = 2.0f / (top - bottom);
+	Result.m[2][2] = 1.0f / (z_far - z_near);
+	Result.m[3][0] = -(right + left) / (right - left);
+	Result.m[3][1] = -(top + bottom) / (top - bottom);
+	Result.m[3][2] = -z_near / (z_far - z_near);
+	Result.m[2][3] = 1;	// 将z值储存在w中
+	return Result;
+}
+
+matrix_t matrix_lookat(const vector_t& eye, const vector_t& at, const vector_t& up)
+{
+	vector_t Xaxis, Yaxis, Zaxis;
+
+	Zaxis = vector_normalize(at - eye);
+	Xaxis = vector_normalize(vector_cross(up, Zaxis));
+	Yaxis = vector_cross(Zaxis, Xaxis);
+
+	matrix_t m;
+	m.m[0][0] = Xaxis.x;
+	m.m[1][0] = Xaxis.y;
+	m.m[2][0] = Xaxis.z;
+	m.m[3][0] = -(vector_dot(Xaxis, eye));
+
+	m.m[0][1] = Yaxis.x;
+	m.m[1][1] = Yaxis.y;
+	m.m[2][1] = Yaxis.z;
+	m.m[3][1] = -(vector_dot(Yaxis, eye));
+
+	m.m[0][2] = Zaxis.x;
+	m.m[1][2] = Zaxis.y;
+	m.m[2][2] = Zaxis.z;
+	m.m[3][2] = -(vector_dot(Zaxis, eye));
+
+	m.m[0][3] = m.m[1][3] = m.m[2][3] = 0.0f;
+	m.m[3][3] = 1.0f;
+	return m;
+}
+
+//求逆矩阵
+matrix_t matrix_get_inverse(const matrix_t& m)
+{
+	int n = 4;
+	double flag = matrix_get_A(m, n);
+	matrix_t ans; matrix_set_identity(&ans);
+	matrix_t t;
+	if (flag == 0){
+		//std::cout << "no matrix inverse\n";
+		return ans;
+	}
+	else{
+		t = matrix_get_AStar(m);
+		for (int i = 0; i < n; i++){
+			for (int j = 0; j < n; j++){
+				ans.m[i][j] = t.m[i][j] / flag;
+			}
+		}
+	}
+	return ans;
+}
+//按第一行展开计算|A|
+float matrix_get_A(const matrix_t& m, int n)
+{
+	float ans = 0;
+	matrix_t temp;
+	int i, j, k;
+	for (i = 0; i < n; i++){
+		for (j = 0; j < n - 1; j++){
+			for (k = 0; k < n - 1; k++){
+				temp.m[j][k] = m.m[j + 1][(k >= i) ? k + 1 : k];
+			}
+		}
+		double t = matrix_get_A(temp, n - 1);
+		if (i % 2 == 0){
+			ans += m.m[0][i] * t;
+		}
+		else{
+			ans -= m.m[0][i] * t;
+		}
+	}
+	return ans;
+}
+//计算每一行每一列的每个元素所对应的余子式，组成A*
+matrix_t matrix_get_AStar(const matrix_t& m)
+{
+	int n = 4;
+	matrix_t ans, temp;
+	int i, j, k, t;
+	for (i = 0; i < n; i++) {
+		for (j = 0; j < n; j++) {
+			for (k = 0; k < n - 1; k++) {
+				for (t = 0; t < n - 1; t++) {
+					temp.m[k][t] = m.m[k >= i ? k + 1 : k][t >= j ? t + 1 : t];
+				}
+			}
+			ans.m[j][i] = matrix_get_A(temp, n - 1);
+			if ((i + j) % 2 == 1) {
+				ans.m[j][i] = -ans.m[j][i];
+			}
+		}
+	}
+	return ans;
+}
+
 vector_t transform_apply(const vector_t& x, const transform_t& ts)
 {
-	return (x)*(ts.transform);
+	return (x) * (ts.transform);
 }
 
 vector_t operator*(const vector_t& x, const transform_t& ts)
 {
-	return transform_apply(x,ts);
+	return transform_apply(x, ts);
 }
 
 vector_t vector_add(const vector_t& x, const vector_t& y)
@@ -165,7 +272,7 @@ vector_t vector_sub(const vector_t& x, const vector_t& y)
 
 vector_t operator-(const vector_t& x, const vector_t& y)
 {
-	return vector_sub(x,y);
+	return vector_sub(x, y);
 }
 
 const vector_t operator-(const vector_t& x)
@@ -175,7 +282,7 @@ const vector_t operator-(const vector_t& x)
 
 vector_t vector_normalize(const vector_t& v)
 {
-	vector_t z=v;
+	vector_t z = v;
 	float length = vector_length(v);
 	if (length != 0.0f) {
 		float inv = 1.0f / length;
@@ -372,6 +479,16 @@ vector_t viewport_transform(const vector_t& x, const transform_t& ts)
 	return y;
 }
 
+vector_t anti_viewport_transform(const vector_t& x, const transform_t& ts)
+{
+	vector_t y;
+	y.x = (x.x * 2.0f * (1.0f / ts.w) - 1.0f) * x.w;
+	y.y = (1.0f - (x.y * 2.0f * (1.0f / ts.h))) * x.w;
+	y.z = x.z * x.w;
+	y.w = x.w;
+	return y;
+}
+
 int check_cvv(const vector_t& v)
 {
 	float w = v.w;
@@ -392,4 +509,3 @@ float interp(float length_total, float length_place, float x1, float x2)
 	float t = length_place / length_total;
 	return (x1 + (x2 - x1) * t);
 }
-

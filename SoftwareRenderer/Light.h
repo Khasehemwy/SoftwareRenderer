@@ -14,6 +14,10 @@ public:
 	color_t diffuse;
 	color_t specular;
 
+	//阴影
+	matrix_t light_space_matrix;	//view * projection
+	Texture* shadow_map = nullptr;
+
 	//点光源所用
 	float constant = 1.0f;
 	float linear = 0.045f;

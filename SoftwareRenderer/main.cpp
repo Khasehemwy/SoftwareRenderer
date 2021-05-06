@@ -5,6 +5,7 @@ float cursor_pitch = 0.0f;
 float cursor_last_x = 400, cursor_last_y = 300;
 float gl_x_offset = 90.0f;
 float gl_y_offset = 0.0f;
+float fov = 45.0f;
 
 void mouse_callback(Camera& camera)
 {
@@ -132,7 +133,8 @@ int main()
 	renderer_light.z_buffer = renderer.z_buffer;//因为深度缓存是每个Renderer独用的,但是现在想让它们一起显示.
 	Renderer renderer_ground;
 	renderer_ground.init(window.screen_width, window.screen_height, window.screen_fb);
-	renderer_ground.z_buffer = renderer.z_buffer;//因为深度缓存是每个Renderer独用的,但是现在想让它们一起显示.
+	renderer_ground.z_buffer = renderer.z_buffer;
+
 
 	Camera camera;
 	float posz = -15;
@@ -160,20 +162,17 @@ int main()
 	//renderer_ground.features[RENDER_FEATURE_BACK_CULLING] = false;
 
 
-	vertex_t v1, v2, v3;
-	v1.pos = { -1,0,0,1 };
-	v2.pos = { 1,0,0,1 };
-	v3.pos = { 0,1,0,1 };
-
 	Texture texture;
 	texture.init();
-	renderer.set_texture(texture.texture, texture.max_size * 4, texture.max_size, texture.max_size);
-	renderer_ground.set_texture(texture.texture, texture.max_size * 4, texture.max_size, texture.max_size);
+	renderer.set_texture(texture);
+	renderer_ground.set_texture(texture);
 
 	Light dir_light;
+	dir_light.pos = { 25,25,10,1 };
 	dir_light.direction = { -50,-50,-20,1 };
+	//dir_light.direction = { 0,0,0,1 };
 	dir_light.ambient = { 0.3f,0.2f,0.1f,1 };
-	dir_light.diffuse = { 0.3f,0.2f,0.1f,1 };
+	dir_light.diffuse = { 0.6f,0.6f,0.6f,1 };
 	dir_light.specular = { 0.8f,0.7f,0.6f,1 };
 	dir_light.light_state = LIGHT_STATE_DIRECTIONAL;
 	renderer.add_light(dir_light);
@@ -199,6 +198,28 @@ int main()
 	spot_light.quadratic = 0.07;
 	renderer.add_light(spot_light);
 	renderer_ground.add_light(spot_light);
+
+	//阴影
+	Renderer renderer_shadow;
+	renderer_shadow.init(window.screen_width, window.screen_height, window.screen_fb);
+	renderer_shadow.render_state = RENDER_STATE_TEXTURE;
+	renderer_shadow.features[RENDER_FEATURE_SHADOW] = false;
+	renderer_shadow.features[RENDER_FEATURE_CVV_CLIP] = false;
+	Camera shadow_camera;
+	renderer_shadow.camera = &shadow_camera;
+	shadow_camera.pos = dir_light.pos;
+	shadow_camera.init_target_zero(dir_light.pos);
+	shadow_camera.front = dir_light.direction;
+	shadow_camera.target = shadow_camera.pos + shadow_camera.front;
+	renderer_shadow.transform.view = matrix_lookat(shadow_camera.pos, shadow_camera.target, shadow_camera.up);
+	renderer_shadow.transform.projection = matrix_ortho(-0.5, 0.5, -0.5, 0.5, 0.1f, 100.0f);
+	dir_light.shadow_map = new Texture(window.screen_width, window.screen_height);
+
+	//设置主renderer
+	float aspect = (float)renderer.width / ((float)renderer.height);
+	//camera = shadow_camera;
+	renderer.current_light = &dir_light;
+	renderer_ground.current_light = &dir_light;
 
 	//时间
 	float delta_time = 0.0f;
@@ -250,17 +271,51 @@ int main()
 		if (window.screen_keys[KEY_I]) { point_light.pos.z += 0.01f; }
 		if (window.screen_keys[KEY_K]) { point_light.pos.z -= 0.01f; }
 
+		if (window.screen_keys[KEY_Y]) { fov -= 0.04f; }
+		if (window.screen_keys[KEY_H]) { fov += 0.04f; }
+		fov = CMID(fov, 1.0f, 60.0f);
+
+		matrix_t model;
+		//*************阴影*************//
+		//////只渲染dir_light的阴影
+		//renderer_shadow.transform.view = matrix_lookat(renderer_shadow.camera->pos, renderer_shadow.camera->target, renderer_shadow.camera->up);
+		//////用阴影shader渲染场景里所有东西
+		//for (int i = 0; i < 10; i++) {//盒子
+		//	matrix_set_identity(&model);
+		//	model = matrix_translate(model, cubePositions[i]);
+		//	model = model * matrix_rotate_build(angle, rotate_axis);
+		//	renderer_shadow.transform.model = model;
+		//	renderer_shadow.transform_update();
+		//	draw_box(renderer_shadow);
+		//}
+		//matrix_set_identity(&model);//地面
+		//model = matrix_scale(model, { 10,0.1,10,1 });
+		//model = matrix_translate(model, { 0,-3,5,1 });
+		//renderer_shadow.transform.model = model;
+		//renderer_shadow.transform_update();
+		//draw_box(renderer_shadow);
+		//for (int j = 0; j < renderer_shadow.height; j++) {
+		//	for (int i = 0; i < renderer_shadow.width; i++) {
+		//		dir_light.shadow_map->texture[j][i].r = renderer_shadow.z_buffer[j][i];
+		//	}
+		//}
+		//dir_light.light_space_matrix = renderer_shadow.transform.view * renderer_shadow.transform.projection;
+		//renderer.clear();
+		//************正常场景************//
 		//更新摄像机
 		camera.target = camera.pos + camera.front;
-		matrix_t view = camera.set_lookat(camera.pos, camera.target, camera.up);
+		matrix_t view = matrix_lookat(renderer.camera->pos, renderer.camera->target, renderer.camera->up);
 		renderer.transform.view = view;
+
+		matrix_set_perspective(&renderer.transform.projection, fov, aspect, 0.1f, 100.0f);
+		//renderer.transform.projection = matrix_ortho(-0.5, 0.5, -0.5, 0.5, 0.1f, 100.0f);
 
 		//设置聚光
 		spot_light.pos = camera.pos;
 		spot_light.direction = camera.front;
 
 		//画盒子
-		matrix_t model;
+		//matrix_t model;
 		for (int i = 0; i < 10; i++) {
 			matrix_set_identity(&model);
 			model = matrix_translate(model, cubePositions[i]);
@@ -305,6 +360,7 @@ int main()
 		renderer.draw_line(10, 10, 20, 10, 0x0);
 		renderer.draw_line(10, 10, 10, 20, 0x0);
 
+		//renderer.FXAA(true);
 		window.screen_update();
 	}
 
