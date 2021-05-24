@@ -1,6 +1,8 @@
 #pragma once
 #include"Includes.h"
 
+#ifdef __ASSIMP_NEED
+
 class Model
 {
 public:
@@ -16,3 +18,4 @@ private:
 	Mesh process_mesh(aiMesh* mesh, const aiScene* scene);
 
 };
+#endif // __ASSIMP_NEED

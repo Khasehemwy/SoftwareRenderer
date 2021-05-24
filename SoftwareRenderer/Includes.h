@@ -10,7 +10,7 @@
 #include<tchar.h>
 #include<chrono>
 
-#define __ASSIMP_NEED
+//#define __ASSIMP_NEED
 
 class Texture;
 class Camera;

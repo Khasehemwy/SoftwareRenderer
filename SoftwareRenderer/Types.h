@@ -33,7 +33,8 @@ typedef unsigned int UINT32;
 
 typedef struct { float m[4][4]; } matrix_t;
 typedef struct { float x, y, z, w; } vector_t;
-typedef vector_t point_t;
+using point_t = vector_t;
+//typedef vector_t point_t;
 typedef struct { float r, g, b, a; } color_t;
 typedef struct { float u, v; } texcoord_t;
 

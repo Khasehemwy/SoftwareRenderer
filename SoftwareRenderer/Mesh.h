@@ -1,6 +1,9 @@
 #pragma once
 #include"Includes.h"
 
+#ifdef __ASSIMP_NEED
+
+
 class Mesh
 {
 public:
@@ -15,4 +18,5 @@ public:
 private:
 
 };
+#endif // __ASSIMP_NEED
 

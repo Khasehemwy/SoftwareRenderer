@@ -1,4 +1,6 @@
 #include"Mesh.h"
+#ifdef __ASSIMP_NEED
+
 
 Mesh::Mesh(std::vector<vertex_t> vertices, std::vector<UINT32> indices):
 	vertices(vertices),
@@ -20,3 +22,5 @@ void Mesh::draw(Renderer& renderer)
 		renderer.display_primitive(v1, v2, v3);
 	}
 }
+
+#endif // __ASSIMP_NEED

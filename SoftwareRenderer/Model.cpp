@@ -1,5 +1,7 @@
 #include"Model.h"
 
+#ifdef __ASSIMP_NEED
+
 Model::Model(const char* path)
 {
 	load_model(path);
@@ -72,3 +74,5 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 
 	return Mesh(vertices,indices);
 }
+
+#endif // __ASSIMP_NEED

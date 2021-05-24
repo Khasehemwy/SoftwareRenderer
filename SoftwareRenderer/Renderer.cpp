@@ -801,7 +801,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 
 	// 线框绘制
 	if (this->render_state == RENDER_STATE_WIREFRAME) {
-		std::cout << "正在绘制线框\n";
+		//std::cout << "正在绘制线框\n";
 		this->draw_line((int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, this->foreground);
 		this->draw_line((int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, this->foreground);
 		this->draw_line((int)p2.x, (int)p2.y, (int)p3.x, (int)p3.y, this->foreground);
