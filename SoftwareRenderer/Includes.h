@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #pragma warning(disable:4244)
 #pragma warning(disable:4838)
 #pragma warning(disable:4305)
@@ -9,6 +9,8 @@
 #include<windows.h>
 #include<tchar.h>
 #include<chrono>
+
+
 
 //#define __ASSIMP_NEED
 

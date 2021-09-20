@@ -1,38 +1,39 @@
-#pragma once
+ï»¿#pragma once
 #include"Includes.h"
 
 
-//äÖÈ¾Ä£Ê½
-#define RENDER_STATE_WIREFRAME 0b1		// äÖÈ¾Ïß¿ò
-#define RENDER_STATE_COLOR 0b10			// äÖÈ¾ÑÕÉ«
-#define RENDER_STATE_TEXTURE 0b100		// äÖÈ¾ÎÆÀí
+//æ¸²æŸ“æ¨¡å¼
+#define RENDER_STATE_WIREFRAME 0b1		// æ¸²æŸ“çº¿æ¡†
+#define RENDER_STATE_COLOR 0b10			// æ¸²æŸ“é¢œè‰²
+#define RENDER_STATE_TEXTURE 0b100		// æ¸²æŸ“çº¹ç†
+#define RENDER_STATE_DEEP 0b1000		// æ¸²æŸ“çº¹ç†
 
 
-//ÌØĞÔ
-#define RENDER_FEATURE_BACK_CULLING 0b1	//±³ÃæÌŞ³ı
-#define RENDER_FEATURE_LIGHT 0b10	//ÊÇ·ñ¿ªÆô¹âÕÕ
-#define RENDER_FEATURE_CVV_CLIP 0b100	//ÊÇ·ñ¿ªÆôcvv²Ã¼ô
-#define RENDER_FEATURE_SHADOW 0b1000	//ÊÇ·ñ¿ªÆôÒõÓ°
+//ç‰¹æ€§
+#define RENDER_FEATURE_BACK_CULLING 0b1	//èƒŒé¢å‰”é™¤
+#define RENDER_FEATURE_LIGHT 0b10		//æ˜¯å¦å¼€å¯å…‰ç…§
+#define RENDER_FEATURE_CVV_CLIP 0b100	//æ˜¯å¦å¼€å¯cvvè£å‰ª
+#define RENDER_FEATURE_SHADOW 0b1000	//æ˜¯å¦å¼€å¯é˜´å½±
 
-//Æ¬¶Î×ÅÉ«Æ÷-×ÅÉ«Ëã·¨
-#define RENDER_SHADER_PIXEL_SCANLINE 0b1		//É¨ÃèÏßËã·¨-½øĞĞÆ¬¶Î×ÅÉ«,¸ü¿ìµ«²»¹»¾«×¼
-#define RENDER_SHADER_PIXEL_BOUNDINGBOX 0b10		//±ß½çºĞËã·¨-½øĞĞÆ¬¶Î×ÅÉ«,¾«×¼µ«²»¿ì
+//Æ¬ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½-ï¿½ï¿½É«ï¿½ã·¨
+#define RENDER_SHADER_PIXEL_SCANLINE 0b1		//É¨ï¿½ï¿½ï¿½ï¿½ï¿½ã·¨-ï¿½ï¿½ï¿½ï¿½Æ¬ï¿½ï¿½ï¿½ï¿½É«,ï¿½ï¿½ï¿½ìµ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¼
+#define RENDER_SHADER_PIXEL_BOUNDINGBOX 0b10		//ï¿½ß½ï¿½ï¿½ï¿½ã·¨-ï¿½ï¿½ï¿½ï¿½Æ¬ï¿½ï¿½ï¿½ï¿½É«,ï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 class Renderer
 {
 public:
-	transform_t transform;      // ×ø±ê±ä»»Æ÷
+	transform_t transform;      // åæ ‡å˜æ¢å™¨
 	const Camera* camera = nullptr;
 	float width, height;
 
-	UINT32** frame_buffer = nullptr;		// ÏñËØ»º´æ£ºframe_buffer[y] ´ú±íµÚ yĞĞ,ÏñËØ»º´æÎª²»Í¬Renderer¹²ÓÃ
-	float** z_buffer = nullptr;				// Éî¶È»º´æ£ºz_buffer[y] ÎªµÚ yĞĞÖ¸Õë,Éî¶È»º´æÎªÃ¿¸öRenderer¶ÀÓÃ
+	UINT32** frame_buffer = nullptr;		// åƒç´ ç¼“å­˜ï¼šframe_buffer[y] ä»£è¡¨ç¬¬ yè¡Œ,åƒç´ ç¼“å­˜ä¸ºä¸åŒRendererå…±ç”¨
+	float** z_buffer = nullptr;				// æ·±åº¦ç¼“å­˜ï¼šz_buffer[y] ä¸ºç¬¬ yè¡ŒæŒ‡é’ˆ,æ·±åº¦ç¼“å­˜ä¸ºæ¯ä¸ªRendererç‹¬ç”¨
 
-	Texture* texture;			// ÎÆÀí£ºÃ¿ĞĞË÷Òı
-	int tex_width;              // ÎÆÀí¿í¶È
-	int tex_height;             // ÎÆÀí¸ß¶È
-	float tex_max_u;            // ÎÆÀí×î´ó¿í¶È£ºtex_width - 1
-	float tex_max_v;            // ÎÆÀí×î´ó¸ß¶È£ºtex_height - 1
+	Texture* texture;			// çº¹ç†ï¼šæ¯è¡Œç´¢å¼•
+	int tex_width;              // çº¹ç†å®½åº¦
+	int tex_height;             // çº¹ç†é«˜åº¦
+	float tex_max_u;            // çº¹ç†æœ€å¤§å®½åº¦ï¼štex_width - 1
+	float tex_max_v;            // çº¹ç†æœ€å¤§é«˜åº¦ï¼štex_height - 1
 	int tex_limit_size;
 
 	float min_clip_x = 0;
@@ -40,13 +41,13 @@ public:
 	float max_clip_x;
 	float max_clip_y;
 
-	UINT32 background;			// ±³¾°ÑÕÉ«
-	UINT32 foreground;			// Ïß¿òÑÕÉ«
+	UINT32 background;			// èƒŒæ™¯é¢œè‰²
+	UINT32 foreground;			// çº¿æ¡†é¢œè‰²
 
-	int render_state = RENDER_STATE_WIREFRAME;	// äÖÈ¾×´Ì¬
-	int render_shader_state = RENDER_SHADER_PIXEL_SCANLINE;	// Æ¬¶Î×ÅÉ«Æ÷Ëã·¨Ñ¡Ôñ
+	int render_state = RENDER_STATE_WIREFRAME;	// æ¸²æŸ“çŠ¶æ€
+	int render_shader_state = RENDER_SHADER_PIXEL_SCANLINE;	// ç‰‡æ®µç€è‰²å™¨ç®—æ³•é€‰æ‹©
 
-	std::map<int, int> features;	//ÌØĞÔ
+	std::map<int, int> features;	//ç‰¹æ€§
 
 	std::vector<const Light*>lights;
 	const Light* current_light;

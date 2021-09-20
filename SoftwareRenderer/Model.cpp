@@ -1,4 +1,4 @@
-#include"Model.h"
+ï»¿#include"Model.h"
 
 #ifdef __ASSIMP_NEED
 
@@ -31,13 +31,13 @@ void Model::load_model(std::string path)
 
 void Model::process_node(aiNode* node, const aiScene* scene)
 {
-	// ´¦Àí½ÚµãËùÓĞµÄÍø¸ñ£¨Èç¹ûÓĞµÄ»°£©
+	// å¤„ç†èŠ‚ç‚¹æ‰€æœ‰çš„ç½‘æ ¼ï¼ˆå¦‚æœæœ‰çš„è¯ï¼‰
 	for (unsigned int i = 0; i < node->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 		meshes.push_back(process_mesh(mesh, scene));
 	}
-	// ´¦Àí×Ó½Úµã
+	// å¤„ç†å­èŠ‚ç‚¹
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
 		process_node(node->mChildren[i], scene);
@@ -49,7 +49,7 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 	std::vector<vertex_t> vertices;
 	std::vector<unsigned int> indices;
 
-	// ´¦Àí¶¥µãÎ»ÖÃ
+	// å¤„ç†é¡¶ç‚¹ä½ç½®
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 	{
 		vertex_t vertex;
@@ -63,7 +63,7 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 		vertices.push_back(vertex);
 	}
 
-	// ´¦ÀíË÷Òı
+	// å¤„ç†ç´¢å¼•
 	for (unsigned int i = 0; i < mesh->mNumFaces; i++)
 	{
 		aiFace face = mesh->mFaces[i];

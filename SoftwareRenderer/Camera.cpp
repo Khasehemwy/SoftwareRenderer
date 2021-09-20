@@ -1,4 +1,4 @@
-#include "Camera.h"
+﻿#include "Camera.h"
 
 matrix_t Camera::set_lookat(const vector_t& eye, const vector_t& at, const vector_t& up)
 {

@@ -1,4 +1,4 @@
-#include"Includes.h"
+ï»¿#include"Includes.h"
 
 float cursor_yaw = 0.0f;
 float cursor_pitch = 0.0f;
@@ -71,7 +71,7 @@ int main()
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
 	Renderer renderer_light;
 	renderer_light.init(window.screen_width, window.screen_height, window.screen_fb);
-	renderer_light.z_buffer = renderer.z_buffer;//ÒòÎªÉî¶È»º´æÊÇÃ¿¸öRenderer¶ÀÓÃµÄ,µ«ÊÇÏÖÔÚÏëÈÃËüÃÇÒ»ÆğÏÔÊ¾.
+	renderer_light.z_buffer = renderer.z_buffer;//å› ä¸ºæ·±åº¦ç¼“å­˜æ˜¯æ¯ä¸ªRendererç‹¬ç”¨çš„,ä½†æ˜¯ç°åœ¨æƒ³è®©å®ƒä»¬ä¸€èµ·æ˜¾ç¤º.
 
 
 	Camera camera;
@@ -94,7 +94,7 @@ int main()
 
 	Model models("resources/pacman/Pacman.stl");
 
-	//¹âÔ´
+	//å…‰æº
 	Light point_light;
 	point_light.pos = { 4,-1,1,1 };
 	point_light.ambient = { 0.2f,0.2f,0.2f,1 };
@@ -103,19 +103,19 @@ int main()
 	point_light.light_state = LIGHT_STATE_POINT;
 	//renderer.add_light(point_light);
 
-	//Ê±¼ä
+	//æ—¶é—´
 	float delta_time = 0.0f;
 	float last_frame = 0.0f;
 
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
-		//Ê±¼ä,Ê¹ÒÆ¶¯ËÙ¶È²»ÊÜÖ¡ÂÊ±ä»¯
-		//²»ºÃÓÃ,ÔİÊ±ÉáÆú
+		//æ—¶é—´,ä½¿ç§»åŠ¨é€Ÿåº¦ä¸å—å¸§ç‡å˜åŒ–
+		//ä¸å¥½ç”¨,æš‚æ—¶èˆå¼ƒ
 		float current_frame = time_get();
 		delta_time = current_frame - last_frame;
 		last_frame = current_frame;
 		camera.speed = 0.1f;
 
-		//Êó±ê
+		//é¼ æ ‡
 		mouse_callback(camera);
 		gl_x_offset = 0; gl_y_offset = 0;
 
@@ -145,7 +145,7 @@ int main()
 				camera.speed * vector_normalize(vector_cross(camera.up, vector_cross(camera.front, camera.up)));
 		}
 
-		//¸üĞÂÉãÏñ»ú
+		//æ›´æ–°æ‘„åƒæœº
 		camera.target = camera.pos + camera.front;
 		matrix_t view = camera.set_lookat(camera.pos, camera.target, camera.up);
 		renderer.transform.view = view;
@@ -159,7 +159,7 @@ int main()
 		renderer.transform_update();
 		models.draw(renderer);
 
-		//»­¹âÔ´
+		//ç”»å…‰æº
 		renderer_light.transform = renderer.transform;
 		matrix_set_identity(&model);
 		model = matrix_scale(model, { 0.2,0.2,0.2,1 });

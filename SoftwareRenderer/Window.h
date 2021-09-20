@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include"Includes.h"
 
 class Window
@@ -13,10 +13,10 @@ public:
 	HWND* screen_handle;
 
 	Window();
-	int screen_init(float w, float h, const TCHAR* title);	// ÆÁÄ»³õÊ¼»¯
-	int screen_close(void);								// ¹Ø±ÕÆÁÄ»
-	void screen_dispatch(void);							// ´¦ÀíÏûÏ¢
-	void screen_update(void);							// ÏÔÊ¾ FrameBuffer
+	int screen_init(float w, float h, const TCHAR* title);	// å±å¹•åˆå§‹åŒ–
+	int screen_close(void);								// å…³é—­å±å¹•
+	void screen_dispatch(void);							// å¤„ç†æ¶ˆæ¯
+	void screen_update(void);							// æ˜¾ç¤º FrameBuffer
 
 	// win32 event handler
 	static LRESULT screen_events(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar);

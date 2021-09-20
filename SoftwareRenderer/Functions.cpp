@@ -1,4 +1,4 @@
-#include"Functions.h"
+ï»¿#include"Functions.h"
 
 void matrix_set_zero(matrix_t* m) {
 	m->m[0][0] = m->m[0][1] = m->m[0][2] = m->m[0][3] = 0.0f;
@@ -50,7 +50,7 @@ matrix_t matrix_translate_build(float x, float y, float z)
 	return m_ret;
 }
 
-//Ê¹ÓÃ»¡¶ÈÖÆµÄ½Ç¶È
+//ä½¿ç”¨å¼§åº¦åˆ¶çš„è§’åº¦
 matrix_t matrix_rotate_build(float angle, const vector_t& v)
 {
 	float x = v.x, y = v.y, z = v.z;
@@ -122,7 +122,7 @@ void matrix_set_perspective(matrix_t* m, float fovy, float aspect, float z_near,
 	m->m[0][0] = (float)(fax / aspect);
 	m->m[1][1] = (float)(fax);
 	m->m[2][2] = z_far / (z_far - z_near);
-	m->m[2][3] = 1;	// ½«zÖµ´¢´æÔÚwÖĞ
+	m->m[2][3] = 1;	// å°†zå€¼å‚¨å­˜åœ¨wä¸­
 	m->m[3][2] = -z_near * z_far / (z_far - z_near);
 }
 
@@ -136,7 +136,7 @@ matrix_t matrix_ortho(float left, float right, float bottom, float top, float z_
 	Result.m[3][0] = -(right + left) / (right - left);
 	Result.m[3][1] = -(top + bottom) / (top - bottom);
 	Result.m[3][2] = -z_near / (z_far - z_near);
-	Result.m[2][3] = 1;	// ½«zÖµ´¢´æÔÚwÖĞ
+	Result.m[2][3] = 1;	// å°†zå€¼å‚¨å­˜åœ¨wä¸­
 	return Result;
 }
 
@@ -169,7 +169,7 @@ matrix_t matrix_lookat(const vector_t& eye, const vector_t& at, const vector_t& 
 	return m;
 }
 
-//ÇóÄæ¾ØÕó
+//æ±‚é€†çŸ©é˜µ
 matrix_t matrix_get_inverse(const matrix_t& m)
 {
 	int n = 4;
@@ -190,7 +190,7 @@ matrix_t matrix_get_inverse(const matrix_t& m)
 	}
 	return ans;
 }
-//°´µÚÒ»ĞĞÕ¹¿ª¼ÆËã|A|
+//æŒ‰ç¬¬ä¸€è¡Œå±•å¼€è®¡ç®—|A|
 float matrix_get_A(const matrix_t& m, int n)
 {
 	float ans = 0;
@@ -212,7 +212,7 @@ float matrix_get_A(const matrix_t& m, int n)
 	}
 	return ans;
 }
-//¼ÆËãÃ¿Ò»ĞĞÃ¿Ò»ÁĞµÄÃ¿¸öÔªËØËù¶ÔÓ¦µÄÓà×ÓÊ½£¬×é³ÉA*
+//è®¡ç®—æ¯ä¸€è¡Œæ¯ä¸€åˆ—çš„æ¯ä¸ªå…ƒç´ æ‰€å¯¹åº”çš„ä½™å­å¼ï¼Œç»„æˆA*
 matrix_t matrix_get_AStar(const matrix_t& m)
 {
 	int n = 4;
@@ -332,7 +332,7 @@ vector_t operator*(const float y, const vector_t& x)
 	return z;
 }
 
-//IÎª´Ó¹âÔ´Ö¸ÏòÄ¿±êµÄ·½ÏòÏòÁ¿,nÎª¶¥µãµ¥Î»·¨ÏòÁ¿.·µ»ØÒÔÄ¿±êÎªÆğµãµÄ·´Éä¹âÏòÁ¿
+//Iä¸ºä»å…‰æºæŒ‡å‘ç›®æ ‡çš„æ–¹å‘å‘é‡,nä¸ºé¡¶ç‚¹å•ä½æ³•å‘é‡.è¿”å›ä»¥ç›®æ ‡ä¸ºèµ·ç‚¹çš„åå°„å…‰å‘é‡
 vector_t vector_reflect(const vector_t& I, const vector_t& N)
 {
 	return I - 2 * N * vector_dot(N, I);
@@ -493,8 +493,8 @@ int check_cvv(const vector_t& v)
 {
 	float w = v.w;
 	int check = 0;
-	// ½øĞĞprojectionÓ³Éäºó,x/y¶¼ÊÇx*z/y*zµÄĞÎÊ½,ÔÚprojectionÒÔºóx/yÓ¦¸ÃÔÚ[-1,1]Ö®¼ä,-
-	// -ÏÖÔÚ*z,ËùÒÔx/yÓ¦¸ÃÔÚ[-z,z]Ö®¼ä,×¢ÒâÕâÀïµÄz¶¼ÊÇÖ¸projectionÒÔÇ°µÄzÖµ,¼´ÏÖÔÚµÄw.
+	// è¿›è¡Œprojectionæ˜ å°„å,x/yéƒ½æ˜¯x*z/y*zçš„å½¢å¼,åœ¨projectionä»¥åx/yåº”è¯¥åœ¨[-1,1]ä¹‹é—´,-
+	// -ç°åœ¨*z,æ‰€ä»¥x/yåº”è¯¥åœ¨[-z,z]ä¹‹é—´,æ³¨æ„è¿™é‡Œçš„zéƒ½æ˜¯æŒ‡projectionä»¥å‰çš„zå€¼,å³ç°åœ¨çš„w.
 	if (v.z < 0.0f) check |= 1;
 	if (v.z > w) check |= 2;
 	if (v.x < -w) check |= 4;

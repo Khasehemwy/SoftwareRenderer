@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include"Includes.h"
 
 #define PI					3.1415926f
@@ -41,9 +41,9 @@ typedef struct { float u, v; } texcoord_t;
 typedef struct { point_t pos; color_t color; texcoord_t tex; float rhw; } vertex_t;
 
 typedef struct {
-	matrix_t model;         // ÊÀ½ç×ø±ê±ä»»
-	matrix_t view;          // ÉãÓ°»ú×ø±ê±ä»»
-	matrix_t projection;    // Í¶Ó°±ä»»
+	matrix_t model;         // ä¸–ç•Œåæ ‡å˜æ¢
+	matrix_t view;          // æ‘„å½±æœºåæ ‡å˜æ¢
+	matrix_t projection;    // æŠ•å½±å˜æ¢
 	matrix_t transform;     // transform = model * view * projection;
-	float w, h;             // ÆÁÄ»´óĞ¡
+	float w, h;             // å±å¹•å¤§å°
 }	transform_t;

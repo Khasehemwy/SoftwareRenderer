@@ -1,4 +1,4 @@
-#include "Renderer.h"
+ï»¿#include "Renderer.h"
 
 Renderer::Renderer()
 {
@@ -91,7 +91,7 @@ void Renderer::set_texture(const Texture& tex)
 	int w = tex.width;
 	int h = tex.height;
 	assert(w <= tex_limit_size && h <= tex_limit_size);
-	for (int j = 0; j < h; j++) 	// ÖØĞÂ¼ÆËãÃ¿ĞĞÎÆÀíµÄÖ¸Õë
+	for (int j = 0; j < h; j++) 	// é‡æ–°è®¡ç®—æ¯è¡Œçº¹ç†çš„æŒ‡é’ˆ
 		this->texture->texture[j] = (color_t*)(*texture->texture + w * j);
 	this->tex_width = w;
 	this->tex_height = h;
@@ -104,14 +104,14 @@ color_t Renderer::texture_read(const Texture& tex, float u, float v)
 	u = u * this->tex_max_u;
 	v = v * this->tex_max_v;
 
-	//µã²ÉÑù
+	//ç‚¹é‡‡æ ·
 	//int x = (int)(u + 0.5f);
 	//int y = (int)(v + 0.5f);
 	//x = CMID(x, 0, this->tex_width - 1);
 	//y = CMID(y, 0, this->tex_height - 1);
 	//return tex.texture[y][x];
 
-	//Ë«ÏßĞÔÂË²¨
+	//åŒçº¿æ€§æ»¤æ³¢
 	int u_0 = CMID(floor(u), 0, this->tex_width - 1);
 	int u_1 = CMID(u_0 + 1, 0, this->tex_width - 1);
 	int v_0 = CMID(floor(v), 0, this->tex_height - 1);
@@ -134,17 +134,17 @@ void Renderer::draw_pixel(int x, int y, UINT32 color)
 	}
 }
 
-//BresenhamËã·¨
+//Bresenhamç®—æ³•
 void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 {
 	int dx = std::abs(x1 - x2);
 	int dy = std::abs(y1 - y2);
-	int rem = 0;//Áîe=d-0.5,Ã¿´ÎxÔö¼ÓÊ±yÔö¼Ódyx(k),È»ºóÔÙÁîrem=(2e(dx)+(dx))/2,ÄÇÃ´remµÄ·¶Î§¾ÍÊÇ[0,dx],Ã¿´ÎÔö¼Ódy.
+	int rem = 0;//ä»¤e=d-0.5,æ¯æ¬¡xå¢åŠ æ—¶yå¢åŠ dyx(k),ç„¶åå†ä»¤rem=(2e(dx)+(dx))/2,é‚£ä¹ˆremçš„èŒƒå›´å°±æ˜¯[0,dx],æ¯æ¬¡å¢åŠ dy.
 
 	if (y2 < y1) { std::swap(y1, y2); std::swap(x1, x2); }
 	int x = x1, y = y1;
 
-	//Ö±Ïß¾ù´ÓÉÏÍùÏÂ»æÖÆ
+	//ç›´çº¿å‡ä»ä¸Šå¾€ä¸‹ç»˜åˆ¶
 	//for (; y <= y2 && x >= min(x1, x2) && x <= max(x1, x2);) {
 	//	if (dx > dy) {
 	//		rem += dy;
@@ -164,9 +164,9 @@ void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 	//	if (dx > dy) { x += (x2 > x1) ? 1 : -1; }
 	//	else { y++; }
 	//}
-	//ºÍÏÂ·½½á¹ûÏàÍ¬,±È½Ï´ÎÊı¸ü¶à,Ğ§ÂÊµÍÒ»Ğ©
+	//å’Œä¸‹æ–¹ç»“æœç›¸åŒ,æ¯”è¾ƒæ¬¡æ•°æ›´å¤š,æ•ˆç‡ä½ä¸€äº›
 	 
-	//Ö±Ïß¿ÉÄÜ´ÓÉÏÍùÏÂ,¿ÉÄÜ´Ó×óÍùÓÒ
+	//ç›´çº¿å¯èƒ½ä»ä¸Šå¾€ä¸‹,å¯èƒ½ä»å·¦å¾€å³
 	if (dx > dy) {
 		if (x2 < x1) { std::swap(x1, x2); std::swap(y1, y2); }
 		for (int x = x1, y = y1; x <= x2; x++) {
@@ -194,13 +194,13 @@ void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 	this->draw_pixel(x2, y2, color);
 }
 
-//²ğ·ÖÒ»°ãÈı½ÇÎªÌØÊâÈı½Ç
+//ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 {
 	if (v1.pos.y > v2.pos.y) { std::swap(v1, v2); }
 	if (v1.pos.y > v3.pos.y) { std::swap(v1, v3); }
 	if (v2.pos.y > v3.pos.y) { std::swap(v2, v3); }
-	//v1,v2,v3ÒÀ´Î´ÓÉÏµ½ÏÂ
+	//v1,v2,v3ï¿½ï¿½ï¿½Î´ï¿½ï¿½Ïµï¿½ï¿½ï¿½
 	float x1, x2, x3, y1, y2, y3;
 	x1 = v1.pos.x; y1 = v1.pos.y;
 	x2 = v2.pos.x; y2 = v2.pos.y;
@@ -208,24 +208,24 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 
 	if (y1 == y2 && y2 == y3)return;
 	if (y1 == y2) {
-		//Æ½¶¥Èı½Ç
+		//å¹³é¡¶ä¸‰è§’
 		if (x1 > x2)std::swap(v1, v2);
 		draw_triangle_StandardAlgorithm(v3, v1, v2);
 		return;
 	}
 	if (y2 == y3) {
-		//Æ½µ×Èı½Ç
+		//å¹³åº•ä¸‰è§’
 		if (x2 > x3)std::swap(v2, v3);
 		draw_triangle_StandardAlgorithm(v1, v2, v3);
 		return;
 	}
 
-	//²ğ·ÖÈı½Ç
+	//æ‹†åˆ†ä¸‰è§’
 	vertex_t v4 = v2;
 	float dxy = (x3 - x1) / (y3 - y1);
 	v4.pos.x = (y2 - y1) * dxy + x1;
 	float x4 = v4.pos.x, y4 = y2;
-	//²åÖµ¼ÆËãv4µÄÏà¹ØÊıÖµ
+	//æ’å€¼è®¡ç®—v4çš„ç›¸å…³æ•°å€¼
 	float t = (y4 - y1) / (y3 - y1);
 	v4.color = v1.color + (v3.color - v1.color) * t;
 	v4.tex.u = v1.tex.u + (v3.tex.u - v1.tex.u) * t;
@@ -244,7 +244,7 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 
 void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right)
 {
-	//»ùÓÚyµÄÌİ¶È,yÔö¼Ó1Ê±,¶ÔÓ¦x/u/v/i/rhwÔö¼ÓµÄÖµ
+	//ï¿½ï¿½ï¿½ï¿½yï¿½ï¿½ï¿½İ¶ï¿½,yï¿½ï¿½ï¿½ï¿½1Ê±,ï¿½ï¿½Ó¦x/u/v/i/rhwï¿½ï¿½ï¿½Óµï¿½Öµ
 	float dxdy_l = (top.pos.x - left.pos.x) / (top.pos.y - left.pos.y);
 	float dudy_l = (top.tex.u - left.tex.u) / (top.pos.y - left.pos.y);
 	float dvdy_l = (top.tex.v - left.tex.v) / (top.pos.y - left.pos.y);
@@ -256,33 +256,33 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	float xl, ul, vl, rhwl;
 	float xr, ur, vr, rhwr;
 
-	//ÑÕÉ«²åÖµ
+	//é¢œè‰²æ’å€¼
 	color_t didy_l = (top.color - left.color) / (top.pos.y - left.pos.y);
 	color_t didy_r = (top.color - right.color) / (top.pos.y - right.pos.y);
 	color_t color_left, color_right;
 
 	int y0 = 0, y1 = 0;
 	float y0f = top.pos.y, y1f = left.pos.y;
-	//¸³³õÊ¼Öµ,Ôİ²»ĞŞÕı
-	//Æ½µ×»òÆ½¶¥Èı½ÇĞÎ
+	//èµ‹åˆå§‹å€¼,æš‚ä¸ä¿®æ­£
+	//å¹³åº•æˆ–å¹³é¡¶ä¸‰è§’å½¢
 	if (y0f <= y1f) {
-		/*Æ½µ×Èı½ÇĞÎ*/
+		/*å¹³åº•ä¸‰è§’å½¢*/
 		xl = top.pos.x;
 		xr = top.pos.x;
-		//ÎÆÀí
+		//çº¹ç†
 		ul = top.tex.u;
 		vl = top.tex.v;
 		ur = top.tex.u;
 		vr = top.tex.v;
-		//ÑÕÉ«
+		//é¢œè‰²
 		color_left = top.color;
 		color_right = top.color;
-		//Éî¶È
+		//æ·±åº¦
 		rhwl = top.rhw;
 		rhwr = top.rhw;
 	}
 	else {
-		/*Æ½¶¥Èı½ÇĞÎ,ÀàËÆÆ½µ×Èı½ÇĞÎ*/
+		/*å¹³é¡¶ä¸‰è§’å½¢,ç±»ä¼¼å¹³åº•ä¸‰è§’å½¢*/
 		std::swap(y0, y1);
 		std::swap(y0f, y1f);
 		xl = left.pos.x;
@@ -297,7 +297,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		rhwr = right.rhw;
 	}
 
-	//´¹Ö±²Ã¼ô
+	//å‚ç›´è£å‰ª
 	if (y1f < min_clip_y) { return; }
 	if (y0f < min_clip_y) {
 		float dy = min_clip_y - y0f;
@@ -315,7 +315,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	}
 	y0 = (int)(ceil(y0f));
 	y1 = (int)(ceil(y1f));
-	//ĞŞÕı(¸¡µãÊı×ª»»ÕûÊıĞèÒªĞŞÕı)
+	//ä¿®æ­£(æµ®ç‚¹æ•°è½¬æ¢æ•´æ•°éœ€è¦ä¿®æ­£)
 	float delta = y0 - y0f;
 	xl += delta * dxdy_l;
 	xr += delta * dxdy_r;
@@ -330,7 +330,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 
 
 
-	//´ÓÉÏÍùÏÂ»æÖÆ
+	//ä»ä¸Šå¾€ä¸‹ç»˜åˆ¶
 	for (int y = y0; y < y1; y++) {
 		if (y >= max_clip_y)break;
 		float dx = xr - xl;
@@ -344,7 +344,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		color_t color = color_left + (ceil(xl) - xl) * dix;
 
 		float xli = xl, xri = xr;
-		//µ÷Õûµ½ÏÂÒ»²½
+		//è°ƒæ•´åˆ°ä¸‹ä¸€æ­¥
 		xl += dxdy_l;
 		ul += dudy_l;
 		vl += dvdy_l;
@@ -356,7 +356,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		rhwl += drhwdy_l;
 		rhwr += drhwdy_r;
 
-		//Ë®Æ½²Ã¼ô
+		//æ°´å¹³è£å‰ª
 		if (xri < min_clip_x) { continue; }
 		if (xli < min_clip_x) {
 			float dx = min_clip_x - xli;
@@ -367,7 +367,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 			xli = min_clip_x;
 		}
 
-		//ĞŞÕı
+		//ä¿®æ­£
 		int x0 = (int)ceil(xli);
 		int x1 = (int)ceil(xri);
 		float delta = x0 - xli;
@@ -380,7 +380,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 			if (x >= max_clip_x)break;
 			if (x >= 0 && y >= 0) {
 				if (rhwi >= this->z_buffer[y][x]) {
-					this->z_buffer[y][x] = rhwi;// Éî¶È»º´æ
+					this->z_buffer[y][x] = rhwi;// ï¿½ï¿½È»ï¿½ï¿½ï¿½
 					float wi = 1.0 / rhwi;
 					if (this->render_state == RENDER_STATE_COLOR) {
 						this->draw_pixel(x, y, color_trans_255(color * wi));
@@ -389,7 +389,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 						color_t color_tmp = color * this->texture_read(*texture, ui * wi, vi * wi);
 						this->draw_pixel(x, y, color_trans_255(color_tmp * wi));
 					}
-					//ÒõÓ°
+					//ï¿½ï¿½Ó°
 					//if (features[RENDER_FEATURE_SHADOW] == true) {
 						//point_t p_light_space;
 						//p_light_space.x = x;
@@ -400,7 +400,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 						//matrix_t inv_view = matrix_get_inverse(transform.view);
 						//p_light_space = p_light_space * inv_proj;
 						//p_light_space = p_light_space * inv_view;
-						//////ÏÖÔÚÊÇÊÀ½ç¿Õ¼äµÄ×ø±ê,½ÓÏÂÀ´±ä»»µ½¹âÔ´¿Õ¼ä
+						//////ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ä»»ï¿½ï¿½ï¿½ï¿½Ô´ï¿½Õ¼ï¿½
 						//p_light_space = p_light_space * current_light->light_space_matrix;
 						//p_light_space = viewport_transform(p_light_space, this->transform);
 						//float rhwi_lt = 1.0f / p_light_space.w;
@@ -431,7 +431,7 @@ void Renderer::add_light(const Light& light)
 void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right)
 {
 	//FIX ME
-	//Ã»ÓĞÍêÉÆÑÕÉ«²åÖµ
+	//Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½Öµ
 	int x1_s = top.pos.x, y1_s = top.pos.y;
 	int x1_e = top.pos.x, y1_e = top.pos.y;
 	int x2 = left.pos.x, y2 = left.pos.y;
@@ -465,14 +465,14 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 	while ((y_s <= y2 && x_s >= min(x1_s, x2) && x_s <= max(x1_s, x2))
 		|| (y_e <= y2 && x_e >= min(x1_e, x3) && x_e <= max(x1_e, x3)))
 	{
-		//ÓÃÓÚÏßĞÔ²åÖµ
+		//ç”¨äºçº¿æ€§æ’å€¼
 		float s1, s2, p1, p2;
 		if (dx_s > dy) { s1 = max(x1_s, x2) - min(x1_s, x2); p1 = x_s; }
 		else { s1 = y2 - y1_s; p1 = y_s; }
 		if (dx_e > dy) { s2 = max(x1_e, x3) - min(x1_e, x3); p2 = x_e; }
 		else { s2 = y3 - y1_e; p2 = y_e; }
 
-		if (y_s == y_e) {//ÏàÍ¬yÖµµÄÉ¨ÃèÏßÖ»»­Ò»´Î
+		if (y_s == y_e) {//ç›¸åŒyå€¼çš„æ‰«æçº¿åªç”»ä¸€æ¬¡
 			if (jug_draw_scanline == true) {
 				//FIX ME
 				color_t color_left, color_right;
@@ -521,7 +521,7 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 			else { y_s++; }
 		}
 
-		if (y_s == y_e) {//ÏàÍ¬yÖµµÄÉ¨ÃèÏßÖ»»­Ò»´Î
+		if (y_s == y_e) {//ç›¸åŒyå€¼çš„æ‰«æçº¿åªç”»ä¸€æ¬¡
 			if (jug_draw_scanline == true) {
 				//FIX ME
 				color_t color_left, color_right;
@@ -572,7 +572,7 @@ void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const verte
 	}
 }
 
-//ÅĞ¶ÏµãÊÇ·ñÔÚÈı½ÇĞÎÄÚ
+//åˆ¤æ–­ç‚¹æ˜¯å¦åœ¨ä¸‰è§’å½¢å†…
 float sign(const point_t& p1, const point_t& p2, const point_t& p3)
 {
 	return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
@@ -594,7 +594,7 @@ bool PointInTriangle(const point_t &pt, const point_t& v1, const point_t& v2, co
 void Renderer::draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
 {
 	//TODO
-	//Ã»ÓĞÑÕÉ«²åÖµ
+	//æ²¡æœ‰é¢œè‰²æ’å€¼
 	float r, g, b, a;
 	r = v1.color.r;
 	g = v1.color.g;
@@ -626,13 +626,14 @@ void Renderer::draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2,
 	}
 }
 
-//»æÖÆÔ­Ê¼Èı½ÇĞÎ
+//ç»˜åˆ¶åŸå§‹ä¸‰è§’å½¢
 int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 {
 	point_t p1, p2, p3;
 	point_t p1_model, p2_model, p3_model;
+	Draw_ExtraInfo extra_info;
 
-	// ÏÈ²Ã¼ô¼ì²â,¼õĞ¡²»±ØÒª¼ÆËã
+	// å…ˆè£å‰ªæ£€æµ‹,å‡å°ä¸å¿…è¦è®¡ç®—
 	if (features[RENDER_FEATURE_CVV_CLIP]) {
 		p1 = v1.pos * transform.model * transform.view * transform.projection;
 		p2 = v2.pos * transform.model * transform.view * transform.projection;
@@ -645,7 +646,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 		}
 	}
 
-	/* ½«µãÓ³Éäµ½ÊÀ½ç¿Õ¼ä */
+	/* ï¿½ï¿½ï¿½ï¿½Ó³ï¿½äµ½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½ */
 	p1 = (v1.pos) * this->transform.model;
 	p2 = (v2.pos) * this->transform.model;
 	p3 = (v3.pos) * this->transform.model;
@@ -653,7 +654,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	p2_model = p2;
 	p3_model = p3;
 
-	// ½øĞĞ±³ÃæÌŞ³ı(µãµÄÅÅÁĞ±ØĞëÎª×óÊÖÂİĞıºó·¨ÏòÁ¿³¯Íâ)
+	// ï¿½ï¿½ï¿½Ğ±ï¿½ï¿½ï¿½ï¿½Ş³ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ±ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
 	vector_t p1_p2 = p2 - p1, p1_p3 = p3 - p1;
 	vector_t v_normal = vector_cross(p1_p3, p1_p2);
 	vector_t v_view = this->camera->pos - p1;
@@ -662,7 +663,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 		if (backCull_jug < 0.0f)return 1;
 	}
 
-	//¹âÕÕ´¦Àí
+	//å…‰ç…§å¤„ç†
 	if (this->render_state == RENDER_STATE_TEXTURE) {
 		v1.color = v2.color = v3.color = { 1,1,1,1 };
 	}
@@ -671,13 +672,13 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 		color1 = color2 = color3 = { 0,0,0,0 };
 		for (auto& light : lights) {
 
-			// »·¾³¹â
+			// ç¯å¢ƒå…‰
 			color_t ambient1 = light->ambient * v1.color;
 			color_t ambient2 = light->ambient * v2.color;
 			color_t ambient3 = light->ambient * v3.color;
 
-			// Âş·´Éä
-			// Ê¹ÓÃÀ¼²®ÌØÓàÏÒ¶¨ÂÉ£¨Lambert' cosine law£©¼ÆËãÂş·´Éä
+			// æ¼«åå°„
+			// ä½¿ç”¨å…°ä¼¯ç‰¹ä½™å¼¦å®šå¾‹ï¼ˆLambert' cosine lawï¼‰è®¡ç®—æ¼«åå°„
 			vector_t norm = vector_normalize(v_normal);
 			vector_t light_dir1, light_dir2, light_dir3;
 			float diff;
@@ -703,7 +704,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 			diff = max(vector_dot(norm, light_dir3), 0.0f);
 			color_t diffuse3 = light->diffuse * diff * v3.color;
 
-			// ¾µÃæ·´Éä
+			// é•œé¢åå°„
 			vector_t reflect_dir1, reflect_dir2, reflect_dir3;
 			vector_t view_dir1, view_dir2, view_dir3;
 			reflect_dir1 = vector_reflect(-light_dir1, norm);
@@ -726,11 +727,11 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 			//specular1 = specular2 = specular3 = { 0,0,0,0 };
 
 
-			//¹âÕÕÔËËã
+			//å…‰ç…§è¿ç®—
 			if (light->light_state == LIGHT_STATE_POINT ||
 				light->light_state == LIGHT_STATE_SPOTLIGHT)
 			{
-				//µã¹âÔ´Ë¥¼õ
+				//ç‚¹å…‰æºè¡°å‡
 				float distance1 = vector_length(light->pos - p1);
 				float distance2 = vector_length(light->pos - p2);
 				float distance3 = vector_length(light->pos - p3);
@@ -741,7 +742,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 				float attenuation3 = 1.0 / (light->constant + light->linear * distance3 +
 					light->quadratic * (distance3 * distance3));
 
-				//¾Û¹â
+				//èšå…‰
 				if (light->light_state == LIGHT_STATE_SPOTLIGHT) {
 					float epsilon = light->cut_off - light->outer_cut_off;
 					float theta1, theta2, theta3;
@@ -783,25 +784,25 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	v3.color = color3;
 
 
-	/* ½«µãÓ³Éäµ½¹Û²ì¿Õ¼ä */
+	/* å°†ç‚¹æ˜ å°„åˆ°è§‚å¯Ÿç©ºé—´ */
 	p1 = p1 * this->transform.view;
 	p2 = p2 * this->transform.view;
 	p3 = p3 * this->transform.view;
 
-	/* ½«µãÓ³Éäµ½²Ã¼ô¿Õ¼ä */
+	/* å°†ç‚¹æ˜ å°„åˆ°è£å‰ªç©ºé—´ */
 	p1 = p1 * this->transform.projection;
 	p2 = p2 * this->transform.projection;
 	p3 = p3 * this->transform.projection;
 
-	//µÃµ½ÆÁÄ»×ø±ê
+	//å¾—åˆ°å±å¹•åæ ‡
 	p1 = viewport_transform(p1, this->transform);
 	p2 = viewport_transform(p2, this->transform);
 	p3 = viewport_transform(p3, this->transform);
 
 
-	// Ïß¿ò»æÖÆ
+	// çº¿æ¡†ç»˜åˆ¶
 	if (this->render_state == RENDER_STATE_WIREFRAME) {
-		//std::cout << "ÕıÔÚ»æÖÆÏß¿ò\n";
+		//std::cout << "æ­£åœ¨ç»˜åˆ¶çº¿æ¡†\n";
 		this->draw_line((int)p1.x, (int)p1.y, (int)p2.x, (int)p2.y, this->foreground);
 		this->draw_line((int)p1.x, (int)p1.y, (int)p3.x, (int)p3.y, this->foreground);
 		this->draw_line((int)p2.x, (int)p2.y, (int)p3.x, (int)p3.y, this->foreground);
@@ -822,7 +823,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	//if (features[RENDER_FEATURE_SHADOW] == true) {
 	//	if (render_state == RENDER_STATE_COLOR ||
 	//		render_state == RENDER_STATE_TEXTURE) {
-	//		//´¦ÀíÒõÓ°
+	//		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó°
 	//		for (auto& light : this->lights) {
 	//			point_t p1, p2, p3;
 	//			p1 = p1_model * light->light_space_matrix;

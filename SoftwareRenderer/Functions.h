@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include"Includes.h"
 
 vector_t vector_add(const vector_t& x, const vector_t& y);

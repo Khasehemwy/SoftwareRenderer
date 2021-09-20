@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include"Includes.h"
 
 #define LIGHT_STATE_DIRECTIONAL 0b1 
@@ -8,22 +8,21 @@
 class Light {
 public:
 	vector_t pos;
-	vector_t direction;	//´Ó¹â³ö·¢µÄÏòÁ¿
+	vector_t direction;	//ä»å…‰å‡ºå‘çš„å‘é‡
 
 	color_t ambient;
 	color_t diffuse;
 	color_t specular;
 
-	//ÒõÓ°
+	//é˜´å½±
 	matrix_t light_space_matrix;	//view * projection
-	Texture* shadow_map = nullptr;
 
-	//µã¹âÔ´ËùÓÃ
+	//ç‚¹å…‰æºæ‰€ç”¨
 	float constant = 1.0f;
 	float linear = 0.045f;
 	float quadratic = 0.0075f;
 
-	//¾Û¹âËùÓÃ
+	//èšå…‰æ‰€ç”¨
 	float cut_off;
 	float outer_cut_off;
 

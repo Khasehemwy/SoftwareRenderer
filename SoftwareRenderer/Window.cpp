@@ -1,13 +1,13 @@
-#include "Window.h"
+ï»¿#include "Window.h"
 
 #ifndef __Window
 #define __Window
 int gl_screen_exit;
 int gl_screen_keys[512];
 static HWND st_screen_handle;
-static HDC screen_dc;			// ÅäÌ×µÄ HDC
+static HDC screen_dc;			// é…å¥—çš„ HDC
 static HBITMAP screen_hb;		// DIB
-static HBITMAP screen_ob;		// ÀÏµÄ BITMAP
+static HBITMAP screen_ob;		// è€çš„ BITMAP
 #endif // !__Window
 
 int Window::screen_init(float w, float h, const TCHAR* title)

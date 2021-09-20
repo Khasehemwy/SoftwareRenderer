@@ -1,4 +1,4 @@
-#include"Includes.h"
+ï»¿#include"Includes.h"
 
 float cursor_yaw = 0.0f;
 float cursor_pitch = 0.0f;
@@ -124,13 +124,13 @@ int main()
 
 
 	Window window;
-	window.screen_init(800, 600, _T("SoftwareRenderer - WASDÒÆ¶¯,·½Ïò¼üÊÓ½Ç,J/LĞı×ª·½¿é."));
+	window.screen_init(800, 600, _T("SoftwareRenderer - WASDç§»åŠ¨,æ–¹å‘é”®è§†è§’,J/Læ—‹è½¬æ–¹å—."));
 
 	Renderer renderer;
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
 	Renderer renderer_light;
 	renderer_light.init(window.screen_width, window.screen_height, window.screen_fb);
-	renderer_light.z_buffer = renderer.z_buffer;//ÒòÎªÉî¶È»º´æÊÇÃ¿¸öRenderer¶ÀÓÃµÄ,µ«ÊÇÏÖÔÚÏëÈÃËüÃÇÒ»ÆğÏÔÊ¾.
+	renderer_light.z_buffer = renderer.z_buffer;//å› ä¸ºæ·±åº¦ç¼“å­˜æ˜¯æ¯ä¸ªRendererç‹¬ç”¨çš„,ä½†æ˜¯ç°åœ¨æƒ³è®©å®ƒä»¬ä¸€èµ·æ˜¾ç¤º.
 	Renderer renderer_ground;
 	renderer_ground.init(window.screen_width, window.screen_height, window.screen_fb);
 	renderer_ground.z_buffer = renderer.z_buffer;
@@ -193,13 +193,13 @@ int main()
 	spot_light.ambient = { 1.0,1.0,1.0,1 };
 	spot_light.diffuse = { 0.8,0.8,0.8,1 };
 	spot_light.specular = { 0.9,0.9,0.9,1 };
-	//ÊÖµçÍ²Ë¥¼õÇ¿Ò»Ğ©
+	//æ‰‹ç”µç­’è¡°å‡å¼ºä¸€äº›
 	spot_light.linear = 0.14;
 	spot_light.quadratic = 0.07;
 	renderer.add_light(spot_light);
 	renderer_ground.add_light(spot_light);
 
-	//ÒõÓ°
+	//é˜´å½±
 	Renderer renderer_shadow;
 	renderer_shadow.init(window.screen_width, window.screen_height, window.screen_fb);
 	renderer_shadow.render_state = RENDER_STATE_TEXTURE;
@@ -215,16 +215,16 @@ int main()
 	renderer_shadow.transform.projection = matrix_ortho(-0.5, 0.5, -0.5, 0.5, 0.1f, 100.0f);
 	dir_light.shadow_map = new Texture(window.screen_width, window.screen_height);
 
-	//ÉèÖÃÖ÷renderer
+	//è®¾ç½®ä¸»renderer
 	float aspect = (float)renderer.width / ((float)renderer.height);
 	//camera = shadow_camera;
 	renderer.current_light = &dir_light;
 	renderer_ground.current_light = &dir_light;
 
-	//Ê±¼ä
+	//æ—¶é—´
 	float delta_time = 0.0f;
 	float last_frame = 0.0f;
-	//Êó±ê
+	//é¼ æ ‡
 	//ShowCursor(FALSE);
 	//RECT rect;
 	//GetWindowRect(*window.screen_handle, &rect);
@@ -232,13 +232,13 @@ int main()
 	//SetCapture(*window.screen_handle);
 
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
-		//Ê±¼ä,Ê¹ÒÆ¶¯ËÙ¶È²»ÊÜÖ¡ÂÊ±ä»¯
+		//æ—¶é—´,ä½¿ç§»åŠ¨é€Ÿåº¦ä¸å—å¸§ç‡å˜åŒ–
 		//float current_frame = time_get();
 		//delta_time = current_frame - last_frame;
 		//last_frame = current_frame;
 		camera.speed = 0.1f;
 
-		//Êó±ê
+		//é¼ æ ‡
 		mouse_callback(camera);
 		gl_x_offset = 0; gl_y_offset = 0;
 
@@ -276,11 +276,11 @@ int main()
 		fov = CMID(fov, 1.0f, 60.0f);
 
 		matrix_t model;
-		//*************ÒõÓ°*************//
-		//////Ö»äÖÈ¾dir_lightµÄÒõÓ°
+		//*************ï¿½ï¿½Ó°*************//
+		//////Ö»ï¿½ï¿½È¾dir_lightï¿½ï¿½ï¿½ï¿½Ó°
 		//renderer_shadow.transform.view = matrix_lookat(renderer_shadow.camera->pos, renderer_shadow.camera->target, renderer_shadow.camera->up);
-		//////ÓÃÒõÓ°shaderäÖÈ¾³¡¾°ÀïËùÓĞ¶«Î÷
-		//for (int i = 0; i < 10; i++) {//ºĞ×Ó
+		//////ï¿½ï¿½ï¿½ï¿½Ó°shaderï¿½ï¿½È¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ¶ï¿½ï¿½ï¿½
+		//for (int i = 0; i < 10; i++) {//ï¿½ï¿½ï¿½ï¿½
 		//	matrix_set_identity(&model);
 		//	model = matrix_translate(model, cubePositions[i]);
 		//	model = model * matrix_rotate_build(angle, rotate_axis);
@@ -288,7 +288,7 @@ int main()
 		//	renderer_shadow.transform_update();
 		//	draw_box(renderer_shadow);
 		//}
-		//matrix_set_identity(&model);//µØÃæ
+		//matrix_set_identity(&model);//ï¿½ï¿½ï¿½ï¿½
 		//model = matrix_scale(model, { 10,0.1,10,1 });
 		//model = matrix_translate(model, { 0,-3,5,1 });
 		//renderer_shadow.transform.model = model;
@@ -301,8 +301,9 @@ int main()
 		//}
 		//dir_light.light_space_matrix = renderer_shadow.transform.view * renderer_shadow.transform.projection;
 		//renderer.clear();
-		//************Õı³£³¡¾°************//
-		//¸üĞÂÉãÏñ»ú
+		
+		//************æ­£å¸¸åœºæ™¯************//
+		//æ›´æ–°æ‘„åƒæœº
 		camera.target = camera.pos + camera.front;
 		matrix_t view = matrix_lookat(renderer.camera->pos, renderer.camera->target, renderer.camera->up);
 		renderer.transform.view = view;
@@ -310,11 +311,11 @@ int main()
 		matrix_set_perspective(&renderer.transform.projection, fov, aspect, 0.1f, 100.0f);
 		//renderer.transform.projection = matrix_ortho(-0.5, 0.5, -0.5, 0.5, 0.1f, 100.0f);
 
-		//ÉèÖÃ¾Û¹â
+		//è®¾ç½®èšå…‰
 		spot_light.pos = camera.pos;
 		spot_light.direction = camera.front;
 
-		//»­ºĞ×Ó
+		//ç”»ç›’å­
 		//matrix_t model;
 		for (int i = 0; i < 10; i++) {
 			matrix_set_identity(&model);
@@ -325,7 +326,7 @@ int main()
 			draw_box(renderer);
 		}
 
-		//»­µØÃæ
+		//ç”»åœ°é¢
 		renderer_ground.transform = renderer.transform;
 		matrix_set_identity(&model);
 		model = matrix_scale(model, { 10,0.1,10,1 });
@@ -334,7 +335,7 @@ int main()
 		renderer_ground.transform_update();
 		draw_box(renderer_ground);
 
-		//»­µã¹âÔ´
+		//ç”»ç‚¹å…‰æº
 		renderer_light.transform = renderer.transform;
 		matrix_set_identity(&model);
 		model = matrix_scale(model, { 0.2,0.2,0.2,1 });
@@ -343,7 +344,7 @@ int main()
 		renderer_light.transform_update();
 		draw_light(renderer_light);
 
-		//»­Ì«Ñô(¶¨Ïò¹â)
+		//ç”»å¤ªé˜³(å®šå‘å…‰)
 		matrix_set_identity(&model);
 		model = matrix_scale(model, { 10,10,20,1 });
 		model = matrix_translate(model, { 50,50,20,1 });
