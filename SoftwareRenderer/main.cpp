@@ -148,18 +148,18 @@ int main()
 	//renderer.render_state = RENDER_STATE_WIREFRAME;
 	//renderer.render_state = RENDER_STATE_COLOR;
 	renderer.render_state = RENDER_STATE_TEXTURE;
-	//renderer.features[RENDER_FEATURE_BACK_CULLING] = false;
-	//renderer.features[RENDER_FEATURE_LIGHT] = false;
+	//renderer.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
+	//renderer.Set_Feature(RENDER_FEATURE_LIGHT, false);
 
 	//renderer-light
 	renderer_light.camera = &camera;
 	renderer_light.render_state = RENDER_STATE_COLOR;
-	renderer_light.features[RENDER_FEATURE_LIGHT] = false;
+	renderer_light.Set_Feature(RENDER_FEATURE_LIGHT, false);
 	//renderer-ground
 	renderer_ground.camera = &camera;
 	renderer_ground.render_state = RENDER_STATE_TEXTURE;
-	renderer_ground.features[RENDER_FEATURE_CVV_CLIP] = false;
-	//renderer_ground.features[RENDER_FEATURE_BACK_CULLING] = false;
+	renderer_ground.Set_Feature(RENDER_FEATURE_CVV_CLIP, false);
+	//renderer_ground.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
 
 
 	Texture texture;
@@ -202,9 +202,9 @@ int main()
 	//阴影
 	Renderer renderer_shadow;
 	renderer_shadow.init(window.screen_width, window.screen_height, window.screen_fb);
-	renderer_shadow.render_state = RENDER_STATE_TEXTURE;
-	renderer_shadow.features[RENDER_FEATURE_SHADOW] = false;
-	renderer_shadow.features[RENDER_FEATURE_CVV_CLIP] = false;
+	renderer_shadow.render_state = RENDER_STATE_DEEP;
+	renderer_shadow.Set_Feature(RENDER_FEATURE_SHADOW, false);
+	renderer_shadow.Set_Feature(RENDER_FEATURE_CVV_CLIP, false);
 	Camera shadow_camera;
 	renderer_shadow.camera = &shadow_camera;
 	shadow_camera.pos = dir_light.pos;

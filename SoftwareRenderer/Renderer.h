@@ -15,9 +15,9 @@
 #define RENDER_FEATURE_CVV_CLIP 0b100	//是否开启cvv裁剪
 #define RENDER_FEATURE_SHADOW 0b1000	//是否开启阴影
 
-//Ƭ����ɫ��-��ɫ�㷨
-#define RENDER_SHADER_PIXEL_SCANLINE 0b1		//ɨ�����㷨-����Ƭ����ɫ,���쵫������׼
-#define RENDER_SHADER_PIXEL_BOUNDINGBOX 0b10		//�߽���㷨-����Ƭ����ɫ,��׼������
+//片段着色器-着色算法
+#define RENDER_SHADER_PIXEL_SCANLINE 0b1		//扫描线算法-进行片段着色,更快但不够精准
+#define RENDER_SHADER_PIXEL_BOUNDINGBOX 0b10		//边界盒算法-进行片段着色,精准但不快
 
 class Renderer
 {
@@ -61,6 +61,7 @@ public:
 	void set_texture(const Texture& tex);
 	color_t texture_read(const Texture& tex, float u, float v);
 	void add_light(const Light& light);
+	int Set_Feature(UINT32 feature, bool turn_on);
 
 	void draw_line(int x1, int y1, int x2, int y2, UINT32 color);
 	int	display_primitive(vertex_t v1, vertex_t v2, vertex_t v3);

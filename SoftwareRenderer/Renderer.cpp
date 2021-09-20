@@ -428,10 +428,19 @@ void Renderer::add_light(const Light& light)
 	this->lights.push_back(&light);
 }
 
+int Renderer::Set_Feature(UINT32 feature, bool turn_on)
+{
+	if (!this->features[feature]) { return 0; }
+
+	this->features[feature] = turn_on;
+
+	return 1;
+}
+
 void Renderer::draw_triangle_BresenhamAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right)
 {
 	//FIX ME
-	//û��������ɫ��ֵ
+	//没有完善颜色插值
 	int x1_s = top.pos.x, y1_s = top.pos.y;
 	int x1_e = top.pos.x, y1_e = top.pos.y;
 	int x2 = left.pos.x, y2 = left.pos.y;
