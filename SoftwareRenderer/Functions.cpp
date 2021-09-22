@@ -350,6 +350,15 @@ void vertex_set_rhw(vertex_t* v)
 	v->color.a *= rhw;
 }
 
+void Set_ExtraData_rhw(Draw_ExtraData* extra_data, const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
+{
+	if (extra_data->shadow_data.valid) {
+		extra_data->shadow_data.p1 = extra_data->shadow_data.p1 * v1.rhw;
+		extra_data->shadow_data.p2 = extra_data->shadow_data.p2 * v2.rhw;
+		extra_data->shadow_data.p3 = extra_data->shadow_data.p3 * v3.rhw;
+	}
+}
+
 void transform_init(transform_t* ts, int width, int height) {
 	float aspect = (float)width / ((float)height);
 	matrix_set_identity(&ts->model);

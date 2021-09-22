@@ -6,3 +6,8 @@ Light::Light():
 {
 	//shadow_map = new Texture();
 }
+
+void Light::Init_ShadowMap(int width, int height)
+{
+	this->shadow_map = new Texture(width, height);
+}

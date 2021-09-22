@@ -16,6 +16,7 @@ public:
 
 	//阴影
 	matrix_t light_space_matrix;	//view * projection
+	Texture* shadow_map = nullptr;	// 阴影贴图
 
 	//点光源所用
 	float constant = 1.0f;
@@ -29,4 +30,6 @@ public:
 	int light_state = 0x10;
 
 	Light();
+
+	void Init_ShadowMap(int width, int height);
 };
