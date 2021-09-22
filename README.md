@@ -21,6 +21,7 @@
    * 环境光照 + 漫反射光照 + 镜面光照 - Ambient light + Diffuse light + Specular lighting  
    * 定向光源 + 点光源 + 聚光源 - Directional light + Point light + Spotlight
    * 多光源 - Multiple light source
+ * 阴影 - Shadow
 
  #### 纹理:
  * 仿射/透视纹理映射 - Affine texture mapping (暂时只支持手动创建的纹理)
@@ -49,3 +50,4 @@
 <image src="https://user-images.githubusercontent.com/57032017/114353745-f5bf6a80-9b9f-11eb-85ce-7937359b624b.png" width=60%>
 <image src="https://user-images.githubusercontent.com/57032017/116544593-ed965780-a921-11eb-9d71-d6a45c07503e.png" width=60%>
 <image src="https://user-images.githubusercontent.com/57032017/117296196-5b54fd00-aea7-11eb-8c2b-91893639804f.png" width=100%>
+<image src="https://user-images.githubusercontent.com/57032017/134305940-d7cb79f6-65db-408f-869a-0f49800a1572.gif" width=60%>
