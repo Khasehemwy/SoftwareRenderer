@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="FPS.cpp" />
     <ClCompile Include="Functions.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="main.cpp">
@@ -161,6 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="FPS.h" />
     <ClInclude Include="Functions.h" />
     <ClInclude Include="Includes.h" />
     <ClInclude Include="Light.h" />

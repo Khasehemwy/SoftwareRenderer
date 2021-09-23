@@ -567,7 +567,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 
 					//阴影
 					if (features[RENDER_FEATURE_SHADOW] == true) {
-						float bias = 0.1;
+						float bias = 0.1f;
 						for (const Light* light : this->lights) {
 							point_t p = { shadow_xi * wi, shadow_yi * wi, shadow_zi * wi, 1 };
 							p = p * light->light_space_matrix;

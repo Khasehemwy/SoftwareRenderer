@@ -6,6 +6,21 @@ float cursor_last_x = 400, cursor_last_y = 300;
 float gl_x_offset = 90.0f;
 float gl_y_offset = 0.0f;
 float fov = 45.0f;
+float angle = 0;
+vector_t rotate_axis = { 1,-0.5,0.5,1 };
+
+vector_t cubePositions[] = {
+	{0.0f,  -2.0f,  0.0f, 1},
+	{2.0f,  5.0f, 15.0f, 1},
+	{-1.5f, -2.2f, 2.5f, 1},
+	{-3.8f, -2.0f, 12.3f, 1},
+	{2.4f, -0.4f, 3.5f, 1},
+	{-1.7f,  3.0f, 7.5f, 1},
+	{1.3f, -2.0f, 2.5f, 1},
+	{1.5f,  2.0f, 2.5f, 1},
+	{1.5f,  0.2f, 1.5f, 1},
+	{-1.3f,  1.0f, 1.5f, 1 }
+};
 
 void mouse_callback(Camera& camera)
 {
@@ -107,22 +122,28 @@ void draw_light(Renderer& renderer)
 	draw_square(renderer, vert[5], vert[6], vert[7], vert[4]);
 }
 
+void Draw_Scene(Renderer& renderer)
+{
+	renderer.transform.view = matrix_lookat(renderer.camera->pos, renderer.camera->target, renderer.camera->up);
+	matrix_t model;
+	for (int i = 0; i < 10; i++) {//盒子
+		matrix_set_identity(&model);
+		model = matrix_translate(model, cubePositions[i]);
+		model = model * matrix_rotate_build(angle, rotate_axis);
+		renderer.transform.model = model;
+		renderer.transform_update();
+		draw_box(renderer);
+	}
+	matrix_set_identity(&model);//地面
+	model = matrix_scale(model, { 10,0.1,10,1 });
+	model = matrix_translate(model, { 0,-3,0,1 });
+	renderer.transform.model = model;
+	renderer.transform_update();
+	draw_box(renderer);
+}
+
 int main()
 {
-	vector_t cubePositions[] = {
-		{0.0f,  -2.0f,  0.0f, 1},
-		{2.0f,  5.0f, 15.0f, 1},
-		{-1.5f, -2.2f, 2.5f, 1},
-		{-3.8f, -2.0f, 12.3f, 1},
-		{2.4f, -0.4f, 3.5f, 1},
-		{-1.7f,  3.0f, 7.5f, 1},
-		{1.3f, -2.0f, 2.5f, 1},
-		{1.5f,  2.0f, 2.5f, 1},
-		{1.5f,  0.2f, 1.5f, 1},
-		{-1.3f,  1.0f, 1.5f, 1 }
-	};
-
-
 	Window window;
 	window.screen_init(800, 600, _T("SoftwareRenderer - WASD移动,方向键视角,J/L旋转方块."));
 
@@ -143,8 +164,6 @@ int main()
 	camera.init_target_zero({ posx,0,posz,1 });
 	camera.front = { 0,0,1,1 };
 
-	float angle = 0;
-	vector_t rotate_axis = { 1,-0.5,0.5,1 };
 	renderer.camera = &camera;
 	//renderer.render_state = RENDER_STATE_WIREFRAME;
 	//renderer.render_state = RENDER_STATE_COLOR;
@@ -174,9 +193,9 @@ int main()
 	dir_light.pos = { 14,10,10,1 };
 	dir_light.direction = { -14,-10,-10,1 };
 	//dir_light.direction = { 0,0,0,1 };
-	dir_light.ambient = { 0.3f,0.2f,0.1f,1 };
-	dir_light.diffuse = { 0.6f,0.6f,0.6f,1 };
-	dir_light.specular = { 0.8f,0.7f,0.6f,1 };
+	dir_light.ambient = { 0.6f,0.42f,0.3f,1 };
+	dir_light.diffuse = { 0.8f,0.56f,0.4f,1 };
+	dir_light.specular = { 0.8f,0.56f,0.4f,1 };
 	dir_light.light_state = LIGHT_STATE_DIRECTIONAL;
 	renderer.add_light(dir_light);
 	renderer_ground.add_light(dir_light);
@@ -211,8 +230,8 @@ int main()
 	renderer_shadow.render_state = RENDER_STATE_DEEP;
 	renderer_shadow.Set_Feature(RENDER_FEATURE_SHADOW, false);
 	renderer_shadow.Set_Feature(RENDER_FEATURE_CVV_CLIP, false);
-	//renderer_shadow.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
-	//renderer_shadow.Set_Feature(RENDER_FEATURE_FACK_CULLING, true);
+	renderer_shadow.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
+	renderer_shadow.Set_Feature(RENDER_FEATURE_FACK_CULLING, true);
 	Camera shadow_camera;
 	renderer_shadow.camera = &shadow_camera;
 	shadow_camera.pos = dir_light.pos;
@@ -239,16 +258,21 @@ int main()
 	//ClipCursor(&rect);
 	//SetCapture(*window.screen_handle);
 
+	//FPS
+	FPS* fps = new FPS();
+
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
 		//时间,使移动速度不受帧率变化
 		//float current_frame = time_get();
 		//delta_time = current_frame - last_frame;
 		//last_frame = current_frame;
-		camera.speed = 0.1f;
+		camera.speed = 0.2f;
 
 		//鼠标
 		mouse_callback(camera);
 		gl_x_offset = 0; gl_y_offset = 0;
+
+		fps->Print_FPS();
 
 		window.screen_dispatch();
 		renderer.clear();
@@ -287,30 +311,9 @@ int main()
 
 		//*************阴影*************//
 		//只渲染dir_light的阴影
-		renderer_shadow.transform.view = matrix_lookat(renderer_shadow.camera->pos, renderer_shadow.camera->target, renderer_shadow.camera->up);
-		//用阴影shader渲染场景里所有东西
-		for (int i = 0; i < 10; i++) {//盒子
-			matrix_set_identity(&model);
-			model = matrix_translate(model, cubePositions[i]);
-			model = model * matrix_rotate_build(angle, rotate_axis);
-			renderer_shadow.transform.model = model;
-			renderer_shadow.transform_update();
-			draw_box(renderer_shadow);
-		}
-		matrix_set_identity(&model);//地面
-		model = matrix_scale(model, { 10,0.1,10,1 });
-		model = matrix_translate(model, { 0,-3,0,1 });
-		renderer_shadow.transform.model = model;
-		renderer_shadow.transform_update();
-		draw_box(renderer_shadow);
-		for (int j = 0; j < renderer_shadow.height; j++) {
-			for (int i = 0; i < renderer_shadow.width; i++) {
-				dir_light.shadow_map->texture[j][i].r = 1 / renderer_shadow.z_buffer[j][i];
-			}
-		}
-		dir_light.light_space_matrix = renderer_shadow.transform.view * renderer_shadow.transform.projection;
+		Draw_Scene(renderer_shadow);
+		dir_light.Set_Shadow_Map(renderer_shadow);
 		renderer_shadow.clear();
-		renderer.clear();
 		
 		//************正常场景************//
 		//更新摄像机
@@ -319,31 +322,13 @@ int main()
 		renderer.transform.view = view;
 
 		matrix_set_perspective(&renderer.transform.projection, fov, aspect, 0.1f, 100.0f);
-		//renderer.transform.projection = matrix_ortho(-0.5, 0.5, -0.5, 0.5, 0.1f, 100.0f);
 
 		//设置聚光
 		spot_light.pos = camera.pos;
 		spot_light.direction = camera.front;
 
-		//画盒子
-		//matrix_t model;
-		for (int i = 0; i < 10; i++) {
-			matrix_set_identity(&model);
-			model = matrix_translate(model, cubePositions[i]);
-			model = model * matrix_rotate_build(angle, rotate_axis);
-			renderer.transform.model = model;
-			renderer.transform_update();
-			draw_box(renderer);
-		}
-
-		//画地面
-		renderer_ground.transform = renderer.transform;
-		matrix_set_identity(&model);
-		model = matrix_scale(model, { 10,0.1,10,1 });
-		model = matrix_translate(model, { 0,-3,0,1 });
-		renderer_ground.transform.model = model;
-		renderer_ground.transform_update();
-		draw_box(renderer_ground);
+		//画盒子 & 地面
+		Draw_Scene(renderer);
 
 		//画点光源
 		renderer_light.transform = renderer.transform;
@@ -356,11 +341,11 @@ int main()
 
 		//画太阳(定向光)
 		matrix_set_identity(&model);
-		model = matrix_scale(model, { 10,10,20,1 });
-		model = matrix_translate(model, { 50,50,20,1 });
+		model = matrix_scale(model, { 2,2,5,1 });
+		model = matrix_translate(model, { dir_light.pos.x, dir_light.pos.y, dir_light.pos.z, 1 });
 		renderer_light.transform.model = model;
 		renderer_light.transform_update();
-		//draw_light(renderer_light);
+		draw_light(renderer_light);
 
 
 

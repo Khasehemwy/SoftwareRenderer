@@ -19,13 +19,14 @@ class Camera;
 class Light;
 class Renderer;
 
-#include"Types.h"
-#include"Functions.h"
-#include"Texture.h"
-#include"Window.h"
-#include"Camera.h"
-#include"Renderer.h"
-#include"Light.h"
+#include "Types.h"
+#include "Functions.h"
+#include "Texture.h"
+#include "Window.h"
+#include "Camera.h"
+#include "Renderer.h"
+#include "Light.h"
+#include "FPS.h"
 
 
 #ifdef __ASSIMP_NEED
