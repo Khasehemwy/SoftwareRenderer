@@ -12,4 +12,5 @@ public:
 	~Texture();
 
 	void init();
+	color_t Read(float u, float v, int choice = 1);
 };

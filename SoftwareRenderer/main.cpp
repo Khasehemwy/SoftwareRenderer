@@ -280,10 +280,10 @@ int main()
 		if (window.screen_keys[KEY_J]) angle += 0.01f;
 		if (window.screen_keys[KEY_L]) angle -= 0.01f;
 
-		if (window.screen_keys[VK_LEFT]) { gl_x_offset = 0.4f; }
-		if (window.screen_keys[VK_RIGHT]) { gl_x_offset = -0.4f; }
-		if (window.screen_keys[VK_UP]) { gl_y_offset = 0.4f; }
-		if (window.screen_keys[VK_DOWN]) { gl_y_offset = -0.4f; }
+		if (window.screen_keys[VK_LEFT]) { gl_x_offset = 0.5f; }
+		if (window.screen_keys[VK_RIGHT]) { gl_x_offset = -0.5f; }
+		if (window.screen_keys[VK_UP]) { gl_y_offset = 0.5f; }
+		if (window.screen_keys[VK_DOWN]) { gl_y_offset = -0.5f; }
 
 		if (window.screen_keys[KEY_A]) {
 			camera.pos = camera.pos + (vector_normalize(vector_cross(camera.front, camera.up)) * camera.speed);
@@ -312,7 +312,7 @@ int main()
 		//*************阴影*************//
 		//只渲染dir_light的阴影
 		Draw_Scene(renderer_shadow);
-		dir_light.Set_Shadow_Map(renderer_shadow);
+		dir_light.Set_ShadowMap(renderer_shadow);
 		renderer_shadow.clear();
 		
 		//************正常场景************//

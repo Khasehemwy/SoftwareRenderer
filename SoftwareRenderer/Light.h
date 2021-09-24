@@ -32,5 +32,5 @@ public:
 	Light();
 
 	void Init_ShadowMap(int width, int height);
-	void Set_Shadow_Map(const Renderer& renderer);
+	void Set_ShadowMap(const Renderer& renderer);
 };

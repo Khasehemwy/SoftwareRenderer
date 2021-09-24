@@ -553,7 +553,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 						color_use = color * wi;
 					}
 					else if (this->render_state == RENDER_STATE_TEXTURE) {
-						color_use = color * this->texture_read(*texture, ui * wi, vi * wi);
+						color_use = color * texture->Read(ui * wi, vi * wi);
 						color_use *= wi;
 					}
 					else if (this->render_state == RENDER_STATE_DEEP) {
@@ -573,13 +573,14 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 							p = p * light->light_space_matrix;
 							p = viewport_transform(p, this->transform);
 
-							int shadow_x = (int)p.x;
-							int shadow_y = (int)p.y;
-							if (shadow_x >= light->shadow_map->width || shadow_x < 0 
-								|| shadow_y >= light->shadow_map->height || shadow_y < 0) 
+							//u,v归一化
+							float shadow_u = p.x / this->width;
+							float shadow_v = p.y / this->height;
+							if (shadow_u > 1 || shadow_u < 0 
+								|| shadow_v > 1 || shadow_v < 0) 
 							{ continue; }
 
-							float shadow_map_deep = light->shadow_map->texture[shadow_y][shadow_x].r;
+							float shadow_map_deep = light->shadow_map->Read(shadow_u, shadow_v, 0).r;
 							if (p.w - bias > shadow_map_deep) {
 								color_use *= 0.5f;
 							}
