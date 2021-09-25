@@ -17,7 +17,9 @@
  * 高洛德着色 - Gouraud Shading
 
  #### 光照:
- * 使用高洛德着色的局部光照：(Lighting,use Gouraud Shading)  
+ * 光照: (Lighting)
+   * 高洛德着色 - Gouraud Shading
+   * 冯氏着色 - Phong Shading
    * 环境光照 + 漫反射光照 + 镜面光照 - Ambient light + Diffuse light + Specular lighting  
    * 定向光源 + 点光源 + 聚光源 - Directional light + Point light + Spotlight
    * 多光源 - Multiple light source
@@ -51,3 +53,10 @@
 <image src="https://user-images.githubusercontent.com/57032017/116544593-ed965780-a921-11eb-9d71-d6a45c07503e.png" width=60%>
 <image src="https://user-images.githubusercontent.com/57032017/117296196-5b54fd00-aea7-11eb-8c2b-91893639804f.png" width=100%>
 <image src="https://user-images.githubusercontent.com/57032017/134305940-d7cb79f6-65db-408f-869a-0f49800a1572.gif" width=60%>
+  
+左: 高洛德着色, 右: 冯氏着色 (GIF左侧是帧率,很明显冯氏着色慢一些)
+ <table><tr>
+<td><image src="https://user-images.githubusercontent.com/57032017/134773833-c045a4cd-a5de-4204-aa4e-1ba45e155603.gif" width=100% height="100%" border=0></td>
+<td><image src="https://user-images.githubusercontent.com/57032017/134773844-8bb864a0-eda3-409c-a8d3-51ce31f79ac9.gif" width=100% height="100%" border=0></td>
+</tr></table>
+
