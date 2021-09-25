@@ -37,8 +37,15 @@ using point_t = vector_t;
 //typedef vector_t point_t;
 typedef struct { float r, g, b, a; } color_t;
 typedef struct { float u, v; } texcoord_t;
+typedef struct { float w1, w2, w3; } barycentric_t;
 
-typedef struct { point_t pos; color_t color; texcoord_t tex; float rhw; } vertex_t;
+struct vertex_t { 
+	point_t pos; 
+	color_t color; 
+	texcoord_t tex; 
+	vector_t normal;
+	float rhw; 
+};
 
 typedef struct {
 	matrix_t model;         // 世界坐标变换
@@ -50,7 +57,7 @@ typedef struct {
 
 struct Draw_ExtraData
 {
-	struct Shadow_Data
+	struct World_Pos
 	{
 		//阴影需要用的三个顶点的世界坐标,用于光栅化时插值计算出每个像素在光源空间的坐标
 		bool valid = false;
@@ -58,5 +65,5 @@ struct Draw_ExtraData
 	};
 
 	bool valid = false;
-	Shadow_Data shadow_data;
+	World_Pos world_pos;
 };

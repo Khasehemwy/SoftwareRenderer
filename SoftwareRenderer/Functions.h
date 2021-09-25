@@ -66,6 +66,8 @@ int check_cvv(const vector_t& v);
 
 float interp(float length_total, float length_place, float x1, float x2);
 
+barycentric_t Get_Barycentric(const point_t& p, const point_t& a, const point_t& b, const point_t& c);
+
 
 inline UINT32 color_trans_255(const color_t &color) {
 	int R = CMID((int)(color.r * 255.0f), 0, 255);

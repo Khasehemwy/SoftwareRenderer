@@ -12,9 +12,11 @@
 //特性
 #define RENDER_FEATURE_BACK_CULLING 0b1		//背面剔除
 #define RENDER_FEATURE_FACK_CULLING 0b11	//正面剔除
-#define RENDER_FEATURE_LIGHT 0b10			//是否开启光照
-#define RENDER_FEATURE_CVV_CLIP 0b100		//是否开启cvv裁剪
-#define RENDER_FEATURE_SHADOW 0b1000		//是否开启阴影
+#define RENDER_FEATURE_LIGHT 0b100			//是否开启光照(默认高洛德着色)
+#define RENDER_FEATURE_LIGHT_PHONG 0b101	//是否开启光照的冯氏着色
+#define RENDER_FEATURE_CVV_CLIP 0b1000		//是否开启cvv裁剪
+#define RENDER_FEATURE_SHADOW 0b10000		//是否开启阴影
+#define RENDER_FEATURE_AUTO_NORMAL 0b100000	//是否自动设置顶点法向量为三角面的法向量
 
 //片段着色器-着色算法
 #define RENDER_SHADER_PIXEL_SCANLINE 0b1		//扫描线算法-进行片段着色,更快但不够精准
@@ -29,7 +31,6 @@ public:
 
 	UINT32** frame_buffer = nullptr;		// 像素缓存：frame_buffer[y] 代表第 y行,像素缓存为不同Renderer共用
 	float** z_buffer = nullptr;				// 深度缓存：z_buffer[y] 为第 y行指针,深度缓存为每个Renderer独用
-	float** shadow_buffer = nullptr;		// 阴影缓存,记录哪些像素处于阴影中,并需要加深多少阴影
 
 	Texture* texture;			// 纹理：每行索引
 	int tex_width;              // 纹理宽度
@@ -77,6 +78,6 @@ private:
 	void draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right, const Draw_ExtraData& extra_data);
 	void draw_triangle_BresenhamAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right);
 	void draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
-
+	void Phong_Shading(vertex_t& v);
 };
 

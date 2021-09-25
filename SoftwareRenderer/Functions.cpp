@@ -348,14 +348,18 @@ void vertex_set_rhw(vertex_t* v)
 	v->color.g *= rhw;
 	v->color.b *= rhw;
 	v->color.a *= rhw;
+	v->normal = v->normal * rhw;
 }
 
 void Set_ExtraData_rhw(Draw_ExtraData* extra_data, const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
 {
-	if (extra_data->shadow_data.valid) {
-		extra_data->shadow_data.p1 = extra_data->shadow_data.p1 * v1.rhw;
-		extra_data->shadow_data.p2 = extra_data->shadow_data.p2 * v2.rhw;
-		extra_data->shadow_data.p3 = extra_data->shadow_data.p3 * v3.rhw;
+	if (extra_data->world_pos.valid) {
+		extra_data->world_pos.p1 = extra_data->world_pos.p1 * v1.rhw;
+		extra_data->world_pos.p2 = extra_data->world_pos.p2 * v2.rhw;
+		extra_data->world_pos.p3 = extra_data->world_pos.p3 * v3.rhw;
+		extra_data->world_pos.p1.w = 1.0f / v1.rhw;
+		extra_data->world_pos.p2.w = 1.0f / v2.rhw;
+		extra_data->world_pos.p3.w = 1.0f / v3.rhw;
 	}
 }
 
@@ -517,4 +521,21 @@ float interp(float length_total, float length_place, float x1, float x2)
 {
 	float t = length_place / length_total;
 	return (x1 + (x2 - x1) * t);
+}
+
+barycentric_t Get_Barycentric(const point_t& p, const point_t& a, const point_t& b, const point_t& c)
+{
+	vector_t v0 = b - a, v1 = c - a, v2 = p - a;
+	float d00 = vector_dot(v0, v0);
+	float d01 = vector_dot(v0, v1);
+	float d11 = vector_dot(v1, v1);
+	float d20 = vector_dot(v2, v0);
+	float d21 = vector_dot(v2, v1);
+	float denom = d00 * d11 - d01 * d01;
+	float v = (d11 * d20 - d01 * d21) / denom;
+	float w = (d00 * d21 - d01 * d20) / denom;
+	float u = 1.0f - v - w;
+	//注意这里的uvw计算顺序
+
+	return barycentric_t({ u, v, w });
 }

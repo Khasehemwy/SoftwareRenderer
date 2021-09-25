@@ -155,7 +155,6 @@ int main()
 	Renderer renderer_ground;
 	renderer_ground.init(window.screen_width, window.screen_height, window.screen_fb);
 	renderer_ground.z_buffer = renderer.z_buffer;
-	renderer_ground.shadow_buffer = renderer.shadow_buffer;
 
 
 	Camera camera;
@@ -168,9 +167,11 @@ int main()
 	//renderer.render_state = RENDER_STATE_WIREFRAME;
 	//renderer.render_state = RENDER_STATE_COLOR;
 	renderer.render_state = RENDER_STATE_TEXTURE;
+	//renderer.render_shader_state = RENDER_SHADER_PIXEL_BOUNDINGBOX;
 	//renderer.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
 	//renderer.Set_Feature(RENDER_FEATURE_FACK_CULLING, true);
 	//renderer.Set_Feature(RENDER_FEATURE_LIGHT, false);
+	//renderer.Set_Feature(RENDER_FEATURE_LIGHT_PHONG, false);
 
 	//renderer-light
 	renderer_light.camera = &camera;
@@ -181,6 +182,7 @@ int main()
 	renderer_ground.camera = &camera;
 	renderer_ground.render_state = RENDER_STATE_TEXTURE;
 	renderer_ground.Set_Feature(RENDER_FEATURE_CVV_CLIP, false);
+	//renderer_ground.Set_Feature(RENDER_FEATURE_LIGHT_PHONG, false);
 	//renderer_ground.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
 
 
@@ -230,6 +232,8 @@ int main()
 	renderer_shadow.render_state = RENDER_STATE_DEEP;
 	renderer_shadow.Set_Feature(RENDER_FEATURE_SHADOW, false);
 	renderer_shadow.Set_Feature(RENDER_FEATURE_CVV_CLIP, false);
+	renderer_shadow.Set_Feature(RENDER_FEATURE_LIGHT, false);
+	renderer_shadow.Set_Feature(RENDER_FEATURE_LIGHT_PHONG, false);
 	renderer_shadow.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
 	renderer_shadow.Set_Feature(RENDER_FEATURE_FACK_CULLING, true);
 	Camera shadow_camera;
