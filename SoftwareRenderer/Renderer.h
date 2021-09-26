@@ -10,20 +10,29 @@
 
 
 //特性
-#define RENDER_FEATURE_BACK_CULLING 0b1		//背面剔除
-#define RENDER_FEATURE_FACK_CULLING 0b11	//正面剔除
-#define RENDER_FEATURE_LIGHT 0b100			//是否开启光照(默认高洛德着色)
-#define RENDER_FEATURE_LIGHT_PHONG 0b101	//是否开启光照的冯氏着色
-#define RENDER_FEATURE_CVV_CLIP 0b1000		//是否开启cvv裁剪
-#define RENDER_FEATURE_SHADOW 0b10000		//是否开启阴影
-#define RENDER_FEATURE_AUTO_NORMAL 0b100000	//是否自动设置顶点法向量为三角面的法向量
+#define RENDER_FEATURE_BACK_CULLING 1		//背面剔除
+#define RENDER_FEATURE_FACK_CULLING 2		//正面剔除
+#define RENDER_FEATURE_LIGHT 3				//是否开启光照(默认高洛德着色)
+#define RENDER_FEATURE_LIGHT_PHONG 4		//是否开启光照的冯氏着色
+#define RENDER_FEATURE_CVV_CLIP 5			//是否开启cvv裁剪
+#define RENDER_FEATURE_SHADOW 6				//是否开启阴影
+#define RENDER_FEATURE_AUTO_NORMAL 7		//是否自动设置顶点法向量为三角面的法向量		
 
 //片段着色器-着色算法
-#define RENDER_SHADER_PIXEL_SCANLINE 0b1		//扫描线算法-进行片段着色,更快但不够精准
+#define RENDER_SHADER_PIXEL_SCANLINE 0b1			//扫描线算法-进行片段着色,更快但不够精准
 #define RENDER_SHADER_PIXEL_BOUNDINGBOX 0b10		//边界盒算法-进行片段着色,精准但不快
 
 class Renderer
 {
+private:
+	void draw_pixel(int x, int y, UINT32 color);
+	void draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3, Draw_ExtraData extra_data = {});
+	void draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right, const Draw_ExtraData& extra_data);
+	void draw_triangle_BresenhamAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right);
+	void draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
+	void Phong_Shading(vertex_t& v, bool in_shadow);
+	color_t Calculate_Lighting(vertex_t& v, const Light* light, bool in_shadow = false);
+
 public:
 	transform_t transform;      // 坐标变换器
 	const Camera* camera = nullptr;
@@ -50,7 +59,7 @@ public:
 	int render_state = RENDER_STATE_WIREFRAME;	// 渲染状态
 	int render_shader_state = RENDER_SHADER_PIXEL_SCANLINE;	// 片段着色器算法选择
 
-	std::map<int, int> features;	//特性
+	std::unordered_map<int, bool> features;	//特性
 
 	std::vector<const Light*>lights;
 	const Light* current_light;
@@ -71,13 +80,5 @@ public:
 	void transform_update();
 
 	void FXAA(bool on);
-
-private:
-	void draw_pixel(int x, int y, UINT32 color);
-	void draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3, Draw_ExtraData extra_data = {});
-	void draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right, const Draw_ExtraData& extra_data);
-	void draw_triangle_BresenhamAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right);
-	void draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
-	void Phong_Shading(vertex_t& v);
 };
 

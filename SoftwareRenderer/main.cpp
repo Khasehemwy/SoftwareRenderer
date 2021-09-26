@@ -182,8 +182,8 @@ int main()
 	renderer_ground.camera = &camera;
 	renderer_ground.render_state = RENDER_STATE_TEXTURE;
 	renderer_ground.Set_Feature(RENDER_FEATURE_CVV_CLIP, false);
-	//renderer_ground.Set_Feature(RENDER_FEATURE_LIGHT_PHONG, false);
 	//renderer_ground.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
+	//renderer_ground.Set_Feature(RENDER_FEATURE_LIGHT_PHONG, false);
 
 
 	Texture texture;

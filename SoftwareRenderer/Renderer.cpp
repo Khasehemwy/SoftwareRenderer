@@ -548,18 +548,51 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 					float wi = 1.0 / rhwi;
 					color_t color_use = color * wi;
 
+					//阴影
+					bool pixel_in_shadow = false;
+					if (features[RENDER_FEATURE_SHADOW] == true) {
+						float bias = 0.1f;
+						for (const Light* light : this->lights) {
+							point_t p = { world_xi * wi, world_yi * wi, world_zi * wi, 1 };
+							p = p * light->light_space_matrix;
+							p = viewport_transform(p, this->transform);
+
+							//u,v归一化
+							float world_u = p.x / this->width;
+							float world_v = p.y / this->height;
+							if (world_u > 1 || world_u < 0
+								|| world_v > 1 || world_v < 0)
+							{
+								continue;
+							}
+
+							float world_map_deep = light->shadow_map->Read(world_u, world_v, 0).r;
+							if (p.w - bias > world_map_deep) {
+								pixel_in_shadow = true;
+							}
+						}
+					}
+
 					//逐片元处理光照
-					if (features[RENDER_FEATURE_LIGHT] && features[RENDER_FEATURE_LIGHT_PHONG]) {
-						vertex_t v;
-						v.pos = { world_xi , world_yi , world_zi , 1 };//这里不乘wi,因为后面会乘wi
-						barycentric_t bary = Get_Barycentric(v.pos, extra_data.world_pos.p1, extra_data.world_pos.p2, extra_data.world_pos.p3);
+					if (features[RENDER_FEATURE_LIGHT]) {
+						if (features[RENDER_FEATURE_LIGHT_PHONG]) {
+							vertex_t v;
+							v.pos = { world_xi , world_yi , world_zi , 1 };//这里不乘wi,因为后面会乘wi
+							barycentric_t bary = Get_Barycentric(v.pos, extra_data.world_pos.p1, extra_data.world_pos.p2, extra_data.world_pos.p3);
 
-						v.color = top.color * wi * bary.w1 + left.color * wi * bary.w2 + right.color * wi * bary.w3;
-						v.normal = top.normal * wi * bary.w1 + left.normal * wi * bary.w2 + right.normal * wi * bary.w3;
-						v.pos = v.pos * wi;//转换回世界坐标,这样光照计算才是正确的
-						Phong_Shading(v);
+							v.color = top.color * wi * bary.w1 + left.color * wi * bary.w2 + right.color * wi * bary.w3;
+							v.normal = top.normal * wi * bary.w1 + left.normal * wi * bary.w2 + right.normal * wi * bary.w3;
+							v.pos = v.pos * wi;//转换回世界坐标,这样光照计算才是正确的
+							Phong_Shading(v, pixel_in_shadow);
 
-						color_use = v.color;
+							color_use = v.color;
+						}
+						else {
+							// 高洛德着色(Gouraud Shading)的阴影处理
+							if (pixel_in_shadow) {
+								color_use *= 0.5;
+							}
+						}
 					}
 
 					if (this->render_state == RENDER_STATE_COLOR) {
@@ -575,28 +608,6 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 						while (color_deep.r > 1) { color_deep.r /= 10; }
 						color_deep.g = color_deep.b = color_deep.r;
 						color_use = color_deep;
-					}
-
-					//阴影
-					if (features[RENDER_FEATURE_SHADOW] == true) {
-						float bias = 0.1f;
-						for (const Light* light : this->lights) {
-							point_t p = { world_xi * wi, world_yi * wi, world_zi * wi, 1 };
-							p = p * light->light_space_matrix;
-							p = viewport_transform(p, this->transform);
-
-							//u,v归一化
-							float world_u = p.x / this->width;
-							float world_v = p.y / this->height;
-							if (world_u > 1 || world_u < 0 
-								|| world_v > 1 || world_v < 0) 
-							{ continue; }
-
-							float world_map_deep = light->shadow_map->Read(world_u, world_v, 0).r;
-							if (p.w - bias > world_map_deep) {
-								color_use *= 0.5f;
-							}
-						}
 					}
 
 					this->draw_pixel(x, y, color_trans_255(color_use));
@@ -831,7 +842,7 @@ void Renderer::draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2,
 	}
 }
 
-void Renderer::Phong_Shading(vertex_t& v)
+void Renderer::Phong_Shading(vertex_t& v, bool in_shadow)
 {
 	//光照处理
 	if (this->render_state == RENDER_STATE_TEXTURE) {
@@ -840,66 +851,84 @@ void Renderer::Phong_Shading(vertex_t& v)
 	color_t color;
 	color = { 0,0,0,0 };
 	for (auto& light : lights) {
-		// 环境光
-		color_t ambient = light->ambient * v.color;
+		color += Calculate_Lighting(v, light, in_shadow);
+	}
 
-		// 漫反射
-		// 使用兰伯特余弦定律（Lambert' cosine law）计算漫反射
-		vector_t norm = vector_normalize(v.normal);
-		vector_t light_dir;
-		float diff;
-		if (light->light_state == LIGHT_STATE_DIRECTIONAL) {
-			light_dir = vector_normalize(-light->direction);
+	v.color = color;
+}
+
+color_t Renderer::Calculate_Lighting(vertex_t& v, const Light* light, bool in_shadow)
+{
+	color_t color = { 0,0,0,0 };
+
+	// 环境光
+	color_t ambient = light->ambient * v.color;
+
+	// 漫反射
+	// 使用兰伯特余弦定律（Lambert' cosine law）计算漫反射
+	vector_t norm = vector_normalize(v.normal);
+	vector_t light_dir;
+	float diff;
+	if (light->light_state == LIGHT_STATE_DIRECTIONAL) {
+		light_dir = vector_normalize(-light->direction);
+	}
+	else if (
+		light->light_state == LIGHT_STATE_POINT ||
+		light->light_state == LIGHT_STATE_SPOTLIGHT)
+	{
+		light_dir = vector_normalize(light->pos - v.pos);
+	}
+
+	diff = max(vector_dot(norm, light_dir), 0.0f);
+	color_t diffuse = light->diffuse * diff * v.color;
+
+	// 镜面反射
+	vector_t reflect_dir;
+	vector_t view_dir;
+	reflect_dir = vector_reflect(-light_dir, norm);
+	view_dir = vector_normalize(camera->pos - v.pos);
+	float shininess = 32.0f;
+
+	float spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0f), shininess);
+	color_t specular = light->specular * spec * v.color;
+
+	//光照运算
+	if (light->light_state == LIGHT_STATE_POINT ||
+		light->light_state == LIGHT_STATE_SPOTLIGHT)
+	{
+		//点光源衰减
+		float distance = vector_length(light->pos - v.pos);
+		float attenuation = 1.0 / (light->constant + light->linear * distance +
+			light->quadratic * (distance * distance));
+
+		//聚光
+		if (light->light_state == LIGHT_STATE_SPOTLIGHT) {
+			float epsilon = light->cut_off - light->outer_cut_off;
+			float theta;
+			float intensity;
+			vector_t light_direction = vector_normalize(-light->direction);
+
+			theta = vector_dot(light_dir, light_direction);
+			intensity = CMID((theta - light->outer_cut_off) / epsilon, 0.0, 1.0);
+			ambient *= intensity; diffuse *= intensity; specular *= intensity;
 		}
-		else if (
-			light->light_state == LIGHT_STATE_POINT ||
-			light->light_state == LIGHT_STATE_SPOTLIGHT)
-		{
-			light_dir = vector_normalize(light->pos - v.pos);
+
+		if (in_shadow && features[RENDER_FEATURE_LIGHT_PHONG]) {
+			color += ambient * attenuation;
 		}
-
-		diff = max(vector_dot(norm, light_dir), 0.0f);
-		color_t diffuse = light->diffuse * diff * v.color;
-
-		// 镜面反射
-		vector_t reflect_dir;
-		vector_t view_dir;
-		reflect_dir = vector_reflect(-light_dir, norm);
-		view_dir = vector_normalize(camera->pos - v.pos);
-		float shininess = 32.0f;
-
-		float spec = pow(max(vector_dot(view_dir, reflect_dir), 0.0f), shininess);
-		color_t specular = light->specular * spec * v.color;
-
-		//光照运算
-		if (light->light_state == LIGHT_STATE_POINT ||
-			light->light_state == LIGHT_STATE_SPOTLIGHT)
-		{
-			//点光源衰减
-			float distance = vector_length(light->pos - v.pos);
-			float attenuation = 1.0 / (light->constant + light->linear * distance +
-				light->quadratic * (distance * distance));
-
-			//聚光
-			if (light->light_state == LIGHT_STATE_SPOTLIGHT) {
-				float epsilon = light->cut_off - light->outer_cut_off;
-				float theta;
-				float intensity;
-				vector_t light_direction = vector_normalize(-light->direction);
-
-				theta = vector_dot(light_dir, light_direction);
-				intensity = CMID((theta - light->outer_cut_off) / epsilon, 0.0, 1.0);
-				ambient *= intensity; diffuse *= intensity; specular *= intensity;
-			}
-
+		else {
 			color += (ambient + diffuse + specular) * attenuation;
+		}
+	}
+	else {
+		if (in_shadow && features[RENDER_FEATURE_LIGHT_PHONG]) {
+			color += ambient;
 		}
 		else {
 			color += (ambient + diffuse + specular);
 		}
 	}
-
-	v.color = color;
+	return color;
 }
 
 //绘制原始三角形
@@ -960,107 +989,11 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	color_t color1, color2, color3;
 	if (this->features[RENDER_FEATURE_LIGHT] && !features[RENDER_FEATURE_LIGHT_PHONG]) {
 		color1 = color2 = color3 = { 0,0,0,0 };
+		v1.pos = p1; v2.pos = p2; v3.pos = p3;
 		for (auto& light : lights) {
-
-			// 环境光
-			color_t ambient1 = light->ambient * v1.color;
-			color_t ambient2 = light->ambient * v2.color;
-			color_t ambient3 = light->ambient * v3.color;
-
-			// 漫反射
-			// 使用兰伯特余弦定律（Lambert' cosine law）计算漫反射
-			vector_t norm = vector_normalize(v_normal);
-			vector_t light_dir1, light_dir2, light_dir3;
-			float diff;
-			if (light->light_state == LIGHT_STATE_DIRECTIONAL) {
-				light_dir1 = vector_normalize(-light->direction);
-				light_dir3 = light_dir2 = light_dir1;
-			}
-			else if (
-				light->light_state == LIGHT_STATE_POINT ||
-				light->light_state == LIGHT_STATE_SPOTLIGHT)
-			{
-				light_dir1 = vector_normalize(light->pos - p1);
-				light_dir2 = vector_normalize(light->pos - p2);
-				light_dir3 = vector_normalize(light->pos - p3);
-			}
-
-			diff = max(vector_dot(norm, light_dir1), 0.0f);
-			color_t diffuse1 = light->diffuse * diff * v1.color;
-
-			diff = max(vector_dot(norm, light_dir2), 0.0f);
-			color_t diffuse2 = light->diffuse * diff * v2.color;
-
-			diff = max(vector_dot(norm, light_dir3), 0.0f);
-			color_t diffuse3 = light->diffuse * diff * v3.color;
-
-			// 镜面反射
-			vector_t reflect_dir1, reflect_dir2, reflect_dir3;
-			vector_t view_dir1, view_dir2, view_dir3;
-			reflect_dir1 = vector_reflect(-light_dir1, norm);
-			reflect_dir2 = vector_reflect(-light_dir2, norm);
-			reflect_dir3 = vector_reflect(-light_dir3, norm);
-			view_dir1 = vector_normalize(camera->pos - p1);
-			view_dir2 = vector_normalize(camera->pos - p2);
-			view_dir3 = vector_normalize(camera->pos - p3);
-			float shininess = 32.0f;
-
-			float spec = pow(max(vector_dot(view_dir1, reflect_dir1), 0.0f), shininess);
-			color_t specular1 = light->specular * spec * v1.color;
-
-			spec = pow(max(vector_dot(view_dir2, reflect_dir2), 0.0f), shininess);
-			color_t specular2 = light->specular * spec * v2.color;
-
-			spec = pow(max(vector_dot(view_dir3, reflect_dir3), 0.0f), shininess);
-			color_t specular3 = light->specular * spec * v3.color;
-
-			//specular1 = specular2 = specular3 = { 0,0,0,0 };
-
-
-			//光照运算
-			if (light->light_state == LIGHT_STATE_POINT ||
-				light->light_state == LIGHT_STATE_SPOTLIGHT)
-			{
-				//点光源衰减
-				float distance1 = vector_length(light->pos - p1);
-				float distance2 = vector_length(light->pos - p2);
-				float distance3 = vector_length(light->pos - p3);
-				float attenuation1 = 1.0 / (light->constant + light->linear * distance1 +
-					light->quadratic * (distance1 * distance1));
-				float attenuation2 = 1.0 / (light->constant + light->linear * distance2 +
-					light->quadratic * (distance2 * distance2));
-				float attenuation3 = 1.0 / (light->constant + light->linear * distance3 +
-					light->quadratic * (distance3 * distance3));
-
-				//聚光
-				if (light->light_state == LIGHT_STATE_SPOTLIGHT) {
-					float epsilon = light->cut_off - light->outer_cut_off;
-					float theta1, theta2, theta3;
-					float intensity1, intensity2, intensity3;
-					vector_t light_direction = vector_normalize(-light->direction);
-
-					theta1 = vector_dot(light_dir1, light_direction);
-					intensity1 = CMID((theta1 - light->outer_cut_off) / epsilon, 0.0, 1.0);
-					ambient1 *= intensity1; diffuse1 *= intensity1; specular1 *= intensity1;
-
-					theta2 = vector_dot(light_dir2, light_direction);
-					intensity2 = CMID((theta2 - light->outer_cut_off) / epsilon, 0.0, 1.0);
-					ambient2 *= intensity2; diffuse2 *= intensity2; specular2 *= intensity2;
-
-					theta3 = vector_dot(light_dir3, light_direction);
-					intensity3 = CMID((theta3 - light->outer_cut_off) / epsilon, 0.0, 1.0);
-					ambient3 *= intensity3; diffuse3 *= intensity3; specular3 *= intensity3;
-				}
-
-				color1 += (ambient1 + diffuse1 + specular1) * attenuation1;
-				color2 += (ambient2 + diffuse2 + specular2) * attenuation2;
-				color3 += (ambient3 + diffuse3 + specular3) * attenuation3;
-			}
-			else {
-				color1 += (ambient1 + diffuse1 + specular1);
-				color2 += (ambient2 + diffuse2 + specular2);
-				color3 += (ambient3 + diffuse3 + specular3);
-			}
+			color1 += Calculate_Lighting(v1, light);
+			color2 += Calculate_Lighting(v2, light);
+			color3 += Calculate_Lighting(v3, light);
 		}
 		v1.color = color1;
 		v2.color = color2;
