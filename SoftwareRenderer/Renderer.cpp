@@ -45,6 +45,7 @@ void Renderer::init(int width, int height, void* fb)
 	this->width = width;
 	this->height = height;
 	this->background = 0x1D4E89;
+	this->background_f = color_trans_1f(background);
 	this->foreground = 0x0;
 
 	tex_limit_size = 8192;
@@ -811,7 +812,7 @@ void Renderer::draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2,
 {
 	//TODO
 	//没有颜色插值
-	float r, g, b, a;
+	float r, g, b;
 	r = v1.color.r;
 	g = v1.color.g;
 	b = v1.color.b;
@@ -893,12 +894,20 @@ color_t Renderer::Calculate_Lighting(vertex_t& v, const Light* light, bool in_sh
 	color_t specular = light->specular * spec * v.color;
 
 	//光照运算
-	if (light->light_state == LIGHT_STATE_POINT ||
+	if (light->light_state == LIGHT_STATE_DIRECTIONAL) {
+		if (in_shadow && features[RENDER_FEATURE_LIGHT_PHONG]) {
+			color += ambient;
+		}
+		else {
+			color += (ambient + diffuse + specular);
+		}
+	}
+	else if (light->light_state == LIGHT_STATE_POINT ||
 		light->light_state == LIGHT_STATE_SPOTLIGHT)
 	{
-		//点光源衰减
+		//衰减
 		float distance = vector_length(light->pos - v.pos);
-		float attenuation = 1.0 / (light->constant + light->linear * distance +
+		float attenuation = 1.0f / (light->constant + light->linear * distance +
 			light->quadratic * (distance * distance));
 
 		//聚光
@@ -982,6 +991,16 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 		v3.normal = v_normal;
 	}
 
+	//光追
+	if (features[RENDER_FEATURE_RAY_TRACING]) {
+		v1.pos = (v1.pos) * this->transform.model;
+		v2.pos = (v2.pos) * this->transform.model;
+		v3.pos = (v3.pos) * this->transform.model;
+		triangle_t triangle = { v1,v2,v3 };
+		this->triangles.push_back(triangle);
+		return 0;
+	}
+
 	//光照处理
 	if (this->render_state == RENDER_STATE_TEXTURE) {
 		v1.color = v2.color = v3.color = { 1,1,1,1 };
@@ -1046,6 +1065,193 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	return 0;
 }
 
+int Renderer::Rendering()
+{
+	if (features[RENDER_FEATURE_RAY_TRACING]) {
+		Rendering_RayTracing();
+	}
+
+	return 0;
+}
+
+int Renderer::Rendering_RayTracing()
+{
+	color_t color_tmp = { 0,0,0,1 }, color = { 0,0,0,1 };
+	matrix_t camera_to_world = matrix_get_inverse(this->transform.view);
+	float scale = tan(radians(camera->fov * 0.5f));
+	float aspect = width / height;
+
+	for (unsigned int y = 0; y < height; y++) {
+		fprintf(stderr, "\rRendering (%d spp) %5.2f%%", raytracing_samples_num * 4, 100.0f * y / (height - 1.0f));
+		for (unsigned int x = 0; x < width; x++) {
+			color = { 0,0,0,1 };
+
+			for (unsigned sy = 0; sy < 2; sy++) { // 2x2子像素
+				for (unsigned int sx = 0; sx < 2; sx++) {
+					color_tmp = { 0,0,0,1 };
+					for (int s = 0; s < raytracing_samples_num; s++) {
+						float dx = rand_lr(0.0f, 1.0f) - 0.5f;//随机偏移
+						float dy = rand_lr(0.0f, 1.0f) - 0.5f;
+
+						float px = ((2 * (x + 0.5 + (sx - 0.5 + dx)) / width - 1)) * aspect * scale;
+						float py = ((1 - 2 * (y + 0.5 + (sy - 0.5 + dy)) / height)) * scale;
+						point_t pixel_pos = vector_t(px, py, 0.76, 1) * camera_to_world;
+						vector_t view_dir = vector_normalize(pixel_pos - camera->pos);
+
+						float tmp_f = 0.0f;
+						color_tmp = color_tmp +
+							Ray_Tracing({ camera->pos, view_dir }, 0, tmp_f) * (1.0 / raytracing_samples_num);
+					}
+					color = color + color_tmp * 0.25;
+				}
+			}
+
+			this->draw_pixel(x, y, color_trans_255(color));
+		}
+	}
+
+	return 0;
+}
+
+color_t Renderer::Ray_Tracing(const ray_t& ray, int depth, float& dis)
+{
+	if (features[RENDER_FEATURE_RAY_TRACING_PBR]) {
+		return Radiance(ray, depth);
+	}
+
+	if (++depth > raytracing_max_depth) {
+		return { 0,0,0,1 };
+	}
+	const float inf = 1e10;
+
+	//计算与射线相交的最近三角形
+	float t = inf, cal_t = inf;
+	bool is_intersect = false;
+	triangle_t triangle;
+	for (unsigned int i = 0; i < triangles.size(); i++) {
+		if (Intersect(ray, cal_t, triangles[i]) && cal_t >= 0.0001f) { //有交点并且交点在视线前方
+			if (cal_t < t) {
+				is_intersect = true;
+				t = cal_t;
+				triangle = triangles[i];
+			}
+		}
+	}
+	if (!is_intersect) { 
+		if (depth <= 1) { return this->background_f; }
+		return {0,0,0,1}; 
+	}
+
+	point_t p_intersect = ray.o + ray.dir * t;
+	dis = t;
+	barycentric_t bary = Get_Barycentric(p_intersect, triangle.v1.pos, triangle.v2.pos, triangle.v3.pos);
+	vertex_t v = triangle.v1 * bary.w1 + triangle.v2 * bary.w2 + triangle.v3 * bary.w3;
+
+	color_t color = { 0,0,0,1 };
+	if (render_state == RENDER_STATE_TEXTURE) { v.color = { 1,1,1,1 }; }
+
+	for (auto& light : this->lights) {
+		ray_t ray_to_light(p_intersect, vector_normalize(light->pos - p_intersect));
+		float dis_p_light = vector_length(light->pos - p_intersect);
+
+		float t = inf, cal_t = inf;
+		bool is_intersect = false;
+		triangle_t triangle_intersect;
+		for (auto& tri : triangles) {
+			if (Intersect(ray_to_light, cal_t, tri) && cal_t >= 0.0001f && cal_t < dis_p_light) {//在光源后的交点也忽略
+				if (cal_t < t) {
+					is_intersect = true;
+					t = cal_t;
+					triangle_intersect = tri;
+				}
+			}
+		}
+		if (!is_intersect) { 
+			color += Calculate_Lighting(v, light); 
+		}
+		else {
+			ray_t r_reflect(p_intersect, vector_normalize(vector_reflect(ray.dir, v.normal)));
+
+			float distance = vector_length(light->pos - v.pos);
+			float attenuation = 1.0f / (light->constant + light->linear * distance +
+				light->quadratic * (distance * distance));
+			color += light->ambient * attenuation * v.color;
+
+			float dis_reflect = 0.0f;
+			color += Ray_Tracing(r_reflect, depth, dis_reflect) * 0.1f;
+		}
+	}
+
+	if (render_state == RENDER_STATE_TEXTURE) {
+		color = color * texture->Read(v.tex.u, v.tex.v);
+	}
+
+	return color;
+}
+
+color_t Renderer::Radiance(const ray_t& ray, int depth)
+{
+	const float inf = 1e10;
+
+	//计算与射线相交的最近三角形
+	float t = inf, cal_t = inf;
+	bool is_intersect = false;
+	triangle_t triangle;
+	for (unsigned int i = 0; i < triangles.size(); i++) {
+		if (Intersect(ray, cal_t, triangles[i]) && cal_t >= 0.0001f) { //有交点并且交点在视线前方
+			if (cal_t < t) {
+				is_intersect = true;
+				t = cal_t;
+				triangle = triangles[i];
+			}
+		}
+	}
+	if (!is_intersect) {
+		if (depth <= 0) { return this->background_f; }
+		return { 0,0,0,1 };
+	}
+
+	//计算相交点的相关变量
+	point_t p_intersect = ray.o + ray.dir * t;
+	barycentric_t bary = Get_Barycentric(p_intersect, triangle.v1.pos, triangle.v2.pos, triangle.v3.pos);
+	vertex_t vt = triangle.v1 * bary.w1 + triangle.v2 * bary.w2 + triangle.v3 * bary.w3;
+	vector_t N = vector_normalize(vt.normal), NL = vector_dot(N, ray.dir) < 0 ? N : N * -1;
+	color_t f = vt.color;
+	float p = std::max(f.r, std::max(f.g, f.b));
+
+	//俄罗斯转盘,随机继续迭代
+	if (++depth > raytracing_max_depth) {
+		if (rand_lr(0.0f, 1.0f) < p) {
+			f = f * (1.0f / p);
+		}
+		else {
+			return vt.emissivity;
+		}
+	}
+
+	//渲染方程
+	if (vt.material.reflect == material_t::reflect_t::DIFF) { //diffuse漫反射
+		float r1 = 2 * PI * rand_lr(0.0f, 1.0f);
+		float r2 = rand_lr(0.0f, 1.0f), r2s = sqrt(r2);
+		vector_t w = NL;
+		vector_t u = vector_normalize(vector_cross((abs(w.x) > 0.1f) ? vector_t(0, 1.0f, 0) : vector_t(1.0f, 0, 0), w));
+		vector_t v = vector_cross(w, u);
+		vector_t d = vector_normalize(u * cos(r1) * r2s + v * sin(r1) * r2s + w * sqrt(1 - r2));
+		color_t color_radiance = Radiance(ray_t(p_intersect, d), depth);
+		f.r *= color_radiance.r; f.g *= color_radiance.g; f.b *= color_radiance.b;
+
+		return vt.emissivity + f;
+	}
+	else if (vt.material.reflect == material_t::reflect_t::SPEC) { //specular镜面反射
+		color_t color_radiance = Radiance(ray_t(p_intersect, vector_normalize(vector_reflect(ray.dir, N))), depth);
+		f.r *= color_radiance.r; f.g *= color_radiance.g; f.b *= color_radiance.b;
+		return vt.emissivity + f;
+	}
+	else if (vt.material.reflect == material_t::reflect_t::REFR) {
+		//todo
+		ray_t ray_reflect(p_intersect, vector_normalize(vector_reflect(ray.dir, N)));
+	}
+}
 
 
 void Renderer::transform_update()

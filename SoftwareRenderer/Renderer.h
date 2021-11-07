@@ -1,13 +1,12 @@
-﻿#pragma once
+#pragma once
 #include"Includes.h"
 
 
 //渲染模式
-#define RENDER_STATE_WIREFRAME 0b1		// 渲染线框
-#define RENDER_STATE_COLOR 0b10			// 渲染颜色
-#define RENDER_STATE_TEXTURE 0b100		// 渲染纹理
-#define RENDER_STATE_DEEP 0b1000		// 渲染纹理
-
+#define RENDER_STATE_WIREFRAME 1		// 渲染线框
+#define RENDER_STATE_COLOR 2			// 渲染颜色
+#define RENDER_STATE_TEXTURE 3			// 渲染纹理
+#define RENDER_STATE_DEEP 4				// 渲染纹理
 
 //特性
 #define RENDER_FEATURE_BACK_CULLING 1		//背面剔除
@@ -17,6 +16,8 @@
 #define RENDER_FEATURE_CVV_CLIP 5			//是否开启cvv裁剪
 #define RENDER_FEATURE_SHADOW 6				//是否开启阴影
 #define RENDER_FEATURE_AUTO_NORMAL 7		//是否自动设置顶点法向量为三角面的法向量		
+#define RENDER_FEATURE_RAY_TRACING 8		// 渲染纹理
+#define RENDER_FEATURE_RAY_TRACING_PBR 9	// 渲染纹理
 
 //片段着色器-着色算法
 #define RENDER_SHADER_PIXEL_SCANLINE 0b1			//扫描线算法-进行片段着色,更快但不够精准
@@ -32,6 +33,9 @@ private:
 	void draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
 	void Phong_Shading(vertex_t& v, bool in_shadow);
 	color_t Calculate_Lighting(vertex_t& v, const Light* light, bool in_shadow = false);
+	int Rendering_RayTracing();
+	color_t Ray_Tracing(const ray_t& ray, int depth, float& dis);
+	color_t Radiance(const ray_t& ray, int depth);
 
 public:
 	transform_t transform;      // 坐标变换器
@@ -54,6 +58,7 @@ public:
 	float max_clip_y;
 
 	UINT32 background;			// 背景颜色
+	color_t background_f;
 	UINT32 foreground;			// 线框颜色
 
 	int render_state = RENDER_STATE_WIREFRAME;	// 渲染状态
@@ -63,6 +68,10 @@ public:
 
 	std::vector<const Light*>lights;
 	const Light* current_light;
+
+	std::vector<triangle_t>triangles;
+	int raytracing_samples_num = 1;
+	int raytracing_max_depth = 5;
 
 	Renderer();
 
@@ -77,6 +86,7 @@ public:
 
 	void draw_line(int x1, int y1, int x2, int y2, UINT32 color);
 	int	display_primitive(vertex_t v1, vertex_t v2, vertex_t v3);
+	int Rendering();
 	void transform_update();
 
 	void FXAA(bool on);

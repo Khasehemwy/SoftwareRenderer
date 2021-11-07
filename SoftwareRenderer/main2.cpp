@@ -1,4 +1,4 @@
-﻿#include"Includes.h"
+#include"Includes.h"
 
 float cursor_yaw = 0.0f;
 float cursor_pitch = 0.0f;
@@ -92,7 +92,7 @@ int main()
 	renderer_light.render_state = RENDER_STATE_COLOR;
 	renderer_light.features[RENDER_FEATURE_LIGHT] = false;
 
-	Model models("resources/pacman/Pacman.stl");
+	Model models("resources/planet/planet.obj");
 
 	//光源
 	Light point_light;
@@ -170,6 +170,8 @@ int main()
 
 		renderer.draw_line(10, 10, 20, 10, 0x0);
 		renderer.draw_line(10, 10, 10, 20, 0x0);
+
+		renderer.Rendering();
 
 		window.screen_update();
 	}

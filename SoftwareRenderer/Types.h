@@ -1,7 +1,7 @@
-﻿#pragma once
+#pragma once
 #include"Includes.h"
 
-#define PI					3.1415926f
+#define PI				3.1415926535898f
 #define KEY_A                  65
 #define KEY_B                  66
 #define KEY_C                  67
@@ -32,12 +32,32 @@
 typedef unsigned int UINT32;
 
 typedef struct { float m[4][4]; } matrix_t;
-typedef struct { float x, y, z, w; } vector_t;
+struct vector_t{ 
+	float x, y, z, w;
+	vector_t(float x = 0, float y = 0, float z = 0, float w = 0) :x(x), y(y), z(z), w(w) {}
+};
+struct ray_t { 
+	vector_t o, dir; 
+	ray_t(vector_t o = vector_t(), vector_t dir = vector_t()) :o(o), dir(dir) {}
+};
 using point_t = vector_t;
-//typedef vector_t point_t;
-typedef struct { float r, g, b, a; } color_t;
+struct color_t{
+	float r, g, b, a;
+	color_t(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 1.0f)
+		:r(r), g(g), b(b), a(a) {  }
+};
 typedef struct { float u, v; } texcoord_t;
 typedef struct { float w1, w2, w3; } barycentric_t;
+
+struct material_t{
+	enum class reflect_t {
+		DIFF, //diffuse漫反射
+		SPEC, //specular反射
+		REFR  //refraction折射
+	};
+
+	reflect_t reflect = reflect_t::DIFF;
+};
 
 struct vertex_t { 
 	point_t pos; 
@@ -45,6 +65,13 @@ struct vertex_t {
 	texcoord_t tex; 
 	vector_t normal;
 	float rhw; 
+
+	//For PBR
+	color_t emissivity;
+	material_t material;
+};
+struct triangle_t {
+	vertex_t v1, v2, v3;
 };
 
 typedef struct {

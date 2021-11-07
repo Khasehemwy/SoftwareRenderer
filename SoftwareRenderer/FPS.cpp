@@ -7,7 +7,7 @@ void FPS::Print_FPS()
 	auto duration = duration_cast<microseconds>(cur_time - last_time);
 	float duration_s = float(duration.count()) * std::chrono::microseconds::period::num / microseconds::period::den;
 
-	if (duration_s > 1)//1秒之后开始统计FPS
+	if (duration_s > 1)//1绉掍箣鍚庡紑濮嬬粺璁PS
 	{
 		fps = frame_count / duration_s;
 		frame_count = 0;

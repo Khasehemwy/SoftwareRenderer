@@ -1,4 +1,4 @@
-﻿#include"Functions.h"
+#include"Functions.h"
 
 void matrix_set_zero(matrix_t* m) {
 	m->m[0][0] = m->m[0][1] = m->m[0][2] = m->m[0][3] = 0.0f;
@@ -172,22 +172,47 @@ matrix_t matrix_lookat(const vector_t& eye, const vector_t& at, const vector_t& 
 //求逆矩阵
 matrix_t matrix_get_inverse(const matrix_t& m)
 {
-	int n = 4;
-	double flag = matrix_get_A(m, n);
-	matrix_t ans; matrix_set_identity(&ans);
-	matrix_t t;
-	if (flag == 0){
-		//std::cout << "no matrix inverse\n";
-		return ans;
-	}
-	else{
-		t = matrix_get_AStar(m);
-		for (int i = 0; i < n; i++){
-			for (int j = 0; j < n; j++){
-				ans.m[i][j] = t.m[i][j] / flag;
-			}
-		}
-	}
+	matrix_t ans;
+	vector_t u(m.m[0][0], m.m[0][1], m.m[0][2], m.m[0][3]);
+	vector_t v(m.m[1][0], m.m[1][1], m.m[1][2], m.m[1][3]);
+	vector_t w(m.m[2][0], m.m[2][1], m.m[2][2], m.m[2][3]);
+	vector_t t(m.m[3][0], m.m[3][1], m.m[3][2], m.m[3][3]);
+	ans.m[0][0] = u.x;
+	ans.m[1][0] = u.y;
+	ans.m[2][0] = u.z;
+	ans.m[3][0] = -vector_dot(u, t);
+
+	ans.m[0][1] = v.x;
+	ans.m[1][1] = v.y;
+	ans.m[2][1] = v.z;
+	ans.m[3][1] = -vector_dot(v, t);
+
+	ans.m[0][2] = w.x;
+	ans.m[1][2] = w.y;
+	ans.m[2][2] = w.z;
+	ans.m[3][2] = -vector_dot(w, t);
+
+	ans.m[0][3] = u.w;
+	ans.m[1][3] = v.w;
+	ans.m[2][3] = w.w;
+	ans.m[3][3] = 1;
+
+	//double flag = matrix_get_A(m, n);
+	//int n = 4;
+	//matrix_t t;
+	//if (flag == 0){
+	//	//std::cout << "no matrix inverse\n";
+	//	return ans;
+	//}
+	//else{
+	//	t = matrix_get_AStar(m);
+	//	for (int i = 0; i < n; i++){
+	//		for (int j = 0; j < n; j++){
+	//			ans.m[i][j] = t.m[i][j] / flag;
+	//		}
+	//	}
+	//}
+
 	return ans;
 }
 //按第一行展开计算|A|
@@ -332,8 +357,8 @@ vector_t operator*(const float y, const vector_t& x)
 	return z;
 }
 
-//I为从光源指向目标的方向向量,n为顶点单位法向量.返回以目标为起点的反射光向量
 vector_t vector_reflect(const vector_t& I, const vector_t& N)
+//I为从光源指向目标的方向向量,n为顶点单位法向量.返回以目标为起点的反射光向量
 {
 	return I - 2 * N * vector_dot(N, I);
 }
@@ -349,6 +374,30 @@ void vertex_set_rhw(vertex_t* v)
 	v->color.b *= rhw;
 	v->color.a *= rhw;
 	v->normal = v->normal * rhw;
+}
+
+vertex_t operator*(const vertex_t& v, float x)
+{
+	vertex_t y = v;
+	y.color = y.color * x;
+	y.normal = y.normal * x;
+	y.pos = y.pos * x;
+	y.rhw = y.rhw * x;
+	y.tex = { y.tex.u * x,y.tex.v * x };
+	y.emissivity = y.emissivity * x;
+	return y;
+}
+
+vertex_t operator+(const vertex_t& v1, const vertex_t& v2)
+{
+	vertex_t y = v1;
+	y.color = y.color + v2.color;
+	y.normal = y.normal + v2.normal;
+	y.pos = y.pos + v2.pos;
+	y.rhw = y.rhw + v2.rhw;
+	y.tex = { y.tex.u + v2.tex.u,y.tex.v + v2.tex.v };
+	y.emissivity = y.emissivity + v2.emissivity;
+	return y;
 }
 
 void Set_ExtraData_rhw(Draw_ExtraData* extra_data, const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
@@ -473,6 +522,16 @@ color_t operator/(const color_t& x, const float& y)
 	return color_div(x, y);
 }
 
+bool operator>(const color_t& x, float y)
+{
+	return (x.r > y && x.g > y && x.b > y);
+}
+
+bool operator<(const color_t& x, float y)
+{
+	return (x.r < y && x.g < y && x.b < y);
+}
+
 float time_get()
 {
 	auto current_time = std::chrono::steady_clock::now();
@@ -539,3 +598,34 @@ barycentric_t Get_Barycentric(const point_t& p, const point_t& a, const point_t&
 
 	return barycentric_t({ u, v, w });
 }
+
+bool Intersect(const ray_t& r, float& t, const triangle_t& triangle)
+// t会被修改
+{
+	const float epsilon = 1.0e-6;
+
+	const vertex_t& v1 = triangle.v1;
+	const vertex_t& v2 = triangle.v2;
+	const vertex_t& v3 = triangle.v3;
+	vector_t v1v2 = v2.pos - v1.pos;
+	vector_t v1v3 = v3.pos - v1.pos;
+	vector_t pvec = vector_cross(r.dir, v1v3);
+	float det = vector_dot(v1v2, pvec);
+
+	if (fabs(det) < epsilon) return false;
+
+	float inv_det = 1 / det;
+	vector_t tvec = r.o - v1.pos;
+	float u, v;
+	u = vector_dot(tvec, pvec) * inv_det;
+	if (u < 0 || u > 1) return false;
+
+	vector_t qvec = vector_cross(tvec, v1v2);
+	v = vector_dot(r.dir, qvec) * inv_det;
+	if (v < 0 || u + v > 1) return false;
+
+	t = vector_dot(v1v3, qvec) * inv_det;
+
+	return true;
+}
+

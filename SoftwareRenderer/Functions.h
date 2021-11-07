@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include"Includes.h"
 
 vector_t vector_add(const vector_t& x, const vector_t& y);
@@ -13,7 +13,10 @@ float vector_dot(const vector_t& x, const vector_t& y);
 vector_t operator*(const vector_t& v, const float value);
 vector_t operator*(const float value, const vector_t& v);
 vector_t vector_reflect(const vector_t& I, const vector_t& N);
+
 void vertex_set_rhw(vertex_t* v);
+vertex_t operator*(const vertex_t& v, float x);
+vertex_t operator+(const vertex_t& v1, const vertex_t& v2);
 
 void Set_ExtraData_rhw(Draw_ExtraData* extra_data, const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
 
@@ -54,6 +57,8 @@ color_t operator-(const color_t& x, const color_t& y);
 const color_t operator - (const color_t& x);
 color_t color_div(const color_t& x, const float& y);
 color_t operator/(const color_t& x, const float& y);
+bool operator>(const color_t& x, float y);
+bool operator<(const color_t& x, float y);
 
 float time_get();
 
@@ -67,7 +72,15 @@ int check_cvv(const vector_t& v);
 float interp(float length_total, float length_place, float x1, float x2);
 
 barycentric_t Get_Barycentric(const point_t& p, const point_t& a, const point_t& b, const point_t& c);
+bool Intersect(const ray_t& r, float& t, const triangle_t& triangle);
 
+inline float rand_lr(float l, float r) {
+	return  l + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (r - l)));
+	//std::uniform_real_distribution<float> values{ x, y };
+	//std::random_device rd; // Non-de terrains tic seed source
+	//std::default_random_engine rng{ rd() }; // Create random number generator
+	//return values(rng);
+}
 
 inline UINT32 color_trans_255(const color_t &color) {
 	int R = CMID((int)(color.r * 255.0f), 0, 255);
