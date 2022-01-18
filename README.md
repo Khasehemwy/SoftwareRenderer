@@ -15,6 +15,7 @@
  * 线框绘制(顶点着色器和几何着色器) - Wireframe drawing (Vertex Shader and Geometry shader)
  * 片段着色器(像素着色器) - Fragment Shader (Pixel Shader)
  * 高洛德着色 - Gouraud Shading
+ * 冯氏着色 - Phong Shading
 
  #### 光线追踪:
  * Whitted-Style光线追踪 - Whitted-Style
