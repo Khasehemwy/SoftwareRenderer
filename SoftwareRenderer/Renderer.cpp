@@ -1,4 +1,5 @@
 ﻿#include "Renderer.h"
+#pragma warning (disable:4996);
 
 Renderer::Renderer()
 {
@@ -1081,11 +1082,24 @@ int Renderer::Rendering_RayTracing()
 	float scale = tan(radians(camera->fov * 0.5f));
 	float aspect = width / height;
 
+	auto getFilePath = []()->std::string {
+		return "D:\\OneDrive\\Program\\Arithmetic\\test\\2022校赛\\";
+	};
+	std::ifstream inFile;
+	inFile.open((getFilePath() + "randomTriangleCnt.txt").c_str(), std::ios::in);
+	int cnt; inFile >> cnt;
+	std::string outFile = "\0";
+	outFile += getFilePath();
+	outFile += std::to_string(cnt - 1); outFile += ".in";
+	std::ofstream outputFile;
+	outputFile.open(outFile.c_str(), std::ios::app);
+	outputFile << height * width * 2 * 2 * raytracing_samples_num << "\n";
+	outputFile << std::fixed << std::setprecision(5);
+
 	for (unsigned int y = 0; y < height; y++) {
-		fprintf(stderr, "\rRendering (%d spp) %5.2f%%", raytracing_samples_num * 4, 100.0f * y / (height - 1.0f));
+		//fprintf(stderr, "\rRendering (%d spp) %5.2f%%", raytracing_samples_num * 4, 100.0f * y / (height - 1.0f));
 		for (unsigned int x = 0; x < width; x++) {
 			color = { 0,0,0,1 };
-
 			for (unsigned sy = 0; sy < 2; sy++) { // 2x2子像素
 				for (unsigned int sx = 0; sx < 2; sx++) {
 					color_tmp = { 0,0,0,1 };
@@ -1096,6 +1110,9 @@ int Renderer::Rendering_RayTracing()
 						float px = ((2 * (x + 0.5 + (sx - 0.5 + dx)) / width - 1)) * aspect * scale;
 						float py = ((1 - 2 * (y + 0.5 + (sy - 0.5 + dy)) / height)) * scale;
 						point_t pixel_pos = vector_t(px, py, 0.76, 1) * camera_to_world;
+
+						outputFile << pixel_pos.x << " " << pixel_pos.y << " " << pixel_pos.z << "\n";
+
 						vector_t view_dir = vector_normalize(pixel_pos - camera->pos);
 
 						float tmp_f = 0.0f;
@@ -1109,6 +1126,10 @@ int Renderer::Rendering_RayTracing()
 			this->draw_pixel(x, y, color_trans_255(color));
 		}
 	}
+
+	inFile.close();
+	outputFile.close();
+	std::cout << "output pixel pos done\n";
 
 	return 0;
 }
@@ -1129,7 +1150,7 @@ color_t Renderer::Ray_Tracing(const ray_t& ray, int depth, float& dis)
 	bool is_intersect = false;
 	triangle_t triangle;
 	for (unsigned int i = 0; i < triangles.size(); i++) {
-		if (Intersect(ray, cal_t, triangles[i]) && cal_t >= 0.0001f) { //有交点并且交点在视线前方
+		if (Intersect(ray, cal_t, triangles[i]) && cal_t > 0.0f) { //有交点并且交点在视线前方
 			if (cal_t < t) {
 				is_intersect = true;
 				t = cal_t;
@@ -1158,7 +1179,7 @@ color_t Renderer::Ray_Tracing(const ray_t& ray, int depth, float& dis)
 		bool is_intersect = false;
 		triangle_t triangle_intersect;
 		for (auto& tri : triangles) {
-			if (Intersect(ray_to_light, cal_t, tri) && cal_t >= 0.0001f && cal_t < dis_p_light) {//在光源后的交点也忽略
+			if (Intersect(ray_to_light, cal_t, tri) && cal_t > 0.0f && cal_t < dis_p_light) {//在光源后的交点也忽略
 				if (cal_t < t) {
 					is_intersect = true;
 					t = cal_t;

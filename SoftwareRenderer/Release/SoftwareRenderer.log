@@ -1,0 +1,38 @@
+﻿  Camera.cpp
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Types.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  FPS.cpp
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Types.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  Functions.cpp
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Functions.cpp(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Types.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  Light.cpp
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Types.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  main.cpp
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Types.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  Mesh.cpp
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Types.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  Model.cpp
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Types.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  Renderer.cpp
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Types.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.cpp(2,31): warning C4081: 应输入“newline”；找到“;”
+  Texture.cpp
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Types.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  Window.cpp
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Types.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Renderer.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  正在生成代码
+  Previous IPDB was built with incompatible compiler, fall back to full compilation.
+C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\SoftwareRenderer\Texture.cpp(59): warning C4715: “Texture::Read”: 不是所有的控件路径都返回值
+  All 526 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  已完成代码的生成
+  SoftwareRenderer.vcxproj -> C:\Users\AzirB\OneDrive\Projects\SoftwareRenderer\Release\SoftwareRenderer.exe

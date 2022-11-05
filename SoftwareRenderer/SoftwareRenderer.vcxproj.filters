@@ -51,6 +51,9 @@
     <ClCompile Include="main_ray_tracing.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="main_rayTracing_file.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Includes.h">

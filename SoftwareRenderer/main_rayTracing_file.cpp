@@ -1,4 +1,5 @@
 #include"Includes.h"
+#pragma warning(disable:4996);
 
 float cursor_yaw = 0.0f;
 float cursor_pitch = 0.0f;
@@ -165,6 +166,7 @@ void draw_light(Renderer& renderer)
 	draw_square_out(renderer, vert[5], vert[6], vert[7], vert[4]);
 }
 
+std::vector<std::vector<vertex_t>>triangles;
 void Draw_Scene(Renderer& renderer, Light& point_light)
 {
 	renderer.transform.view = matrix_lookat(renderer.camera->pos, renderer.camera->target, renderer.camera->up);
@@ -172,26 +174,18 @@ void Draw_Scene(Renderer& renderer, Light& point_light)
 
 	matrix_set_identity(&model);
 	model = matrix_translate(model, { 0,0,-5,1 });
-	model = matrix_scale(model, { 20,20,20,1 });
+	model = matrix_scale(model, { 42,42,42,1 });
 	renderer.transform.model = model;
 	renderer.transform_update();
 	draw_box_no_front(renderer);
 
 	matrix_set_identity(&model);
-	model = matrix_translate(model, { 6,-6,0,1 });
-	model = matrix_scale(model, { 4,10,4,1 });
-	model = model * matrix_rotate_build(radians(45), { 0,1,0,1 });
 	renderer.transform.model = model;
 	renderer.transform_update();
-	draw_box(renderer);
 
-	matrix_set_identity(&model);
-	model = matrix_translate(model, { -5,-6,-4,1 });
-	model = matrix_scale(model, { 5,5,5,1 });
-	model = model * matrix_rotate_build(radians(0), { 0,1,0,1 });
-	renderer.transform.model = model;
-	renderer.transform_update();
-	draw_box(renderer);
+	for (auto& triangle : triangles) {
+		renderer.display_primitive(triangle[0], triangle[1], triangle[2]);
+	}
 
 	matrix_set_identity(&model);
 	model = matrix_scale(model, { 2,0.2,2,1 });
@@ -199,35 +193,83 @@ void Draw_Scene(Renderer& renderer, Light& point_light)
 	renderer.transform.model = model;
 	renderer.transform_update();
 	draw_light(renderer);
+
 }
 
 int main()
 {
+	auto getFilePath = []()->std::string {
+		return "D:\\OneDrive\\Program\\Arithmetic\\test\\2022Ð£Èü\\"; 
+	};
+	std::ifstream inFile;
+	inFile.open((getFilePath() + "randomTriangleCnt.txt").c_str(), std::ios::in);
+	int cnt; inFile >> cnt;
+	inFile.close();
+	std::string outFile = "\0";
+	outFile += getFilePath();
+	outFile += std::to_string(cnt - 1); outFile += ".in";
+	inFile.open(outFile.c_str(), std::ios::in);
+	int N; inFile >> N;
+	for (int i = 0; i < N; i++) {
+		float in;
+		std::vector<vertex_t> oneTriangle;
+		vertex_t oneVertex;
+		for (int i = 0; i < 3; i++) {
+			inFile >> in;
+			oneVertex.pos.x = in;
+			inFile >> in;
+			oneVertex.pos.y = in;
+			inFile >> in;
+			oneVertex.pos.z = in;
+			oneVertex.pos.w = 1;
+			oneVertex.color = { 1,0,0,1 };
+			oneTriangle.push_back(oneVertex);
+		}
+		triangles.push_back(oneTriangle);
+	}
+	inFile.close();
+	std::cout << "read file done\n";
+
 	Window window;
-	window.screen_init(30, 30, _T("SoftwareRenderer - WASDç§»åŠ¨,æ–¹å‘é”®è§†è§’,J/Læ—‹è½¬æ–¹å—."));
+	window.screen_init(200, 200, _T("SoftwareRenderer - WASDÒÆ¶¯,·½Ïò¼üÊÓ½Ç,J/LÐý×ª·½¿é."));
 
 	Renderer renderer;
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
 	Renderer renderer_light;
 	renderer_light.init(window.screen_width, window.screen_height, window.screen_fb);
-	renderer_light.z_buffer = renderer.z_buffer;//å› ä¸ºæ·±åº¦ç¼“å­˜æ˜¯æ¯ä¸ªRendererç‹¬ç”¨çš„,ä½†æ˜¯çŽ°åœ¨æƒ³è®©å®ƒä»¬ä¸€èµ·æ˜¾ç¤º.
+	renderer_light.z_buffer = renderer.z_buffer;//ÒòÎªÉî¶È»º´æÊÇÃ¿¸öRenderer¶ÀÓÃµÄ,µ«ÊÇÏÖÔÚÏëÈÃËüÃÇÒ»ÆðÏÔÊ¾.
 	Renderer renderer_ground;
 	renderer_ground.init(window.screen_width, window.screen_height, window.screen_fb);
 	renderer_ground.z_buffer = renderer.z_buffer;
 
 
 	Camera camera;
-	float posz = -28;
-	float posx = 0;
-	camera.init_target_zero({ posx,0,posz,1 });
+	float posz = rand_lr(-50.0f, -40.0f);
+	float posy = rand_lr(-5.0f, 5.0f);
+	float posx = rand_lr(-5.0f, 5.0f);
+	camera.init_target_zero({ posx,posy,posz,1 });
+	//camera.init_target_zero({ 0,0,-50,1 });
 	camera.front = { 0,0,1,1 };
+
+	inFile.open((getFilePath() + "randomTriangleCnt.txt").c_str(), std::ios::in);
+	inFile >> cnt;
+	outFile = "\0";
+	outFile += getFilePath();
+	outFile += std::to_string(cnt - 1); outFile += ".in";
+	std::ofstream outputFile;
+	outputFile.open(outFile.c_str(), std::ios::app);
+	outputFile << std::fixed << std::setprecision(5);
+	outputFile << camera.pos.x << " " << camera.pos.y << " " << camera.pos.z << "\n";
+	inFile.close();
+	outputFile.close();
+	std::cout << "output camera pos done\n";
 
 	renderer.camera = &camera;
 	//renderer.render_state = RENDER_STATE_WIREFRAME;
 	renderer.render_state = RENDER_STATE_COLOR;
 	//renderer.render_state = RENDER_STATE_TEXTURE;
 	//renderer.render_shader_state = RENDER_SHADER_PIXEL_BOUNDINGBOX;
-	renderer.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
+	renderer.Set_Feature(RENDER_FEATURE_BACK_CULLING, true);
 	renderer.Set_Feature(RENDER_FEATURE_FACK_CULLING, false);
 	renderer.Set_Feature(RENDER_FEATURE_CVV_CLIP, false);
 	//renderer.Set_Feature(RENDER_FEATURE_SHADOW, false);
@@ -235,7 +277,11 @@ int main()
 	//renderer.Set_Feature(RENDER_FEATURE_LIGHT_PHONG, false);
 	//renderer.Set_Feature(RENDER_FEATURE_RAY_TRACING, true);
 	//renderer.raytracing_max_depth = 16;
-	//renderer.raytracing_samples_num = 512;
+	renderer.raytracing_samples_num = 1;
+	renderer.Set_Feature(RENDER_FEATURE_RAY_TRACING, true);
+	renderer_ground.Set_Feature(RENDER_FEATURE_RAY_TRACING, true);
+	renderer.Set_Feature(RENDER_FEATURE_RAY_TRACING_PBR, true);
+	renderer_ground.Set_Feature(RENDER_FEATURE_RAY_TRACING_PBR, true);
 
 	//renderer-ground
 	renderer_ground.camera = &camera;
@@ -270,7 +316,8 @@ int main()
 	dir_light.Init_ShadowMap(window.screen_width, window.screen_height);
 
 	Light point_light;
-	point_light.pos = { 0,7,-9,1 };
+	point_light.pos = { rand_lr(-5.0f,5.0f),rand_lr(-5.0f,5.0f),rand_lr(-10.0f,-5.0f),1 };
+	//point_light.pos = { 0,0,-5,1 };
 	point_light.ambient = { 0.3f,0.3f,0.3f,1 };
 	point_light.diffuse = { 0.8f,0.8f,0.8f,1 };
 	point_light.specular = { 1.0f,1.0f,1.0f,1 };
@@ -287,14 +334,14 @@ int main()
 	spot_light.ambient = { 1.0,1.0,1.0,1 };
 	spot_light.diffuse = { 0.8,0.8,0.8,1 };
 	spot_light.specular = { 0.9,0.9,0.9,1 };
-	//æ‰‹ç”µç­’è¡°å‡å¼ºä¸€äº›
+	//ÊÖµçÍ²Ë¥¼õÇ¿Ò»Ð©
 	spot_light.linear = 0.14;
 	spot_light.quadratic = 0.07;
 	//renderer.add_light(spot_light);
 	//renderer_ground.add_light(spot_light);
 	spot_light.Init_ShadowMap(window.screen_width, window.screen_height);
 
-	//é˜´å½±
+	//ÒõÓ°
 	Renderer renderer_shadow;
 	renderer_shadow.init(window.screen_width, window.screen_height, window.screen_fb);
 	renderer_shadow.render_state = RENDER_STATE_DEEP;
@@ -314,16 +361,16 @@ int main()
 	float shadow_ortho = 0.4f;
 	renderer_shadow.transform.projection = matrix_ortho(-shadow_ortho, shadow_ortho, -shadow_ortho, shadow_ortho, 1.0f, 100.0f);
 
-	//è®¾ç½®ä¸»renderer
+	//ÉèÖÃÖ÷renderer
 	float aspect = (float)renderer.width / ((float)renderer.height);
 	//camera = shadow_camera;
 	renderer.current_light = &dir_light;
 	renderer_ground.current_light = &dir_light;
 
-	//æ—¶é—´
+	//Ê±¼ä
 	float delta_time = 0.0f;
 	float last_frame = 0.0f;
-	//é¼ æ ‡
+	//Êó±ê
 	//ShowCursor(FALSE);
 	//RECT rect;
 	//GetWindowRect(*window.screen_handle, &rect);
@@ -333,10 +380,13 @@ int main()
 	//FPS
 	FPS* fps = new FPS();
 
-	int operation = 0;
+	int operation = 1;
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
-		std::thread t_operation([&]() {std::cin >> operation; });
-		t_operation.join();
+		//std::thread t_operation([&]() {
+		//	//freopen("CON", "r", stdin);
+		//	std::cin >> operation; 
+		//});
+		//t_operation.join();
 		if (operation == 0) {
 			renderer.Set_Feature(RENDER_FEATURE_RAY_TRACING, false);
 			renderer_ground.Set_Feature(RENDER_FEATURE_RAY_TRACING, false);
@@ -350,13 +400,13 @@ int main()
 			renderer_ground.Set_Feature(RENDER_FEATURE_RAY_TRACING_PBR, true);
 		}
 
-		//æ—¶é—´,ä½¿ç§»åŠ¨é€Ÿåº¦ä¸å—å¸§çŽ‡å˜åŒ–
+		//Ê±¼ä,Ê¹ÒÆ¶¯ËÙ¶È²»ÊÜÖ¡ÂÊ±ä»¯
 		//float current_frame = time_get();
 		//delta_time = current_frame - last_frame;
 		//last_frame = current_frame;
 		camera.speed = 0.2f;
 
-		//é¼ æ ‡
+		//Êó±ê
 		mouse_callback(camera);
 		gl_x_offset = 0; gl_y_offset = 0;
 
@@ -402,59 +452,50 @@ int main()
 
 		matrix_t model;
 
-		//*************é˜´å½±*************//
-		//åªæ¸²æŸ“dir_lightçš„é˜´å½±
+		//*************ÒõÓ°*************//
+		//Ö»äÖÈ¾dir_lightµÄÒõÓ°
 		//Draw_Scene(renderer_shadow, renderer_shadow);
 		//dir_light.Set_ShadowMap(renderer_shadow);
 		//renderer_shadow.clear();
 
-		//************æ­£å¸¸åœºæ™¯************//
-		//æ›´æ–°æ‘„åƒæœº
+		//************Õý³£³¡¾°************//
+		//¸üÐÂÉãÏñ»ú
 		camera.target = camera.pos + camera.front;
 		matrix_t view = matrix_lookat(renderer.camera->pos, renderer.camera->target, renderer.camera->up);
 		renderer.transform.view = view;
 
 		matrix_set_perspective(&renderer.transform.projection, fov, aspect, 0.1f, 100.0f);
 
-		//è®¾ç½®èšå…‰
+		//ÉèÖÃ¾Û¹â
 		spot_light.pos = camera.pos;
 		spot_light.direction = camera.front;
 
-		//ç”»ç›’å­ & åœ°é¢
+		//»­ºÐ×Ó & µØÃæ
 		Draw_Scene(renderer, point_light);
-
-		////ç”»å¤ªé˜³(å®šå‘å…‰)
-		//matrix_set_identity(&model);
-		//model = matrix_scale(model, { 2,2,5,1 });
-		//model = matrix_translate(model, { dir_light.pos.x, dir_light.pos.y, dir_light.pos.z, 1 });
-		//renderer_light.transform.model = model;
-		//renderer_light.transform_update();
-		//draw_light(renderer_light);
-
-
-
-		//renderer.display_primitive(vert[1], vert[2], vert[3]);
-		//renderer.display_primitive(vert[1], vert[3], vert[4]);
-		//renderer.display_primitive(v1, v2, v3);
-
-		//ç”»ç‚¹å…‰æº
-		//renderer.transform = renderer.transform;
-		//matrix_set_identity(&model);
-		//model = matrix_scale(model, { 2,0.2,2,1 });
-		//model = matrix_translate(model, point_light.pos);
-		//renderer.transform.model = model;
-		//renderer.transform_update();
-		//draw_light(renderer);
 
 		renderer.Rendering();
 
 
-		renderer.draw_line(10, 10, 20, 10, 0x0);
-		renderer.draw_line(10, 10, 10, 20, 0x0);
+		//renderer.draw_line(10, 10, 20, 10, 0x0);
+		//renderer.draw_line(10, 10, 10, 20, 0x0);
+
+		inFile.open((getFilePath() + "randomTriangleCnt.txt").c_str(), std::ios::in);
+		inFile >> cnt;
+		std::string outFile = "\0";
+		outFile += getFilePath();
+		outFile += std::to_string(cnt - 1); outFile += ".in";
+		outputFile.open(outFile.c_str(), std::ios::app);
+		outputFile << std::fixed << std::setprecision(5);
+		outputFile << point_light.pos.x << " " << point_light.pos.y << " " << point_light.pos.z << "\n";
+		inFile.close();
+		outputFile.close();
+		std::cout << "output point_light pos done\n";
+		std::cout << "all done\n";
 
 
 		window.screen_update();
 
+		while (1);
 		//renderer.FXAA(true);
 	}
 
