@@ -463,7 +463,13 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		world_zr += delta * world_dzdy_r;
 	}
 
+	vertex_t v1 = top;
+	vertex_t v2 = left;
+	vertex_t v3 = right;
 
+	v1.pos_world = extra_data.world_pos.p1;
+	v2.pos_world = extra_data.world_pos.p2;
+	v3.pos_world = extra_data.world_pos.p3;
 
 	//从上往下绘制
 	for (int y = y0; y < y1; y++) {
@@ -550,69 +556,15 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 					float wi = 1.0 / rhwi;
 					color_t color_use = color * wi;
 
-					//阴影
-					bool pixel_in_shadow = false;
-					if (features[RENDER_FEATURE_SHADOW] == true) {
-						float bias = 0.1f;
-						for (const Light* light : this->lights) {
-							point_t p = { world_xi * wi, world_yi * wi, world_zi * wi, 1 };
-							p = p * light->light_space_matrix;
-							p = viewport_transform(p, this->transform);
+					barycentric_t bary = Get_Barycentric(
+						{ (float)x , (float)y , 0 , 0 },
+						v1.pos, 
+						v2.pos, 
+						v3.pos);
 
-							//u,v归一化
-							float world_u = p.x / this->width;
-							float world_v = p.y / this->height;
-							if (world_u > 1 || world_u < 0
-								|| world_v > 1 || world_v < 0)
-							{
-								continue;
-							}
-
-							float world_map_deep = light->shadow_map->Read(world_u, world_v, 0).r;
-							if (p.w - bias > world_map_deep) {
-								pixel_in_shadow = true;
-							}
-						}
-					}
-
-					//逐片元处理光照
-					if (features[RENDER_FEATURE_LIGHT]) {
-						if (features[RENDER_FEATURE_LIGHT_PHONG]) {
-							vertex_t v;
-							v.pos = { world_xi , world_yi , world_zi , 1 };//这里不乘wi,因为后面会乘wi
-							barycentric_t bary = Get_Barycentric(v.pos, extra_data.world_pos.p1, extra_data.world_pos.p2, extra_data.world_pos.p3);
-
-							v.color = top.color * wi * bary.w1 + left.color * wi * bary.w2 + right.color * wi * bary.w3;
-							v.normal = top.normal * wi * bary.w1 + left.normal * wi * bary.w2 + right.normal * wi * bary.w3;
-							v.pos = v.pos * wi;//转换回世界坐标,这样光照计算才是正确的
-							Phong_Shading(v, pixel_in_shadow);
-
-							color_use = v.color;
-						}
-						else {
-							// 高洛德着色(Gouraud Shading)的阴影处理
-							if (pixel_in_shadow) {
-								color_use *= 0.5;
-							}
-						}
-					}
-
-					if (this->render_state == RENDER_STATE_COLOR) {
-						color_use = color_use;
-					}
-					else if (this->render_state == RENDER_STATE_TEXTURE) {
-						color_use = color_use * texture->Read(ui * wi, vi * wi);
-					}
-					else if (this->render_state == RENDER_STATE_DEEP) {
-						color_t color_deep;
-						color_deep.r = 1 / this->z_buffer[y][x];
-						while (color_deep.r < 1) { color_deep.r *= 10; }
-						while (color_deep.r > 1) { color_deep.r /= 10; }
-						color_deep.g = color_deep.b = color_deep.r;
-						color_use = color_deep;
-					}
-
-					this->draw_pixel(x, y, color_trans_255(color_use));
+					this->draw_pixel(
+						x, y, 
+						color_trans_255(PS_Interpolation(v1, v2, v3, bary)));
 				}
 			}
 			color = color + dix;
@@ -1002,37 +954,13 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 		return 0;
 	}
 
-	//光照处理
-	if (this->render_state == RENDER_STATE_TEXTURE) {
-		v1.color = v2.color = v3.color = { 1,1,1,1 };
-	}
-	color_t color1, color2, color3;
-	if (this->features[RENDER_FEATURE_LIGHT] && !features[RENDER_FEATURE_LIGHT_PHONG]) {
-		color1 = color2 = color3 = { 0,0,0,0 };
-		v1.pos = p1; v2.pos = p2; v3.pos = p3;
-		for (auto& light : lights) {
-			color1 += Calculate_Lighting(v1, light);
-			color2 += Calculate_Lighting(v2, light);
-			color3 += Calculate_Lighting(v3, light);
-		}
-		v1.color = color1;
-		v2.color = color2;
-		v3.color = color3;
-	}
+	VS(v1, v2, v3);
 	
-
-
-	/* 将点映射到观察空间 */
-	p1 = p1 * this->transform.view;
-	p2 = p2 * this->transform.view;
-	p3 = p3 * this->transform.view;
-
-	/* 将点映射到裁剪空间 */
-	p1 = p1 * this->transform.projection;
-	p2 = p2 * this->transform.projection;
-	p3 = p3 * this->transform.projection;
-
 	//得到屏幕坐标
+	p1 = v1.pos;
+	p2 = v2.pos;
+	p3 = v3.pos;
+
 	p1 = viewport_transform(p1, this->transform);
 	p2 = viewport_transform(p2, this->transform);
 	p3 = viewport_transform(p3, this->transform);
@@ -1272,6 +1200,119 @@ color_t Renderer::Radiance(const ray_t& ray, int depth)
 		//todo
 		ray_t ray_reflect(p_intersect, vector_normalize(vector_reflect(ray.dir, N)));
 	}
+}
+
+void Renderer::VS(vertex_t& v1, vertex_t& v2, vertex_t& v3)
+{
+	//光照处理
+	if (this->render_state == RENDER_STATE_TEXTURE) {
+		v1.color = v2.color = v3.color = { 1,1,1,1 };
+	}
+	color_t color1, color2, color3;
+	if (this->features[RENDER_FEATURE_LIGHT] && !features[RENDER_FEATURE_LIGHT_PHONG]) {
+		color1 = color2 = color3 = { 0,0,0,0 };
+		for (auto& light : lights) {
+			color1 += Calculate_Lighting(v1, light);
+			color2 += Calculate_Lighting(v2, light);
+			color3 += Calculate_Lighting(v3, light);
+		}
+		v1.color = color1;
+		v2.color = color2;
+		v3.color = color3;
+	}
+
+	v1.pos = v1.pos * this->transform.model;
+	v2.pos = v2.pos * this->transform.model;
+	v3.pos = v3.pos * this->transform.model;
+
+	v1.pos_world = v1.pos;
+	v2.pos_world = v2.pos;
+	v3.pos_world = v3.pos;
+
+	/* 将点映射到观察空间 */
+	v1.pos = v1.pos * this->transform.view;
+	v2.pos = v2.pos * this->transform.view;
+	v3.pos = v3.pos * this->transform.view;
+
+	/* 将点映射到裁剪空间 */
+	v1.pos = v1.pos * this->transform.projection;
+	v2.pos = v2.pos * this->transform.projection;
+	v3.pos = v3.pos * this->transform.projection;
+}
+
+color_t Renderer::PS_Interpolation(vertex_t& v1, vertex_t& v2, vertex_t& v3, barycentric_t bary)
+{
+	vertex_t v = v1 * bary.w1 + v2 * bary.w2 + v3 * bary.w3;
+	auto tmp_rhw = v.rhw;
+	v = v * (1.0 / v.rhw);
+	v.rhw = tmp_rhw;
+
+	return PS(v);
+}
+
+color_t Renderer::PS(vertex_t& v)
+{
+	//阴影
+	bool pixel_in_shadow = false;
+	if (features[RENDER_FEATURE_SHADOW] == true) {
+		float bias = 0.1f;
+		for (const Light* light : this->lights) {
+			point_t p = v.pos_world;
+			p = p * light->light_space_matrix;
+			p = viewport_transform(p, this->transform);
+
+			//u,v归一化
+			float world_u = p.x / this->width;
+			float world_v = p.y / this->height;
+			if (world_u > 1 || world_u < 0
+				|| world_v > 1 || world_v < 0)
+			{
+				continue;
+			}
+
+			float world_map_deep = light->shadow_map->Read(world_u, world_v, 0).r;
+			if (p.w - bias > world_map_deep) {
+				pixel_in_shadow = true;
+			}
+		}
+	}
+
+	color_t color_use = v.color;
+	//逐片元处理光照
+	if (features[RENDER_FEATURE_LIGHT]) {
+		if (features[RENDER_FEATURE_LIGHT_PHONG]) {
+
+			vertex_t v_world = v;
+			v_world.pos = v.pos_world;
+
+			Phong_Shading(v_world, pixel_in_shadow);
+
+			color_use = v_world.color;
+		}
+		else {
+			// 高洛德着色(Gouraud Shading)的阴影处理
+			if (pixel_in_shadow) {
+				color_use *= 0.5;
+			}
+		}
+	}
+
+	if (this->render_state == RENDER_STATE_COLOR) {
+		color_use = color_use;
+	}
+	else if (this->render_state == RENDER_STATE_TEXTURE) {
+		color_use = color_use * texture->Read(v.tex.u, v.tex.v);
+	}
+	else if (this->render_state == RENDER_STATE_DEEP) {
+		color_t color_deep;
+		color_deep.r = 1 / v.rhw;
+		while (color_deep.r < 1) { color_deep.r *= 10; }
+		while (color_deep.r > 1) { color_deep.r /= 10; }
+		color_deep.g = color_deep.b = color_deep.r;
+		color_use = color_deep;
+	}
+
+	return color_use;
 }
 
 

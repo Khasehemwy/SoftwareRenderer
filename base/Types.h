@@ -59,8 +59,10 @@ struct material_t{
 	reflect_t reflect = reflect_t::DIFF;
 };
 
-struct vertex_t { 
+class vertex_t { 
+public:
 	point_t pos; 
+	point_t pos_world;
 	color_t color; 
 	texcoord_t tex; 
 	vector_t normal;
@@ -70,6 +72,7 @@ struct vertex_t {
 	color_t emissivity;
 	material_t material;
 };
+
 struct triangle_t {
 	vertex_t v1, v2, v3;
 };

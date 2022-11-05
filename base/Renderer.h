@@ -37,6 +37,10 @@ private:
 	color_t Ray_Tracing(const ray_t& ray, int depth, float& dis);
 	color_t Radiance(const ray_t& ray, int depth);
 
+	virtual void VS(vertex_t& v1, vertex_t& v2, vertex_t& v3);
+	virtual color_t PS_Interpolation(vertex_t& v1, vertex_t& v2, vertex_t& v3, barycentric_t bary);
+	virtual color_t PS(vertex_t& v);
+
 public:
 	transform_t transform;      // 坐标变换器
 	const Camera* camera = nullptr;

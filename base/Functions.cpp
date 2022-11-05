@@ -374,6 +374,7 @@ void vertex_set_rhw(vertex_t* v)
 	v->color.b *= rhw;
 	v->color.a *= rhw;
 	v->normal = v->normal * rhw;
+	v->pos_world = v->pos_world * rhw;
 }
 
 vertex_t operator*(const vertex_t& v, float x)
@@ -382,6 +383,7 @@ vertex_t operator*(const vertex_t& v, float x)
 	y.color = y.color * x;
 	y.normal = y.normal * x;
 	y.pos = y.pos * x;
+	y.pos_world = y.pos_world * x;
 	y.rhw = y.rhw * x;
 	y.tex = { y.tex.u * x,y.tex.v * x };
 	y.emissivity = y.emissivity * x;
@@ -394,6 +396,7 @@ vertex_t operator+(const vertex_t& v1, const vertex_t& v2)
 	y.color = y.color + v2.color;
 	y.normal = y.normal + v2.normal;
 	y.pos = y.pos + v2.pos;
+	y.pos_world = y.pos_world + v2.pos_world;
 	y.rhw = y.rhw + v2.rhw;
 	y.tex = { y.tex.u + v2.tex.u,y.tex.v + v2.tex.v };
 	y.emissivity = y.emissivity + v2.emissivity;
@@ -406,9 +409,6 @@ void Set_ExtraData_rhw(Draw_ExtraData* extra_data, const vertex_t& v1, const ver
 		extra_data->world_pos.p1 = extra_data->world_pos.p1 * v1.rhw;
 		extra_data->world_pos.p2 = extra_data->world_pos.p2 * v2.rhw;
 		extra_data->world_pos.p3 = extra_data->world_pos.p3 * v3.rhw;
-		extra_data->world_pos.p1.w = 1.0f / v1.rhw;
-		extra_data->world_pos.p2.w = 1.0f / v2.rhw;
-		extra_data->world_pos.p3.w = 1.0f / v3.rhw;
 	}
 }
 
