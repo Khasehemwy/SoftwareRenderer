@@ -334,35 +334,10 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 
 	//基于y的梯度,y增加1时,对应x/u/v/i/rhw增加的值
 	float dxdy_l = (top.pos.x - left.pos.x) / (top.pos.y - left.pos.y);
-	float dudy_l = (top.tex.u - left.tex.u) / (top.pos.y - left.pos.y);
-	float dvdy_l = (top.tex.v - left.tex.v) / (top.pos.y - left.pos.y);
-	float drhwdy_l = (top.rhw - left.rhw) / (top.pos.y - left.pos.y);
 	float dxdy_r = (top.pos.x - right.pos.x) / (top.pos.y - right.pos.y);
-	float dudy_r = (top.tex.u - right.tex.u) / (top.pos.y - right.pos.y);
-	float dvdy_r = (top.tex.v - right.tex.v) / (top.pos.y - right.pos.y);
-	float drhwdy_r = (top.rhw - right.rhw) / (top.pos.y - left.pos.y);
 	
-	float world_dxdy_l = 0, world_dxdy_r = 0;
-	float world_dydy_l = 0, world_dydy_r = 0;
-	float world_dzdy_l = 0, world_dzdy_r = 0;
-	if (extra_data.world_pos.valid) {
-		const point_t& p1 = extra_data.world_pos.p1;
-		const point_t& p2 = extra_data.world_pos.p2;
-		const point_t& p3 = extra_data.world_pos.p3;
-		world_dxdy_l = (p1.x - p2.x) / (top.pos.y - left.pos.y);
-		world_dydy_l = (p1.y - p2.y) / (top.pos.y - left.pos.y);
-		world_dzdy_l = (p1.z - p2.z) / (top.pos.y - left.pos.y);
-		world_dxdy_r = (p1.x - p3.x) / (top.pos.y - right.pos.y);
-		world_dydy_r = (p1.y - p3.y) / (top.pos.y - right.pos.y);
-		world_dzdy_r = (p1.z - p3.z) / (top.pos.y - right.pos.y);
-	}
-	float xl, ul, vl, rhwl, world_xl, world_yl,world_zl;
-	float xr, ur, vr, rhwr, world_xr, world_yr,world_zr;
-
-	//颜色插值
-	color_t didy_l = (top.color - left.color) / (top.pos.y - left.pos.y);
-	color_t didy_r = (top.color - right.color) / (top.pos.y - right.pos.y);
-	color_t color_left, color_right;
+	float xl;
+	float xr;
 
 	int y0 = 0, y1 = 0;
 	float y0f = top.pos.y, y1f = left.pos.y;
@@ -372,24 +347,6 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		/*平底三角形*/
 		xl = top.pos.x;
 		xr = top.pos.x;
-		//纹理
-		ul = top.tex.u;
-		vl = top.tex.v;
-		ur = top.tex.u;
-		vr = top.tex.v;
-		//颜色
-		color_left = top.color;
-		color_right = top.color;
-		//深度
-		rhwl = top.rhw;
-		rhwr = top.rhw;
-
-		//阴影
-		if (extra_data.world_pos.valid) {
-			world_xl = world_xr = extra_data.world_pos.p1.x;
-			world_yl = world_yr = extra_data.world_pos.p1.y;
-			world_zl = world_zr = extra_data.world_pos.p1.z;
-		}
 	}
 	else {
 		/*平顶三角形,类似平底三角形*/
@@ -397,22 +354,6 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		std::swap(y0f, y1f);
 		xl = left.pos.x;
 		xr = right.pos.x;
-		ul = left.tex.u;
-		vl = left.tex.v;
-		ur = right.tex.u;
-		vr = right.tex.v;
-		color_left = left.color;
-		color_right = right.color;
-		rhwl = left.rhw;
-		rhwr = right.rhw;
-		if (extra_data.world_pos.valid) {
-			world_xl = extra_data.world_pos.p2.x;
-			world_yl = extra_data.world_pos.p2.y;
-			world_zl = extra_data.world_pos.p2.z;
-			world_xr = extra_data.world_pos.p3.x;
-			world_yr = extra_data.world_pos.p3.y;
-			world_zr = extra_data.world_pos.p3.z;
-		}
 	}
 
 	//垂直裁剪
@@ -421,23 +362,6 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		float dy = min_clip_y - y0f;
 		xl += dxdy_l * dy;
 		xr += dxdy_r * dy;
-		ul += dudy_l * dy;
-		vl += dvdy_l * dy;
-		ur += dudy_r * dy;
-		vr += dvdy_r * dy;
-		color_left += didy_l * dy;
-		color_right += didy_r * dy;
-		rhwl += drhwdy_l * dy;
-		rhwr += drhwdy_r * dy;
-		if (extra_data.world_pos.valid) {
-			world_xl += world_dxdy_l * dy;
-			world_yl += world_dydy_l * dy;
-			world_zl += world_dzdy_l * dy;
-			world_xr += world_dxdy_r * dy;
-			world_yr += world_dydy_r * dy;
-			world_zr += world_dzdy_r * dy;
-		}
-
 		y0f = min_clip_y;
 	}
 	y0 = (int)(ceil(y0f));
@@ -446,22 +370,6 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	float delta = y0 - y0f;
 	xl += delta * dxdy_l;
 	xr += delta * dxdy_r;
-	ul += delta * dudy_l;
-	vl += delta * dvdy_l;
-	ur += delta * dudy_r;
-	vr += delta * dvdy_r;
-	color_left += delta * didy_l;
-	color_right += delta * didy_r;
-	rhwl += delta * drhwdy_l;
-	rhwr += delta * drhwdy_r;
-	if (extra_data.world_pos.valid) {
-		world_xl += delta * world_dxdy_l;
-		world_yl += delta * world_dydy_l;
-		world_zl += delta * world_dzdy_l;
-		world_xr += delta * world_dxdy_r;
-		world_yr += delta * world_dydy_r;
-		world_zr += delta * world_dzdy_r;
-	}
 
 	vertex_t v1 = top;
 	vertex_t v2 = left;
@@ -475,61 +383,16 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	for (int y = y0; y < y1; y++) {
 		if (y >= max_clip_y)break;
 		float dx = xr - xl;
-		float dux = (ur - ul) / dx;
-		float dvx = (vr - vl) / dx;
-		float drhwdx = (rhwr - rhwl) / dx;
-		float ui = ul;
-		float vi = vl;
-		float rhwi = rhwl;
-
-		color_t dix = (color_right - color_left) / dx;
-		color_t color = color_left + (ceil(xl) - xl) * dix;
-
-		float world_dxdx = 0.0f, world_dydx = 0.0f, world_dzdx = 0.0f;
-		float world_xi = 0.0f, world_yi = 0.0f, world_zi = 0.0f;
-		if (extra_data.world_pos.valid) {
-			world_dxdx = (world_xr - world_xl) / dx;
-			world_dydx = (world_yr - world_yl) / dx;
-			world_dzdx = (world_zr - world_zl) / dx;
-			world_xi = world_xl;
-			world_yi = world_yl;
-			world_zi = world_zl;
-		}
 
 		float xli = xl, xri = xr;
 		//调整到下一步
 		xl += dxdy_l;
-		ul += dudy_l;
-		vl += dvdy_l;
-		ur += dudy_r;
-		vr += dvdy_r;
 		xr += dxdy_r;
-		rhwl += drhwdy_l;
-		rhwr += drhwdy_r;
-		color_left = color_left + didy_l;
-		color_right = color_right + didy_r;
-		if (extra_data.world_pos.valid) {
-			world_xl += world_dxdy_l;
-			world_yl += world_dydy_l;
-			world_zl += world_dzdy_l;
-			world_xr += world_dxdy_r;
-			world_yr += world_dydy_r;
-			world_zr += world_dzdy_r;
-		}
 
 		//水平裁剪
 		if (xri < min_clip_x) { continue; }
 		if (xli < min_clip_x) {
 			float dx = min_clip_x - xli;
-			color += dix * dx;
-			ui += dux * dx;
-			vi += dvx * dx;
-			rhwi += drhwdx * dx;
-			if (extra_data.world_pos.valid) {
-				world_xi += world_dxdx * dx;
-				world_yi += world_dydx * dx;
-				world_zi += world_dzdx * dx;
-			}
 
 			xli = min_clip_x;
 		}
@@ -538,43 +401,28 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 		int x0 = (int)ceil(xli);
 		int x1 = (int)ceil(xri);
 		float delta = x0 - xli;
-		color += delta * dix;
-		ui += delta * dux;
-		vi += delta * dvx;
-		rhwi += delta * drhwdx;
-		if (extra_data.world_pos.valid) {
-			world_xi += delta * world_dxdx;
-			world_yi += delta * world_dydx;
-			world_zi += delta * world_dzdx;
-		}
 
 		for (int x = x0; x <= x1; x++) {
 			if (x >= max_clip_x)break;
 			if (x >= 0 && y >= 0) {
-				if (rhwi >= this->z_buffer[y][x]) {
-					this->z_buffer[y][x] = rhwi;// 深度缓存
-					float wi = 1.0 / rhwi;
-					color_t color_use = color * wi;
 
-					barycentric_t bary = Get_Barycentric(
-						{ (float)x , (float)y , 0 , 0 },
-						v1.pos, 
-						v2.pos, 
-						v3.pos);
+				//用重心插值获取其他属性
+				barycentric_t bary = Get_Barycentric(
+					{ (float)x , (float)y , 0 , 0 },
+					v1.pos, 
+					v2.pos, 
+					v3.pos);
+
+				float rhwi = v1.rhw * bary.w1 + v2.rhw * bary.w2 + v3.rhw * bary.w3;
+
+				if (rhwi >= this->z_buffer[y][x]) {
+
+					this->z_buffer[y][x] = rhwi;// 深度缓存
 
 					this->draw_pixel(
 						x, y, 
-						color_trans_255(PS_Interpolation(v1, v2, v3, bary)));
+						color_trans_255(PS_Interpolation(&v1, &v2, &v3, bary)));
 				}
-			}
-			color = color + dix;
-			ui += dux;
-			vi += dvx;
-			rhwi += drhwdx;
-			if (extra_data.world_pos.valid) {
-				world_xi += world_dxdx;
-				world_yi += world_dydx;
-				world_zi += world_dzdx;
 			}
 		}
 	}
@@ -954,7 +802,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 		return 0;
 	}
 
-	VS(v1, v2, v3);
+	VS(&v1, &v2, &v3);
 	
 	//得到屏幕坐标
 	p1 = v1.pos;
@@ -1202,62 +1050,67 @@ color_t Renderer::Radiance(const ray_t& ray, int depth)
 	}
 }
 
-void Renderer::VS(vertex_t& v1, vertex_t& v2, vertex_t& v3)
+void Renderer::VS(vertex_t * v1, vertex_t * v2, vertex_t * v3)
 {
 	//光照处理
 	if (this->render_state == RENDER_STATE_TEXTURE) {
-		v1.color = v2.color = v3.color = { 1,1,1,1 };
+		v1->color = v2->color = v3->color = { 1,1,1,1 };
 	}
 	color_t color1, color2, color3;
 	if (this->features[RENDER_FEATURE_LIGHT] && !features[RENDER_FEATURE_LIGHT_PHONG]) {
 		color1 = color2 = color3 = { 0,0,0,0 };
 		for (auto& light : lights) {
-			color1 += Calculate_Lighting(v1, light);
-			color2 += Calculate_Lighting(v2, light);
-			color3 += Calculate_Lighting(v3, light);
+			color1 += Calculate_Lighting(*v1, light);
+			color2 += Calculate_Lighting(*v2, light);
+			color3 += Calculate_Lighting(*v3, light);
 		}
-		v1.color = color1;
-		v2.color = color2;
-		v3.color = color3;
+		v1->color = color1;
+		v2->color = color2;
+		v3->color = color3;
 	}
 
-	v1.pos = v1.pos * this->transform.model;
-	v2.pos = v2.pos * this->transform.model;
-	v3.pos = v3.pos * this->transform.model;
+	v1->pos = v1->pos * this->transform.model;
+	v2->pos = v2->pos * this->transform.model;
+	v3->pos = v3->pos * this->transform.model;
 
-	v1.pos_world = v1.pos;
-	v2.pos_world = v2.pos;
-	v3.pos_world = v3.pos;
+	v1->pos_world = v1->pos;
+	v2->pos_world = v2->pos;
+	v3->pos_world = v3->pos;
 
 	/* 将点映射到观察空间 */
-	v1.pos = v1.pos * this->transform.view;
-	v2.pos = v2.pos * this->transform.view;
-	v3.pos = v3.pos * this->transform.view;
+	v1->pos = v1->pos * this->transform.view;
+	v2->pos = v2->pos * this->transform.view;
+	v3->pos = v3->pos * this->transform.view;
 
 	/* 将点映射到裁剪空间 */
-	v1.pos = v1.pos * this->transform.projection;
-	v2.pos = v2.pos * this->transform.projection;
-	v3.pos = v3.pos * this->transform.projection;
+	v1->pos = v1->pos * this->transform.projection;
+	v2->pos = v2->pos * this->transform.projection;
+	v3->pos = v3->pos * this->transform.projection;
 }
 
-color_t Renderer::PS_Interpolation(vertex_t& v1, vertex_t& v2, vertex_t& v3, barycentric_t bary)
+vertex_t Renderer::Split_Triangle(const vertex_t* v1, const vertex_t* v2, const vertex_t* v3, float t)
 {
-	vertex_t v = v1 * bary.w1 + v2 * bary.w2 + v3 * bary.w3;
+	return vertex_t();
+}
+
+color_t Renderer::PS_Interpolation(vertex_t* v1, vertex_t* v2, vertex_t* v3, barycentric_t bary)
+{
+	vertex_t v = (*v1) * bary.w1 + (*v2) * bary.w2 + (*v3) * bary.w3;
 	auto tmp_rhw = v.rhw;
 	v = v * (1.0 / v.rhw);
 	v.rhw = tmp_rhw;
 
-	return PS(v);
+	return PS(&v);
 }
 
-color_t Renderer::PS(vertex_t& v)
+color_t Renderer::PS(vertex_t* v)
 {
 	//阴影
 	bool pixel_in_shadow = false;
 	if (features[RENDER_FEATURE_SHADOW] == true) {
 		float bias = 0.1f;
 		for (const Light* light : this->lights) {
-			point_t p = v.pos_world;
+			point_t p = v->pos_world;
 			p = p * light->light_space_matrix;
 			p = viewport_transform(p, this->transform);
 
@@ -1277,13 +1130,13 @@ color_t Renderer::PS(vertex_t& v)
 		}
 	}
 
-	color_t color_use = v.color;
+	color_t color_use = v->color;
 	//逐片元处理光照
 	if (features[RENDER_FEATURE_LIGHT]) {
 		if (features[RENDER_FEATURE_LIGHT_PHONG]) {
 
-			vertex_t v_world = v;
-			v_world.pos = v.pos_world;
+			vertex_t v_world = *v;
+			v_world.pos = v->pos_world;
 
 			Phong_Shading(v_world, pixel_in_shadow);
 
@@ -1301,11 +1154,11 @@ color_t Renderer::PS(vertex_t& v)
 		color_use = color_use;
 	}
 	else if (this->render_state == RENDER_STATE_TEXTURE) {
-		color_use = color_use * texture->Read(v.tex.u, v.tex.v);
+		color_use = color_use * texture->Read(v->tex.u, v->tex.v);
 	}
 	else if (this->render_state == RENDER_STATE_DEEP) {
 		color_t color_deep;
-		color_deep.r = 1 / v.rhw;
+		color_deep.r = 1 / v->rhw;
 		while (color_deep.r < 1) { color_deep.r *= 10; }
 		while (color_deep.r > 1) { color_deep.r /= 10; }
 		color_deep.g = color_deep.b = color_deep.r;
