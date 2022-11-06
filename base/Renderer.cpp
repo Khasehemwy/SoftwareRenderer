@@ -199,25 +199,16 @@ void Renderer::draw_line(int x1, int y1, int x2, int y2, UINT32 color)
 }
 
 //拆分一般三角为特殊三角
-void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3, Draw_ExtraData extra_data)
+void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3)
 {
 	if (v1.pos.y > v2.pos.y) { 
 		std::swap(v1, v2); 
-		if (extra_data.world_pos.valid) {
-			std::swap(extra_data.world_pos.p1, extra_data.world_pos.p2);
-		}
 	}
 	if (v1.pos.y > v3.pos.y) { 
 		std::swap(v1, v3); 
-		if (extra_data.world_pos.valid) {
-			std::swap(extra_data.world_pos.p1, extra_data.world_pos.p3);
-		}
 	}
 	if (v2.pos.y > v3.pos.y) { 
 		std::swap(v2, v3); 
-		if (extra_data.world_pos.valid) {
-			std::swap(extra_data.world_pos.p2, extra_data.world_pos.p3);
-		}
 	}
 
 	//v1,v2,v3依次从上到下
@@ -231,104 +222,42 @@ void Renderer::draw_triangle(vertex_t v1, vertex_t v2, vertex_t v3, Draw_ExtraDa
 		//平顶三角
 		if (x1 > x2) {
 			std::swap(v1, v2);
-			if (extra_data.world_pos.valid) {
-				std::swap(extra_data.world_pos.p1, extra_data.world_pos.p2);
-			}
 		}
 
-		if (extra_data.world_pos.valid) {
-			std::swap(extra_data.world_pos.p1, extra_data.world_pos.p3);
-			std::swap(extra_data.world_pos.p2, extra_data.world_pos.p3);
-		}
-		if (extra_data.valid) {
-			draw_triangle_StandardAlgorithm(v3, v1, v2, extra_data);
-		}
-		else {
-			draw_triangle_StandardAlgorithm(v3, v1, v2, extra_data);
-		}
+		draw_triangle_StandardAlgorithm(v3, v1, v2);
+
 		return;
 	}
 	if (y2 == y3) {
 		//平底三角
 		if (x2 > x3) {
 			std::swap(v2, v3);
-			if (extra_data.world_pos.valid) {
-				std::swap(extra_data.world_pos.p2, extra_data.world_pos.p3);
-			}
 		}
-		if (extra_data.valid) {
-			draw_triangle_StandardAlgorithm(v1, v2, v3, extra_data);
-		}
-		else {
-			draw_triangle_StandardAlgorithm(v1, v2, v3, extra_data);
-		}
+
+		draw_triangle_StandardAlgorithm(v1, v2, v3);
+
 		return;
 	}
 
+
 	//拆分三角
-	vertex_t v4 = v2;
-	float dxy = (x3 - x1) / (y3 - y1);
-	v4.pos.x = (y2 - y1) * dxy + x1;
-	float x4 = v4.pos.x, y4 = y2;
 	//插值计算v4的相关数值
-	float t = (y4 - y1) / (y3 - y1);
-	v4.color = v1.color + (v3.color - v1.color) * t;
-	v4.tex.u = v1.tex.u + (v3.tex.u - v1.tex.u) * t;
-	v4.tex.v = v1.tex.v + (v3.tex.v - v1.tex.v) * t;
-	v4.rhw = v1.rhw + (v3.rhw - v1.rhw) * t;
-	//插值计算v4的z值,用于阴影
-	point_t world_p4;
-	if (extra_data.world_pos.valid) {
-		const point_t& world_p1 = extra_data.world_pos.p1;
-		const point_t& world_p2 = extra_data.world_pos.p2;
-		const point_t& world_p3 = extra_data.world_pos.p3;
-		world_p4 = extra_data.world_pos.p2;
-		world_p4 = world_p1 + (world_p3 - world_p1) * t;
-	}
+	float t = (y2 - y1) / (y3 - y1);
+	vertex_t v4 = Split_Triangle(&v1, &v2, &v3, t);
+
+	float x4 = v4.pos.x, y4 = y2;
 
 	if (x2 <= x4) {
-		if (extra_data.world_pos.valid) {
-			Draw_ExtraData extra_data_tmp;
-			extra_data_tmp = extra_data;
-
-			extra_data_tmp.world_pos.p1 = extra_data.world_pos.p1;
-			extra_data_tmp.world_pos.p2 = extra_data.world_pos.p2;
-			extra_data_tmp.world_pos.p3 = world_p4;
-			draw_triangle_StandardAlgorithm(v1, v2, v4, extra_data_tmp);
-
-			extra_data_tmp.world_pos.p1 = extra_data.world_pos.p3;
-			extra_data_tmp.world_pos.p2 = extra_data.world_pos.p2;
-			extra_data_tmp.world_pos.p3 = world_p4;
-			draw_triangle_StandardAlgorithm(v3, v2, v4, extra_data_tmp);
-		}
-		else {
-			draw_triangle_StandardAlgorithm(v1, v2, v4, extra_data);
-			draw_triangle_StandardAlgorithm(v3, v2, v4, extra_data);
-		}
+		draw_triangle_StandardAlgorithm(v1, v2, v4);
+		draw_triangle_StandardAlgorithm(v3, v2, v4);
 	}
 	else {
-		if (extra_data.world_pos.valid) {
-			Draw_ExtraData extra_data_tmp;
-			extra_data_tmp = extra_data;
-
-			extra_data_tmp.world_pos.p1 = extra_data.world_pos.p1;
-			extra_data_tmp.world_pos.p2 = world_p4;
-			extra_data_tmp.world_pos.p3 = extra_data.world_pos.p2;
-			draw_triangle_StandardAlgorithm(v1, v4, v2, extra_data_tmp);
-
-			extra_data_tmp.world_pos.p1 = extra_data.world_pos.p3;
-			extra_data_tmp.world_pos.p2 = world_p4;
-			extra_data_tmp.world_pos.p3 = extra_data.world_pos.p2;
-			draw_triangle_StandardAlgorithm(v3, v4, v2, extra_data_tmp);
-		}
-		else {
-			draw_triangle_StandardAlgorithm(v1, v4, v2, extra_data);
-			draw_triangle_StandardAlgorithm(v3, v4, v2, extra_data);
-		}
+		draw_triangle_StandardAlgorithm(v1, v4, v2);
+		draw_triangle_StandardAlgorithm(v3, v4, v2);
 	}
 }
 
-void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right, const Draw_ExtraData& extra_data)
+void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex_t& left, const vertex_t& right)
 {
 	//注意所有需要插值的数据都需要透视修正,即所有值都乘上了rhw
 
@@ -374,10 +303,6 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	vertex_t v1 = top;
 	vertex_t v2 = left;
 	vertex_t v3 = right;
-
-	v1.pos_world = extra_data.world_pos.p1;
-	v2.pos_world = extra_data.world_pos.p2;
-	v3.pos_world = extra_data.world_pos.p3;
 
 	//从上往下绘制
 	for (int y = y0; y < y1; y++) {
@@ -745,7 +670,6 @@ color_t Renderer::Calculate_Lighting(vertex_t& v, const Light* light, bool in_sh
 int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 {
 	point_t p1, p2, p3;
-	Draw_ExtraData extra_data;
 
 	// 先裁剪检测,减小不必要计算
 	if (features[RENDER_FEATURE_CVV_CLIP]) {
@@ -764,14 +688,6 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	p1 = (v1.pos) * this->transform.model;
 	p2 = (v2.pos) * this->transform.model;
 	p3 = (v3.pos) * this->transform.model;
-
-	if (features[RENDER_FEATURE_SHADOW] || features[RENDER_FEATURE_LIGHT_PHONG]) {
-		extra_data.valid = true;
-		extra_data.world_pos.valid = true;
-		extra_data.world_pos.p1 = p1;
-		extra_data.world_pos.p2 = p2;
-		extra_data.world_pos.p3 = p3;
-	}
 
 	// 进行背面剔除(点的排列必须为左手螺旋后法向量朝外)
 	vector_t p1_p2 = p2 - p1, p1_p3 = p3 - p1;
@@ -828,10 +744,9 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 		vertex_set_rhw(&v1);
 		vertex_set_rhw(&v2);
 		vertex_set_rhw(&v3);
-		Set_ExtraData_rhw(&extra_data, v1, v2, v3);
 		if (render_shader_state == RENDER_SHADER_PIXEL_SCANLINE) {
 			//default
-			if (features[RENDER_FEATURE_SHADOW]) { this->draw_triangle(v1, v2, v3, extra_data); }
+			if (features[RENDER_FEATURE_SHADOW]) { this->draw_triangle(v1, v2, v3); }
 			else { this->draw_triangle(v1, v2, v3); }
 		}
 		else if (render_shader_state == RENDER_SHADER_PIXEL_BOUNDINGBOX) {
@@ -1090,7 +1005,14 @@ void Renderer::VS(vertex_t * v1, vertex_t * v2, vertex_t * v3)
 
 vertex_t Renderer::Split_Triangle(const vertex_t* v1, const vertex_t* v2, const vertex_t* v3, float t)
 {
-	return vertex_t();
+	vertex_t v;
+	v.color = v1->color + (v3->color - v1->color) * t;
+	v.tex.u = v1->tex.u + (v3->tex.u - v1->tex.u) * t;
+	v.tex.v = v1->tex.v + (v3->tex.v - v1->tex.v) * t;
+	v.rhw = v1->rhw + (v3->rhw - v1->rhw) * t;
+	v.pos = v1->pos + (v3->pos - v1->pos) * t;
+	v.pos_world = v1->pos_world + (v3->pos_world - v1->pos_world) * t;
+	return v;
 }
 
 color_t Renderer::PS_Interpolation(vertex_t* v1, vertex_t* v2, vertex_t* v3, barycentric_t bary)

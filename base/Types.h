@@ -84,16 +84,3 @@ typedef struct {
 	matrix_t transform;     // transform = model * view * projection;
 	float w, h;             // 屏幕大小
 }	transform_t;
-
-struct Draw_ExtraData
-{
-	struct World_Pos
-	{
-		//阴影需要用的三个顶点的世界坐标,用于光栅化时插值计算出每个像素在光源空间的坐标
-		bool valid = false;
-		point_t p1, p2, p3;
-	};
-
-	bool valid = false;
-	World_Pos world_pos;
-};

@@ -403,15 +403,6 @@ vertex_t operator+(const vertex_t& v1, const vertex_t& v2)
 	return y;
 }
 
-void Set_ExtraData_rhw(Draw_ExtraData* extra_data, const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
-{
-	if (extra_data->world_pos.valid) {
-		extra_data->world_pos.p1 = extra_data->world_pos.p1 * v1.rhw;
-		extra_data->world_pos.p2 = extra_data->world_pos.p2 * v2.rhw;
-		extra_data->world_pos.p3 = extra_data->world_pos.p3 * v3.rhw;
-	}
-}
-
 void transform_init(transform_t* ts, int width, int height) {
 	float aspect = (float)width / ((float)height);
 	matrix_set_identity(&ts->model);

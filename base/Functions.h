@@ -18,8 +18,6 @@ void vertex_set_rhw(vertex_t* v);
 vertex_t operator*(const vertex_t& v, float x);
 vertex_t operator+(const vertex_t& v1, const vertex_t& v2);
 
-void Set_ExtraData_rhw(Draw_ExtraData* extra_data, const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
-
 void matrix_set_identity(matrix_t* m);
 void matrix_set_perspective(matrix_t* m, float fovy, float aspect, float z_near, float z_far);
 matrix_t matrix_ortho(float left, float right, float bottom, float top, float z_near, float z_far);
