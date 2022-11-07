@@ -91,12 +91,12 @@ void Renderer::clear()
 
 void Renderer::set_texture(const Texture& tex)
 {
-	texture->texture = tex.texture;
+	*texture = tex;
 	int w = tex.width;
 	int h = tex.height;
+
 	assert(w <= tex_limit_size && h <= tex_limit_size);
-	for (int j = 0; j < h; j++) 	// 重新计算每行纹理的指针
-		this->texture->texture[j] = (color_t*)(*texture->texture + w * j);
+
 	this->tex_width = w;
 	this->tex_height = h;
 	this->tex_max_u = (float)(w - 1);

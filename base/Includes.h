@@ -6,6 +6,7 @@
 #pragma warning(disable:26495)
 #pragma warning(disable:6386)
 #include <bits/stdc++.h>
+#include <filesystem>
 #include <thread>
 #include <random>
 #include <unordered_map>
@@ -22,6 +23,7 @@ class Camera;
 class Light;
 class Renderer;
 
+#include "stb_image.h"
 #include "Types.h"
 #include "Functions.h"
 #include "Texture.h"

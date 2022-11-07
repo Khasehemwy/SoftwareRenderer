@@ -12,5 +12,6 @@ public:
 	~Texture();
 
 	void init();
+	void Load(std::filesystem::path path);
 	color_t Read(float u, float v, int choice = 1);
 };

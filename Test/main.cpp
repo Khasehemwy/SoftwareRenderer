@@ -191,7 +191,8 @@ int main()
 
 
 	Texture texture;
-	texture.init();
+	//texture.init();
+	texture.Load("../resources/textures/patterned_wooden_wall_panels_48_05_diffuse.jpg");
 	renderer.set_texture(texture);
 	renderer_ground.set_texture(texture);
 

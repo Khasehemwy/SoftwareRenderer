@@ -25,6 +25,64 @@ void Texture::init()
 	}
 }
 
+void Texture::Load(std::filesystem::path path)
+{
+	int width, height, nrComponents;
+	unsigned char* data = stbi_load(
+		path.string().c_str(), 
+		&width, &height, 
+		&nrComponents, 0);
+
+	if (data)
+	{
+		delete[] texture;
+
+		this->width = width;
+		this->height = height;
+		texture = create_2D_array<color_t>(width, height);
+
+		if (nrComponents == 1) {
+			// RED
+
+		}
+		else if (nrComponents == 3) {
+			// RGB
+			color_t color;
+			int data_index = 0;
+			for (int j = 0; j < height; j++) {
+				for (int i = 0; i < width; i++) {
+					color.r = (float)data[data_index++] / 255.0f;
+					color.g = (float)data[data_index++] / 255.0f;
+					color.b = (float)data[data_index++] / 255.0f;
+					color.a = 1;
+					this->texture[j][i] = color;
+				}
+			}
+		}
+		else if (nrComponents == 4) {
+			// RGBA
+			color_t color;
+			int data_index = 0;
+			for (int j = 0; j < height; j++) {
+				for (int i = 0; i < width; i++) {
+					color.r = (float)data[data_index++] / 255.0f;
+					color.g = (float)data[data_index++] / 255.0f;
+					color.b = (float)data[data_index++] / 255.0f;
+					color.a = (float)data[data_index++] / 255.0f;
+					this->texture[j][i] = color;
+				}
+			}
+		}
+
+		stbi_image_free(data);
+	}
+	else
+	{
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+		stbi_image_free(data);
+	}
+}
+
 color_t Texture::Read(float u, float v, int choice)
 {
 

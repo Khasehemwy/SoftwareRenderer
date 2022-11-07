@@ -89,6 +89,7 @@ int main()
 	//renderer.render_state = RENDER_STATE_WIREFRAME;
 	renderer.render_state = RENDER_STATE_COLOR;
 	renderer.features[RENDER_FEATURE_LIGHT] = false;
+	renderer.features[RENDER_FEATURE_AUTO_NORMAL] = true;
 	//renderer.render_state = RENDER_STATE_TEXTURE;
 	//renderer.features[RENDER_FEATURE_BACK_CULLING] = false;
 	renderer_light.camera = &camera;

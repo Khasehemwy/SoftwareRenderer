@@ -55,10 +55,10 @@ color_t Renderer_Normal::PS(vertex_t* v)
 	color_use.b = v->normal.z;
 	color_use.a = 1;
 
-	color_use.r = v->rhw;
-	color_use.g = v->rhw;
-	color_use.b = v->rhw;
-	color_use.a = 1;
+	//color_use.r = v->rhw;
+	//color_use.g = v->rhw;
+	//color_use.b = v->rhw;
+	//color_use.a = 1;
 
 	return color_use;
 }
