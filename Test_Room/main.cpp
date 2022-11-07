@@ -133,10 +133,11 @@ int main()
 		if (window.screen_keys[KEY_J]) angle += 0.01f;
 		if (window.screen_keys[KEY_L]) angle -= 0.01f;
 
-		if (window.screen_keys[VK_LEFT]) { gl_x_offset = 6.0f * camera.speed; }
-		if (window.screen_keys[VK_RIGHT]) { gl_x_offset = -6.0f * camera.speed; }
-		if (window.screen_keys[VK_UP]) { gl_y_offset = 6.0f * camera.speed; }
-		if (window.screen_keys[VK_DOWN]) { gl_y_offset = -6.0f * camera.speed; }
+		float head_speed = 8;
+		if (window.screen_keys[VK_LEFT]) { gl_x_offset = head_speed * camera.speed; }
+		if (window.screen_keys[VK_RIGHT]) { gl_x_offset = -head_speed * camera.speed; }
+		if (window.screen_keys[VK_UP]) { gl_y_offset = head_speed * camera.speed; }
+		if (window.screen_keys[VK_DOWN]) { gl_y_offset = -head_speed * camera.speed; }
 
 		if (window.screen_keys[KEY_A]) {
 			camera.pos = camera.pos + (vector_normalize(vector_cross(camera.front, camera.up)) * camera.speed);

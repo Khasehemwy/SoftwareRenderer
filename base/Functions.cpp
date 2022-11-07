@@ -345,6 +345,7 @@ vector_t operator*(const vector_t& x, const float y)
 	z.x *= y;
 	z.y *= y;
 	z.z *= y;
+	z.w *= y;
 	return z;
 }
 
@@ -354,6 +355,7 @@ vector_t operator*(const float y, const vector_t& x)
 	z.x *= y;
 	z.y *= y;
 	z.z *= y;
+	z.w *= y;
 	return z;
 }
 

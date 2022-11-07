@@ -62,7 +62,7 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 
 		vertex.normal.x = mesh->mNormals[i].x;
 		vertex.normal.y = mesh->mNormals[i].y;
-		vertex.normal.z = mesh->mNormals[i].z;
+		vertex.normal.z = -mesh->mNormals[i].z;
 
 		vertices.push_back(vertex);
 	}

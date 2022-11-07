@@ -22,9 +22,9 @@ void Renderer_Normal::VS(vertex_t* v1, vertex_t* v2, vertex_t* v3)
 	v2->pos_world = v2->pos;
 	v3->pos_world = v3->pos;
 
-	//v1->normal = v1->normal * transform.model;
-	//v2->normal = v2->normal * transform.model;
-	//v3->normal = v3->normal * transform.model;
+	v1->normal = v1->normal * transform.model * transform.view;
+	v2->normal = v2->normal * transform.model * transform.view;
+	v3->normal = v3->normal * transform.model * transform.view;
 
 	/* 将点映射到观察空间 */
 	v1->pos = v1->pos * this->transform.view;

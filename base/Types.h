@@ -59,8 +59,7 @@ struct material_t{
 	reflect_t reflect = reflect_t::DIFF;
 };
 
-class vertex_t { 
-public:
+struct vertex_t { 
 	point_t pos; 
 	point_t pos_world;
 	color_t color; 
