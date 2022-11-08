@@ -50,15 +50,8 @@ color_t Renderer_Normal::PS_Interpolation(vertex_t* v1, vertex_t* v2, vertex_t* 
 color_t Renderer_Normal::PS(vertex_t* v)
 {
 	color_t color_use;
-	color_use.r = v->normal.x;
-	color_use.g = v->normal.y;
-	color_use.b = v->normal.z;
-	color_use.a = 1;
 
-	//color_use.r = v->rhw;
-	//color_use.g = v->rhw;
-	//color_use.b = v->rhw;
-	//color_use.a = 1;
+	color_use = textures["dirty"]->Read(v->tex.u, v->tex.v);
 
 	return color_use;
 }

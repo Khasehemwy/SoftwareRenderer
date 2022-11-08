@@ -64,6 +64,14 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 		vertex.normal.y = mesh->mNormals[i].y;
 		vertex.normal.z = -mesh->mNormals[i].z;
 
+		if (mesh->mTextureCoords[0]) {
+			vertex.tex.u = mesh->mTextureCoords[0][i].x;
+			vertex.tex.v = mesh->mTextureCoords[0][i].y;
+
+			while (vertex.tex.u > 1.0f)vertex.tex.u -= 1.0f;
+			while (vertex.tex.v > 1.0f)vertex.tex.v -= 1.0f;
+		}
+
 		vertices.push_back(vertex);
 	}
 

@@ -6,6 +6,7 @@ float cursor_pitch = 0.0f;
 float cursor_last_x = 400, cursor_last_y = 300;
 float gl_x_offset = 90.0f;
 float gl_y_offset = 0.0f;
+float g_fov = 45.0f;
 
 
 
@@ -76,6 +77,7 @@ int main()
 	renderer_light.init(window.screen_width, window.screen_height, window.screen_fb);
 	renderer_light.z_buffer = renderer.z_buffer;//因为深度缓存是每个Renderer独用的,但是现在想让它们一起显示.
 
+	float aspect = (float)renderer.width / ((float)renderer.height);
 
 	Camera camera;
 	float posz = -7;
@@ -96,8 +98,11 @@ int main()
 	renderer_light.render_state = RENDER_STATE_COLOR;
 	renderer_light.features[RENDER_FEATURE_LIGHT] = false;
 
-	Model models("../resources/pacman/Pacman.stl");
+	Model models("../resources/pbr_-_dirt_material/scene.gltf");
 	//Model models("../resources/room/OBJ/room.obj");
+
+	Texture tex_wooden("../resources/textures/patterned_wooden_wall_panels_48_05_diffuse.jpg");
+	renderer.Add_Texture("dirty", &tex_wooden);
 
 	//光源
 	Light point_light;
@@ -155,15 +160,22 @@ int main()
 				camera.speed * vector_normalize(vector_cross(camera.up, vector_cross(camera.front, camera.up)));
 		}
 
+		if (window.screen_keys[KEY_Y]) { g_fov -= 0.04f; }
+		if (window.screen_keys[KEY_H]) { g_fov += 0.04f; }
+		g_fov = CMID(g_fov, 1.0f, 60.0f);
+
 		//更新摄像机
 		camera.target = camera.pos + camera.front;
 		matrix_t view = camera.set_lookat(camera.pos, camera.target, camera.up);
 		renderer.transform.view = view;
 
+		matrix_set_perspective(&renderer.transform.projection, g_fov, aspect, 0.1f, 100.0f);
+
+
 		matrix_t model;
 		matrix_set_identity(&model);
-		model = matrix_scale(model, { 0.1f,0.1f,0.1f,1 });
-		model = model * matrix_rotate_build(radians(90), { 1.0f,0.0f,0.0f,1 });
+		//model = matrix_scale(model, { 0.1f,0.1f,0.1f,1 });
+		//model = model * matrix_rotate_build(radians(90), { 1.0f,0.0f,0.0f,1 });
 		model = matrix_translate(model, { 0.0f,-0.5f,0.0f,1 });
 		renderer.transform.model = model;
 		renderer.transform_update();
