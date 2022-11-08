@@ -50,12 +50,6 @@ void Renderer::init(int width, int height, void* fb)
 	this->foreground = 0x0;
 
 	tex_limit_size = 8192;
-	this->texture = new Texture(width, height);
-
-	this->tex_width = 2;
-	this->tex_height = 2;
-	this->tex_max_u = 1.0f;
-	this->tex_max_v = 1.0f;
 
 	this->min_clip_x = min_clip_y = 0;
 	this->max_clip_x = width;
@@ -67,11 +61,15 @@ void Renderer::init(int width, int height, void* fb)
 
 void Renderer::destroy()
 {
-	if (this->frame_buffer)
+	if (this->frame_buffer) {
 		free(this->frame_buffer);
+	}
 	this->frame_buffer = nullptr;
+
+	if (z_buffer) {
+		delete[] z_buffer;
+	}
 	this->z_buffer = nullptr;
-	this->texture->texture = nullptr;
 }
 
 void Renderer::clear()
@@ -89,46 +87,15 @@ void Renderer::clear()
 	}
 }
 
-void Renderer::set_texture(const Texture& tex)
+void Renderer::Add_Texture(std::string name, const Texture* tex)
 {
-	*texture = tex;
-	int w = tex.width;
-	int h = tex.height;
+	assert(textures[name]);
 
+	int w = tex->width;
+	int h = tex->height;
 	assert(w <= tex_limit_size && h <= tex_limit_size);
 
-	this->tex_width = w;
-	this->tex_height = h;
-	this->tex_max_u = (float)(w - 1);
-	this->tex_max_v = (float)(h - 1);
-}
-
-color_t Renderer::texture_read(const Texture& tex, float u, float v)
-{
-	u = u * this->tex_max_u;
-	v = v * this->tex_max_v;
-
-	//点采样
-	//int x = (int)(u + 0.5f);
-	//int y = (int)(v + 0.5f);
-	//x = CMID(x, 0, this->tex_width - 1);
-	//y = CMID(y, 0, this->tex_height - 1);
-	//return tex.texture[y][x];
-
-	//双线性滤波
-	int u_0 = CMID(floor(u), 0, this->tex_width - 1);
-	int u_1 = CMID(u_0 + 1, 0, this->tex_width - 1);
-	int v_0 = CMID(floor(v), 0, this->tex_height - 1);
-	int v_1 = CMID(v_0 + 1, 0, this->tex_height - 1);
-	float du_0 = u - floor(u);
-	float du_1 = floor(u) + 1 - u;
-	float dv_0 = v - floor(v);
-	float dv_1 = floor(v) + 1 - v;
-	color_t c_up, c_down, color;
-	c_up = tex.texture[v_0][u_0] * du_1 + tex.texture[v_0][u_1] * du_0;
-	c_down = tex.texture[v_1][u_0] * du_1 + tex.texture[v_1][u_1] * du_0;
-	color = c_up * dv_1 + c_down * dv_0;
-	return color;
+	textures[name] = tex;
 }
 
 void Renderer::draw_pixel(int x, int y, UINT32 color)
@@ -895,7 +862,8 @@ color_t Renderer::Ray_Tracing(const ray_t& ray, int depth, float& dis)
 	}
 
 	if (render_state == RENDER_STATE_TEXTURE) {
-		color = color * texture->Read(v.tex.u, v.tex.v);
+		assert(textures.size() > 0);
+		color = color * textures.begin()->second->Read(v.tex.u, v.tex.v);
 	}
 
 	return color;
@@ -1076,7 +1044,10 @@ color_t Renderer::PS(vertex_t* v)
 		color_use = color_use;
 	}
 	else if (this->render_state == RENDER_STATE_TEXTURE) {
-		color_use = color_use * texture->Read(v->tex.u, v->tex.v);
+		assert(textures.size() > 0);
+
+		const Texture* texture_use = textures.begin()->second;
+		color_use = color_use * texture_use->Read(v->tex.u, v->tex.v);
 	}
 	else if (this->render_state == RENDER_STATE_DEEP) {
 		color_t color_deep;

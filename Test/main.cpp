@@ -190,11 +190,10 @@ int main()
 	renderer_light.Set_Feature(RENDER_FEATURE_SHADOW, false);
 
 
-	Texture texture;
+	Texture texture("../resources/textures/patterned_wooden_wall_panels_48_05_diffuse.jpg");
 	//texture.init();
-	texture.Load("../resources/textures/patterned_wooden_wall_panels_48_05_diffuse.jpg");
-	renderer.set_texture(texture);
-	renderer_ground.set_texture(texture);
+	renderer.Add_Texture("Default", &texture);
+	renderer_ground.Add_Texture("Default", &texture);
 
 	Light dir_light;
 	dir_light.pos = { 14,10,10,1 };

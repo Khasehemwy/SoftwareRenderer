@@ -54,11 +54,7 @@ public:
 	UINT32** frame_buffer = nullptr;		// 像素缓存：frame_buffer[y] 代表第 y行,像素缓存为不同Renderer共用
 	float** z_buffer = nullptr;				// 深度缓存：z_buffer[y] 为第 y行指针,深度缓存为每个Renderer独用
 
-	Texture* texture;			// 纹理：每行索引
-	int tex_width;              // 纹理宽度
-	int tex_height;             // 纹理高度
-	float tex_max_u;            // 纹理最大宽度：tex_width - 1
-	float tex_max_v;            // 纹理最大高度：tex_height - 1
+	std::unordered_map<std::string, const Texture*> textures;
 	int tex_limit_size;
 
 	float min_clip_x = 0;
@@ -88,9 +84,10 @@ public:
 	void destroy();
 	void clear();
 
-	void set_texture(const Texture& tex);
-	color_t texture_read(const Texture& tex, float u, float v);
+	void Add_Texture(std::string name, const Texture* tex);
+
 	void add_light(const Light& light);
+
 	int Set_Feature(UINT32 feature, bool turn_on);
 
 	void draw_line(int x1, int y1, int x2, int y2, UINT32 color);

@@ -299,7 +299,7 @@ int main()
 
 
 	Texture texture;
-	texture.init();
+	texture.Set_Default_Tex();
 	renderer.set_texture(texture);
 	renderer_ground.set_texture(texture);
 

@@ -1,21 +1,23 @@
 ﻿#include"Texture.h"
 
-Texture::Texture()
+Texture::Texture(std::filesystem::path path)
 {
-	texture = create_2D_array<color_t>(width, height);
+	Load(path);
 }
+
 Texture::Texture(int width, int height):
 	width(width),
 	height(height)
 {
 	texture = create_2D_array<color_t>(width, height);
 }
+
 Texture::~Texture()
 {
-	free(texture);
+	delete[] texture;
 }
 
-void Texture::init()
+void Texture::Set_Default_Tex()
 {
 	for (int j = 0; j < this->height; j++) {
 		for (int i = 0; i < this->width; i++) {
@@ -35,7 +37,9 @@ void Texture::Load(std::filesystem::path path)
 
 	if (data)
 	{
-		delete[] texture;
+		if (texture) {
+			delete[] texture;
+		}
 
 		this->width = width;
 		this->height = height;
@@ -83,7 +87,7 @@ void Texture::Load(std::filesystem::path path)
 	}
 }
 
-color_t Texture::Read(float u, float v, int choice)
+color_t Texture::Read(float u, float v, int choice) const
 {
 
 	u = u * this->width;
