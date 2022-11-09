@@ -68,8 +68,8 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 			vertex.tex.u = mesh->mTextureCoords[0][i].x;
 			vertex.tex.v = mesh->mTextureCoords[0][i].y;
 
-			while (vertex.tex.u > 1.0f)vertex.tex.u -= 1.0f;
-			while (vertex.tex.v > 1.0f)vertex.tex.v -= 1.0f;
+			vertex.tex.u -= (int)vertex.tex.u;
+			vertex.tex.v -= (int)vertex.tex.v;
 		}
 
 		vertices.push_back(vertex);
