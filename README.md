@@ -32,7 +32,7 @@
  * 阴影 - Shadow
 
  #### 纹理:
- * 仿射/透视纹理映射 - Affine texture mapping (暂时只支持手动创建的纹理)
+ * 仿射/透视纹理映射 - Affine texture mapping
  * 双线性滤波 - Bilinear filtering
 
  #### 优化:
