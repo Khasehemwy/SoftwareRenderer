@@ -2,10 +2,55 @@
 #include"Includes.h"
 
 class Renderer_PBR :public Renderer {
+	vector_t FresnelSchlick(float cosTheta, vector_t F0);
+	float DistributionGGX(vector_t N, vector_t H, float roughness);
+	float GeometrySchlickGGX(float NdotV, float roughness);
+	float GeometrySmith(vector_t N, vector_t V, vector_t L, float roughness);
 public:
+	point_t view_pos;
 	virtual void VS(vertex_t* v1, vertex_t* v2, vertex_t* v3);
 	virtual color_t PS(vertex_t* v);
 };
+
+inline vector_t Renderer_PBR::FresnelSchlick(float cosTheta, vector_t F0)
+{
+	return F0 + (1.0 - F0) * pow(CMID(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+inline float Renderer_PBR::DistributionGGX(vector_t N, vector_t H, float roughness)
+{
+	float a = roughness * roughness;
+	float a2 = a * a;
+	float NdotH = max(vector_dot(N, H), 0.0f);
+	float NdotH2 = NdotH * NdotH;
+
+	float nom = a2;
+	float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+	denom = PI * denom * denom;
+
+	return (nom / denom);
+}
+
+inline float Renderer_PBR::GeometrySchlickGGX(float NdotV, float roughness)
+{
+	float r = (roughness + 1.0);
+	float k = (r * r) / 8.0;
+
+	float nom = NdotV;
+	float denom = NdotV * (1.0 - k) + k;
+
+	return (nom / denom);
+}
+
+inline float Renderer_PBR::GeometrySmith(vector_t N, vector_t V, vector_t L, float roughness)
+{
+	float NdotV = max(vector_dot(N, V), 0.0f);
+	float NdotL = max(vector_dot(N, L), 0.0f);
+	float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+	float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+	return (ggx1 * ggx2);
+}
 
 void Renderer_PBR::VS(vertex_t* v1, vertex_t* v2, vertex_t* v3)
 {
@@ -21,9 +66,44 @@ void Renderer_PBR::VS(vertex_t* v1, vertex_t* v2, vertex_t* v3)
 	v2->pos_world = v2->pos;
 	v3->pos_world = v3->pos;
 
-	v1->normal = v1->normal * transform.model * transform.view;
-	v2->normal = v2->normal * transform.model * transform.view;
-	v3->normal = v3->normal * transform.model * transform.view;
+	//计算TBN矩阵
+	{
+		vector_t edge1 = v2->pos - v1->pos;
+		vector_t edge2 = v3->pos - v1->pos;
+		vector_t deltaUV1(v2->tex.u - v1->tex.u, v2->tex.v - v1->tex.v, 0, 1);
+		vector_t deltaUV2(v3->tex.u - v1->tex.u, v3->tex.v - v1->tex.v, 0, 1);
+
+		float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+		vector_t T;
+		T.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+		T.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+		T.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+		T = vector_normalize(T);
+
+		vector_t N = vector_normalize(vector_cross(v3->pos - v1->pos, v2->pos - v1->pos));
+
+		vector_t B = vector_normalize(vector_cross(T, N));
+
+		transform.TBN.m[0][0] = T.x;
+		transform.TBN.m[0][1] = T.y;
+		transform.TBN.m[0][2] = T.z;
+		transform.TBN.m[0][3] = 0;
+
+		transform.TBN.m[1][0] = B.x;
+		transform.TBN.m[1][1] = B.y;
+		transform.TBN.m[1][2] = B.z;
+		transform.TBN.m[1][3] = 0;
+
+
+		transform.TBN.m[2][0] = N.x;
+		transform.TBN.m[2][1] = N.y;
+		transform.TBN.m[2][2] = N.z;
+		transform.TBN.m[2][3] = 0;
+	}
+	//
+
+
 
 	/* 将点映射到观察空间 */
 	v1->pos = v1->pos * this->transform.view;
@@ -38,9 +118,63 @@ void Renderer_PBR::VS(vertex_t* v1, vertex_t* v2, vertex_t* v3)
 
 color_t Renderer_PBR::PS(vertex_t* v)
 {
-	color_t color_use;
+	vector_t N = vector_normalize(textures["normal"]->Read(v->tex.u, v->tex.v) * this->transform.TBN);
+	//vector_t N = v->normal;
+	vector_t V = vector_normalize(view_pos - v->pos_world);
 
-	color_use = textures["diffuce"]->Read(v->tex.u, v->tex.v);
+	vector_t F0 = vector_t(0.04);
+	vector_t albedo = textures["diffuce"]->Read(v->tex.u, v->tex.v);
+	//vector_t albedo(0.5f, 0.0f, 0.0f);
+	float metallic = textures["metallic"]->Read(v->tex.u, v->tex.v).r;
+	//float metallic = 0.5;
+	F0 = mix(F0, albedo, metallic);
+
+	vector_t Lo = vector_t(0.0);
+	for (int i = 0; i < lights.size(); i++) {
+		const Light* curLight = lights[i];
+
+		vector_t L = vector_normalize(curLight->pos - v->pos_world);
+		vector_t H = vector_normalize(V + L);
+
+		float distance = vector_length(curLight->pos- v->pos_world);
+		float attenuation = 1.0 / (curLight->constant + curLight->linear * distance + curLight->quadratic * (distance * distance));
+		vector_t radiance = curLight->radiance * attenuation;
+
+		vector_t F = FresnelSchlick(CMID(vector_dot(H, V), 0.0, 1.0), F0);
+		float roughness = textures["roughness"]->Read(v->tex.u, v->tex.v).r;
+		//float roughness = 0.5;
+		float NDF = DistributionGGX(N, H, roughness);
+		float G = GeometrySmith(N, V, L, roughness);
+
+		vector_t numerator = NDF * G * F;
+		float denominator = 4.0 * max(vector_dot(N, V), 0.0f) * max(vector_dot(N, L), 0.0f) + 0.0001;
+		vector_t specular = numerator / denominator;
+
+		vector_t kS = F;
+		vector_t kD = vector_t(1.0) - kS;
+		kD = kD * (1.0 - metallic);
+
+		float NdotL = max(vector_dot(N, L), 0.0f);
+		Lo = Lo + (kD * albedo / PI + specular) * radiance * NdotL;
+	}
+
+	float ao = textures["ao"]->Read(v->tex.u, v->tex.v).r;
+	//float ao = 1;
+	vector_t ambient = vector_dot(vector_t(0.03) , albedo) * ao;
+	vector_t color = Lo + ambient;
+
+	//color = color / (color + vector_t(1.0));
+
+	color_t color_use;
+	color_use.r = color.x;
+	color_use.g = color.y;
+	color_use.b = color.z;
+	color_use.a = 1;
+
+	//color_use.r = N.x;
+	//color_use.g = N.y;
+	//color_use.b = N.z;
+	//color_use.a = 1;
 
 	return color_use;
 }

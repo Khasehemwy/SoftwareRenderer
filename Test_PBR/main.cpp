@@ -46,14 +46,14 @@ void draw_light(Renderer& renderer)
 	p[7] = { -1,1,1,1 };
 
 	vertex_t vert[8];
-	vert[0].color = { 1,0.7,0.5,1 };
-	vert[1].color = { 1,0.7,0.5,1 };
-	vert[2].color = { 1,0.7,0.5,1 };
-	vert[3].color = { 1,0.7,0.5,1 };
-	vert[4].color = { 1,0.7,0.5,1 };
-	vert[5].color = { 1,0.7,0.5,1 };
-	vert[6].color = { 1,0.7,0.5,1 };
-	vert[7].color = { 1,0.7,0.5,1 };
+	vert[0].color = { 20.0f,0.6f,0.6f,1 };
+	vert[1].color = { 20.0f,0.6f,0.6f,1 };
+	vert[2].color = { 20.0f,0.6f,0.6f,1 };
+	vert[3].color = { 20.0f,0.6f,0.6f,1 };
+	vert[4].color = { 20.0f,0.6f,0.6f,1 };
+	vert[5].color = { 20.0f,0.6f,0.6f,1 };
+	vert[6].color = { 20.0f,0.6f,0.6f,1 };
+	vert[7].color = { 20.0f,0.6f,0.6f,1 };
 	for (int i = 0; i < 8; i++) {
 		vert[i].pos = p[i];
 	}
@@ -92,22 +92,26 @@ int main()
 	renderer.render_state = RENDER_STATE_COLOR;
 	renderer.features[RENDER_FEATURE_LIGHT] = false;
 	renderer.features[RENDER_FEATURE_AUTO_NORMAL] = true;
+	renderer.features[RENDER_FEATURE_CVV_CLIP] = false;
 	//renderer.render_state = RENDER_STATE_TEXTURE;
 	//renderer.features[RENDER_FEATURE_BACK_CULLING] = false;
 	renderer_light.camera = &camera;
 	renderer_light.render_state = RENDER_STATE_COLOR;
 	renderer_light.features[RENDER_FEATURE_LIGHT] = false;
 
-	Model models("../resources/sphere/scene.gltf");
+	Model models("../resources/box/scene.gltf");
 	//Model models("../resources/room/OBJ/room.obj");
 
-	Texture tex_wooden_diffuce("../resources/patterned_wooden_wall_panels_48_05_4K/patterned_wooden_wall_panels_48_05_diffuse.jpg");
-	Texture tex_wooden_ao("../resources/patterned_wooden_wall_panels_48_05_4K/patterned_wooden_wall_panels_48_05_ao.jpg");
-	Texture tex_wooden_glossiness("../resources/patterned_wooden_wall_panels_48_05_4K/patterned_wooden_wall_panels_48_05_glossiness.jpg");
-	Texture tex_wooden_metallic("../resources/patterned_wooden_wall_panels_48_05_4K/patterned_wooden_wall_panels_48_05_metallic.jpg");
-	Texture tex_wooden_normal("../resources/patterned_wooden_wall_panels_48_05_4K/patterned_wooden_wall_panels_48_05_normal.jpg");
-	Texture tex_wooden_reflection("../resources/patterned_wooden_wall_panels_48_05_4K/patterned_wooden_wall_panels_48_05_reflection.jpg");
-	Texture tex_wooden_roughness("../resources/patterned_wooden_wall_panels_48_05_4K/patterned_wooden_wall_panels_48_05_roughness.jpg");
+	Texture tex_wooden_diffuce("../resources/patterned_wooden_wall_panels_48_05_2K/patterned_wooden_wall_panels_48_05_diffuse.jpg");
+	Texture tex_wooden_roughness("../resources/patterned_wooden_wall_panels_48_05_2K/patterned_wooden_wall_panels_48_05_roughness.jpg");
+	Texture tex_wooden_normal("../resources/patterned_wooden_wall_panels_48_05_2K/patterned_wooden_wall_panels_48_05_normal.jpg");
+	//Texture tex_wooden_diffuce("../resources/sphere/textures/Material_baseColor.png");
+	//Texture tex_wooden_roughness("../resources/sphere/textures/Material_metallicRoughness.png");
+	//Texture tex_wooden_normal("../resources/sphere/textures/Material_normal.png");
+	Texture tex_wooden_ao("../resources/patterned_wooden_wall_panels_48_05_2K/patterned_wooden_wall_panels_48_05_ao.jpg");
+	Texture tex_wooden_glossiness("../resources/patterned_wooden_wall_panels_48_05_2K/patterned_wooden_wall_panels_48_05_glossiness.jpg");
+	Texture tex_wooden_metallic("../resources/patterned_wooden_wall_panels_48_05_2K/patterned_wooden_wall_panels_48_05_metallic.jpg");
+	Texture tex_wooden_reflection("../resources/patterned_wooden_wall_panels_48_05_2K/patterned_wooden_wall_panels_48_05_reflection.jpg");
 	renderer.Add_Texture("diffuce", &tex_wooden_diffuce);
 	renderer.Add_Texture("ao", &tex_wooden_ao);
 	renderer.Add_Texture("glossiness", &tex_wooden_glossiness);
@@ -118,12 +122,10 @@ int main()
 
 	//光源
 	Light point_light;
-	point_light.pos = { 4,-1,1,1 };
-	point_light.ambient = { 0.2f,0.2f,0.2f,1 };
-	point_light.diffuse = { 0.9f,0.9f,0.9f,1 };
-	point_light.specular = { 1.0f,1.0f,1.0f,1 };
+	point_light.pos = { 3,-1,-4,1 };
+	point_light.radiance = { 5.0f,4.8f,4.8f,1 };
 	point_light.light_state = LIGHT_STATE_POINT;
-	//renderer.add_light(point_light);
+	renderer.add_light(point_light);
 
 	//时间
 	float delta_time = 0.0f;
@@ -139,7 +141,7 @@ int main()
 		float current_frame = time_get();
 		delta_time = current_frame - last_frame;
 		last_frame = current_frame;
-		camera.speed = 0.05f;
+		camera.speed = 0.1f;
 
 		//鼠标
 		mouse_callback(camera);
@@ -183,12 +185,14 @@ int main()
 
 		matrix_set_perspective(&renderer.transform.projection, g_fov, aspect, 0.1f, 100.0f);
 
+		renderer.view_pos = camera.pos;
 
 		matrix_t model;
 		matrix_set_identity(&model);
-		//model = matrix_scale(model, { 0.1f,0.1f,0.1f,1 });
-		//model = model * matrix_rotate_build(radians(90), { 1.0f,0.0f,0.0f,1 });
-		model = matrix_translate(model, { 0.0f,-0.5f,0.0f,1 });
+		model = matrix_scale(model, { 0.02f,0.02f,0.02f,1 });
+		model = model * matrix_rotate_build(radians(90), { 1.0f,0.0f,0.0f,1 });
+		model = model * matrix_rotate_build(radians(30), { 0.0f,1.0f,0.0f,1 });
+		model = matrix_translate(model, { 0.0f,-1.5f,0.0f,1 });
 		renderer.transform.model = model;
 		renderer.transform_update();
 		models.draw(renderer);

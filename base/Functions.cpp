@@ -284,6 +284,16 @@ vector_t operator+(const vector_t& x, const vector_t& y)
 	return vector_add(x, y);
 }
 
+vector_t operator+(const vector_t& x, const float y)
+{
+	vector_t v = x;
+	v.x += y;
+	v.y += y;
+	v.z += y;
+	v.w = 1;
+	return v;
+}
+
 //return x-y
 vector_t vector_sub(const vector_t& x, const vector_t& y)
 {
@@ -357,6 +367,36 @@ vector_t operator*(const float y, const vector_t& x)
 	z.z *= y;
 	z.w = 1;
 	return z;
+}
+
+vector_t operator*(const vector_t& x, const vector_t& y)
+{
+	vector_t v;
+	v.x = x.x * y.x;
+	v.y = x.y * y.y;
+	v.z = x.z * y.z;
+	v.w = x.w * y.w;
+	return v;
+}
+
+vector_t operator/(const vector_t& v, const float x)
+{
+	vector_t y;
+	y.x = v.x / x;
+	y.y = v.y / x;
+	y.z = v.z / x;
+	y.w = 1;
+	return y;
+}
+
+vector_t operator/(const vector_t& x, const vector_t& y)
+{
+	vector_t v;
+	v.x = x.x / y.x;
+	v.y = x.y / y.y;
+	v.z = x.z / y.z;
+	v.w = x.w / y.w;
+	return v;
 }
 
 vector_t vector_reflect(const vector_t& I, const vector_t& N)
@@ -573,6 +613,11 @@ float interp(float length_total, float length_place, float x1, float x2)
 {
 	float t = length_place / length_total;
 	return (x1 + (x2 - x1) * t);
+}
+
+vector_t mix(const vector_t& v1, const vector_t& v2, float t)
+{
+	return v1 * (1 - t) + v2 * t;
 }
 
 barycentric_t Get_Barycentric(const point_t& p, const point_t& a, const point_t& b, const point_t& c)

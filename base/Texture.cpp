@@ -47,7 +47,17 @@ void Texture::Load(std::filesystem::path path)
 
 		if (nrComponents == 1) {
 			// RED
-
+			color_t color;
+			int data_index = 0;
+			for (int j = 0; j < height; j++) {
+				for (int i = 0; i < width; i++) {
+					color.r = (float)data[data_index++] / 255.0f;
+					color.g = 0;
+					color.b = 0;
+					color.a = 1;
+					this->texture[j][i] = color;
+				}
+			}
 		}
 		else if (nrComponents == 3) {
 			// RGB

@@ -29,23 +29,35 @@
 #define KEY_Y                  89
 #define KEY_Z                  90
 
+struct color_t;
+
 typedef unsigned int UINT32;
 
+struct color_t {
+	float r, g, b, a;
+	color_t() :r(0), g(0), b(0), a(1) {  }
+	color_t(float r, float g, float b, float a) :r(r), g(g), b(b), a(a) {  }
+	color_t(float r) :r(r), g(r), b(r), a(r) {  }
+};
+
 typedef struct { float m[4][4]; } matrix_t;
+
 struct vector_t{ 
 	float x, y, z, w;
-	vector_t(float x = 0, float y = 0, float z = 0, float w = 0) :x(x), y(y), z(z), w(w) {}
+	vector_t() :x(0), y(0), z(0), w(0) {}
+	vector_t(float x, float y, float z, float w) :x(x), y(y), z(z), w(w) {}
+	vector_t(float x, float y, float z) :x(x), y(y), z(z), w(1) {}
+	vector_t(float x) :x(x), y(x), z(x), w(x) {}
+	void operator=(const color_t& c) { x = c.r; y = c.g; z = c.b; w = c.a; }
+	vector_t(const color_t& c) :x(c.r), y(c.g), z(c.b), w(c.a) { }
 };
+
 struct ray_t { 
 	vector_t o, dir; 
 	ray_t(vector_t o = vector_t(), vector_t dir = vector_t()) :o(o), dir(dir) {}
 };
 using point_t = vector_t;
-struct color_t{
-	float r, g, b, a;
-	color_t(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 1.0f)
-		:r(r), g(g), b(b), a(a) {  }
-};
+
 typedef struct { float u, v; } texcoord_t;
 typedef struct { float w1, w2, w3; } barycentric_t;
 
@@ -81,5 +93,6 @@ typedef struct {
 	matrix_t view;          // 摄影机坐标变换
 	matrix_t projection;    // 投影变换
 	matrix_t transform;     // transform = model * view * projection;
+	matrix_t TBN;
 	float w, h;             // 屏幕大小
 }	transform_t;

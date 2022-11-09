@@ -14,6 +14,9 @@ public:
 	color_t diffuse;
 	color_t specular;
 
+	//PBR
+	color_t radiance;
+
 	//阴影
 	matrix_t light_space_matrix;	//view * projection
 	Texture* shadow_map = nullptr;	// 阴影贴图
