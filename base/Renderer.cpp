@@ -89,7 +89,7 @@ void Renderer::clear()
 
 void Renderer::Add_Texture(std::string name, const Texture* tex)
 {
-	assert(textures[name]);
+	assert(!textures[name]);
 
 	int w = tex->width;
 	int h = tex->height;

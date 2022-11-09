@@ -98,7 +98,7 @@ int main()
 	renderer_light.render_state = RENDER_STATE_COLOR;
 	renderer_light.features[RENDER_FEATURE_LIGHT] = false;
 
-	Model models("../resources/pbr_-_dirt_material/scene.gltf");
+	Model models("../resources/sphere/scene.gltf");
 	//Model models("../resources/room/OBJ/room.obj");
 
 	Texture tex_wooden("../resources/textures/patterned_wooden_wall_panels_48_05_diffuse.jpg");
