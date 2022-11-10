@@ -620,6 +620,11 @@ vector_t mix(const vector_t& v1, const vector_t& v2, float t)
 	return v1 * (1 - t) + v2 * t;
 }
 
+float mix(float v1, float v2, float t)
+{
+	return v1 * (1 - t) + v2 * t;
+}
+
 barycentric_t Get_Barycentric(const point_t& p, const point_t& a, const point_t& b, const point_t& c)
 {
 	vector_t v0 = b - a, v1 = c - a, v2 = p - a;

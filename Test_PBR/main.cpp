@@ -58,18 +58,18 @@ void draw_light(Renderer& renderer)
 		vert[i].pos = p[i];
 	}
 
-	draw_square(renderer, vert[3], vert[2], vert[1], vert[0]);
-	draw_square(renderer, vert[2], vert[6], vert[5], vert[1]);
-	draw_square(renderer, vert[4], vert[7], vert[3], vert[0]);
-	draw_square(renderer, vert[1], vert[5], vert[4], vert[0]);
-	draw_square(renderer, vert[7], vert[6], vert[2], vert[3]);
-	draw_square(renderer, vert[5], vert[6], vert[7], vert[4]);
+	draw_square(renderer, vert[0], vert[1], vert[2], vert[3]);
+	draw_square(renderer, vert[1], vert[5], vert[6], vert[2]);
+	draw_square(renderer, vert[0], vert[3], vert[7], vert[4]);
+	draw_square(renderer, vert[0], vert[4], vert[5], vert[1]);
+	draw_square(renderer, vert[3], vert[2], vert[6], vert[7]);
+	draw_square(renderer, vert[4], vert[7], vert[6], vert[5]);
 }
 
 int main()
 {
 	Window window;
-	window.screen_init(800, 600, _T("SoftwareRenderer - model."));
+	window.screen_init(800, 600, _T("SoftwareRenderer - PBR"));
 
 	Renderer_PBR renderer;
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
@@ -102,18 +102,20 @@ int main()
 	Model models("../resources/sphere/scene.gltf");
 	//Model models("../resources/room/OBJ/room.obj");
 
-	Texture tex_wooden_diffuce("../resources/patterned_wooden_wall_panels_48_05_2K/diffuse.jpg");
-	Texture tex_wooden_roughness("../resources/patterned_wooden_wall_panels_48_05_2K/roughness.jpg");
-	Texture tex_wooden_normal("../resources/patterned_wooden_wall_panels_48_05_2K/normal.jpg");
+	Texture tex_wooden_diffuce("../resources/cgaxis_rock_wall_with_moss_40_45_2K/diffuse.jpg");
+	Texture tex_wooden_roughness("../resources/cgaxis_rock_wall_with_moss_40_45_2K/roughness.jpg");
+	Texture tex_wooden_normal("../resources/cgaxis_rock_wall_with_moss_40_45_2K/normal.jpg");
 	//Texture tex_wooden_diffuce("../resources/sphere/textures/Material_baseColor.png");
 	//Texture tex_wooden_roughness("../resources/sphere/textures/Material_metallicRoughness.png");
 	//Texture tex_wooden_normal("../resources/sphere/textures/Material_normal.png");
-	Texture tex_wooden_ao("../resources/patterned_wooden_wall_panels_48_05_2K/ao.jpg");
-	Texture tex_wooden_glossiness("../resources/patterned_wooden_wall_panels_48_05_2K/glossiness.jpg");
-	Texture tex_wooden_metallic("../resources/patterned_wooden_wall_panels_48_05_2K/metallic.jpg");
-	Texture tex_wooden_reflection("../resources/patterned_wooden_wall_panels_48_05_2K/reflection.jpg");
-	renderer.Add_Texture("diffuce", &tex_wooden_diffuce);
+	Texture tex_wooden_ao("../resources/cgaxis_rock_wall_with_moss_40_45_2K/ao.jpg");
+	Texture tex_wooden_height("../resources/cgaxis_rock_wall_with_moss_40_45_2K/height.jpg");
+	Texture tex_wooden_glossiness("../resources/cgaxis_rock_wall_with_moss_40_45_2K/glossiness.jpg");
+	Texture tex_wooden_metallic("../resources/cgaxis_rock_wall_with_moss_40_45_2K/metallic.jpg");
+	Texture tex_wooden_reflection("../resources/cgaxis_rock_wall_with_moss_40_45_2K/reflection.jpg");
+	renderer.Add_Texture("diffuse", &tex_wooden_diffuce);
 	renderer.Add_Texture("ao", &tex_wooden_ao);
+	renderer.Add_Texture("height", &tex_wooden_height);
 	renderer.Add_Texture("glossiness", &tex_wooden_glossiness);
 	renderer.Add_Texture("metallic", &tex_wooden_metallic);
 	renderer.Add_Texture("normal", &tex_wooden_normal);
@@ -121,12 +123,11 @@ int main()
 	renderer.Add_Texture("roughness", &tex_wooden_roughness);
 
 	//光源
-	Light point_light;
-	point_light.pos = { 1,-1,-4,1 };
-	point_light.radiance = { 5.0f,4.8f,4.8f,1 };
-	point_light.light_state = LIGHT_STATE_POINT;
-
-	renderer.add_light(point_light);
+	Light point_light_right;
+	point_light_right.pos = { 1,1,-8,1 };
+	point_light_right.radiance = { 7.0f,7.0f,7.0f,1 };
+	point_light_right.light_state = LIGHT_STATE_POINT;
+	renderer.add_light(point_light_right);
 
 	//时间
 	float delta_time = 0.0f;
@@ -142,7 +143,7 @@ int main()
 		float current_frame = time_get();
 		delta_time = current_frame - last_frame;
 		last_frame = current_frame;
-		camera.speed = 0.1f;
+		camera.speed = 0.2f;
 
 		//鼠标
 		mouse_callback(camera);
@@ -197,19 +198,20 @@ int main()
 		matrix_t model;
 		matrix_set_identity(&model);
 		//model = matrix_scale(model, { 0.02f,0.02f,0.02f,1 });
-		//model = matrix_scale(model, { 0.1f,0.1f,0.1f,1 });
+		//model = matrix_scale(model, { 0.5f,0.5f,0.5f,1 });
 		model = model * matrix_rotate_build(radians(90), { 1.0f,0.0f,0.0f,1 });
 		//model = model * matrix_rotate_build(radians(30), { 0.0f,1.0f,0.0f,1 });
 		//model = matrix_translate(model, { 0.0f,-1.5f,0.0f,1 });
 		renderer.transform.model = model;
 		renderer.transform_update();
 		models.draw(renderer);
+		//draw_light(renderer);
 
 		//画光源
 		renderer_light.transform = renderer.transform;
 		matrix_set_identity(&model);
 		model = matrix_scale(model, { 0.2,0.2,0.2,1 });
-		model = matrix_translate(model, point_light.pos);
+		model = matrix_translate(model, point_light_right.pos);
 		renderer_light.transform.model = model;
 		renderer_light.transform_update();
 		draw_light(renderer_light);

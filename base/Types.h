@@ -58,7 +58,14 @@ struct ray_t {
 };
 using point_t = vector_t;
 
-typedef struct { float u, v; } texcoord_t;
+struct texcoord_t {
+	float u, v;
+	texcoord_t() :u(0), v(0) {}
+	texcoord_t(float u, float v) :u(u), v(v) {}
+	texcoord_t operator-(const texcoord_t& x) { return texcoord_t(u - x.u, v - x.v); }
+	texcoord_t operator+(const texcoord_t& x) { return texcoord_t(u + x.u, v + x.v); }
+	texcoord_t operator*(float x) { return texcoord_t(u * x, v * x); }
+};
 typedef struct { float w1, w2, w3; } barycentric_t;
 
 struct material_t{

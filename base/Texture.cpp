@@ -99,7 +99,6 @@ void Texture::Load(std::filesystem::path path)
 
 color_t Texture::Read(float u, float v, int choice) const
 {
-
 	u = u * this->width;
 	v = v * this->height;
 

@@ -73,6 +73,7 @@ int check_cvv(const vector_t& v);
 
 float interp(float length_total, float length_place, float x1, float x2);
 vector_t mix(const vector_t& v1, const vector_t& v2, float t);
+float mix(float v1, float v2, float t);
 
 barycentric_t Get_Barycentric(const point_t& p, const point_t& a, const point_t& b, const point_t& c);
 bool Intersect(const ray_t& r, float& t, const triangle_t& triangle);
