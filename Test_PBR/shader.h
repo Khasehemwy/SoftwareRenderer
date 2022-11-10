@@ -142,7 +142,6 @@ color_t Renderer_PBR::PS(vertex_t* v)
 
 		vector_t F = FresnelSchlick(CMID(vector_dot(H, V), 0.0, 1.0), F0);
 		float roughness = textures["roughness"]->Read(v->tex.u, v->tex.v).r;
-		//float roughness = 0.5;
 		float NDF = DistributionGGX(N, H, roughness);
 		float G = GeometrySmith(N, V, L, roughness);
 
