@@ -13,6 +13,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <chrono>
+#include <array>
 
 
 #define __ASSIMP_NEED

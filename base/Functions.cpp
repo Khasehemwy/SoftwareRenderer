@@ -417,6 +417,7 @@ void vertex_set_rhw(vertex_t* v)
 	v->color.a *= rhw;
 	v->normal = v->normal * rhw;
 	v->pos_world = v->pos_world * rhw;
+	v->pos_model = v->pos_model * rhw;
 }
 
 vertex_t operator*(const vertex_t& v, float x)
@@ -426,6 +427,7 @@ vertex_t operator*(const vertex_t& v, float x)
 	y.normal = y.normal * x;
 	y.pos = y.pos * x;
 	y.pos_world = y.pos_world * x;
+	y.pos_model = y.pos_model * x;
 	y.rhw = y.rhw * x;
 	y.tex = { y.tex.u * x,y.tex.v * x };
 	y.emissivity = y.emissivity * x;
@@ -439,6 +441,7 @@ vertex_t operator+(const vertex_t& v1, const vertex_t& v2)
 	y.normal = y.normal + v2.normal;
 	y.pos = y.pos + v2.pos;
 	y.pos_world = y.pos_world + v2.pos_world;
+	y.pos_model = y.pos_model + v2.pos_model;
 	y.rhw = y.rhw + v2.rhw;
 	y.tex = { y.tex.u + v2.tex.u,y.tex.v + v2.tex.v };
 	y.emissivity = y.emissivity + v2.emissivity;

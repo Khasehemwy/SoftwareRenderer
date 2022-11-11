@@ -9,6 +9,8 @@ Renderer::Renderer()
 	features[RENDER_FEATURE_SHADOW] = true;
 	features[RENDER_FEATURE_LIGHT_PHONG] = true;
 	features[RENDER_FEATURE_AUTO_NORMAL] = true;
+	features[RENDER_FEATURE_DEPTH_TEST] = true;
+	features[RENDER_FEATURE_DEPTH_WRITE] = true;
 }
 
 void Renderer::init(int width, int height, void* fb)
@@ -307,13 +309,28 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 
 				float rhwi = v1.rhw * bary.w1 + v2.rhw * bary.w2 + v3.rhw * bary.w3;
 
-				if (rhwi >= this->z_buffer[y][x]) {
+				if (features[RENDER_FEATURE_DEPTH_TEST]) {
+					if(rhwi >= this->z_buffer[y][x]) {
 
-					this->z_buffer[y][x] = rhwi;// 深度缓存
+						if (features[RENDER_FEATURE_DEPTH_WRITE]) {
+							this->z_buffer[y][x] = rhwi;// 深度缓存
+						}
+
+						this->draw_pixel(
+							x, y, 
+							color_trans_255(PS_Interpolation(&v1, &v2, &v3, bary))
+						);
+					}
+				}
+				else {
+					if (features[RENDER_FEATURE_DEPTH_WRITE]) {
+						this->z_buffer[y][x] = rhwi;// 深度缓存
+					}
 
 					this->draw_pixel(
-						x, y, 
-						color_trans_255(PS_Interpolation(&v1, &v2, &v3, bary)));
+						x, y,
+						color_trans_255(PS_Interpolation(&v1, &v2, &v3, bary))
+					);
 				}
 			}
 		}
@@ -980,6 +997,7 @@ vertex_t Renderer::Split_Triangle(const vertex_t* v1, const vertex_t* v2, const 
 	v.rhw = v1->rhw + (v3->rhw - v1->rhw) * t;
 	v.pos = v1->pos + (v3->pos - v1->pos) * t;
 	v.pos_world = v1->pos_world + (v3->pos_world - v1->pos_world) * t;
+	v.pos_model = v1->pos_model + (v3->pos_model - v1->pos_model) * t;
 	return v;
 }
 

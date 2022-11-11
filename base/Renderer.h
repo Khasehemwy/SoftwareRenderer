@@ -18,6 +18,8 @@
 #define RENDER_FEATURE_AUTO_NORMAL 7		//是否自动设置顶点法向量为三角面的法向量		
 #define RENDER_FEATURE_RAY_TRACING 8		// 渲染纹理
 #define RENDER_FEATURE_RAY_TRACING_PBR 9	// 渲染纹理
+#define RENDER_FEATURE_DEPTH_WRITE 10		// 深度写入
+#define RENDER_FEATURE_DEPTH_TEST 11		// 深度测试
 
 //片段着色器-着色算法
 #define RENDER_SHADER_PIXEL_SCANLINE 0b1			//扫描线算法-进行片段着色,更快但不够精准

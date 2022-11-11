@@ -81,6 +81,7 @@ struct material_t{
 struct vertex_t { 
 	point_t pos; 
 	point_t pos_world;
+	point_t pos_model;
 	color_t color; 
 	texcoord_t tex; 
 	vector_t normal;

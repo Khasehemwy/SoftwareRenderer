@@ -76,6 +76,8 @@ int main()
 	Renderer renderer_light;
 	renderer_light.init(window.screen_width, window.screen_height, window.screen_fb);
 	renderer_light.z_buffer = renderer.z_buffer;//因为深度缓存是每个Renderer独用的,但是现在想让它们一起显示.
+	Renderer_Skybox renderer_sky;
+	renderer_sky.init(window.screen_width, window.screen_height, window.screen_fb);
 
 	float aspect = (float)renderer.width / ((float)renderer.height);
 
@@ -89,15 +91,25 @@ int main()
 	vector_t rotate_axis = { 1,-0.5,0.5,1 };
 	renderer.camera = &camera;
 	//renderer.render_state = RENDER_STATE_WIREFRAME;
-	renderer.render_state = RENDER_STATE_COLOR;
+	renderer.render_state = RENDER_STATE_TEXTURE;
 	renderer.features[RENDER_FEATURE_LIGHT] = false;
 	renderer.features[RENDER_FEATURE_AUTO_NORMAL] = true;
 	renderer.features[RENDER_FEATURE_CVV_CLIP] = false;
 	//renderer.render_state = RENDER_STATE_TEXTURE;
 	//renderer.features[RENDER_FEATURE_BACK_CULLING] = false;
+
 	renderer_light.camera = &camera;
 	renderer_light.render_state = RENDER_STATE_COLOR;
 	renderer_light.features[RENDER_FEATURE_LIGHT] = false;
+
+	renderer_sky.camera = &camera;
+	renderer_sky.render_state = RENDER_STATE_TEXTURE;
+	renderer_sky.features[RENDER_FEATURE_LIGHT] = false;
+	renderer_sky.features[RENDER_FEATURE_CVV_CLIP] = false;
+	renderer_sky.features[RENDER_FEATURE_BACK_CULLING] = false;
+	renderer_sky.features[RENDER_FEATURE_FACK_CULLING] = false;
+	renderer_sky.features[RENDER_FEATURE_DEPTH_TEST] = false;
+	renderer_sky.features[RENDER_FEATURE_DEPTH_WRITE] = false;
 
 	Model models("../resources/sphere/scene.gltf");
 	//Model models("../resources/room/OBJ/room.obj");
@@ -123,6 +135,16 @@ int main()
 	renderer.Add_Texture("reflection", &tex_wooden_reflection);
 	renderer.Add_Texture("roughness", &tex_wooden_roughness);
 
+	std::array<std::filesystem::path, 6>texture_skybox_path;
+	texture_skybox_path[0] = (std::string)"../resources/" + "skybox" + "/right.png";
+	texture_skybox_path[1] = (std::string)"../resources/" + "skybox" + "/left.png";
+	texture_skybox_path[2] = (std::string)"../resources/" + "skybox" + "/top.png";
+	texture_skybox_path[3] = (std::string)"../resources/" + "skybox" + "/bottom.png";
+	texture_skybox_path[4] = (std::string)"../resources/" + "skybox" + "/front.png";
+	texture_skybox_path[5] = (std::string)"../resources/" + "skybox" + "/back.png";
+	Texture_Cube tex_sky_box(texture_skybox_path);
+	renderer_sky.texture_cube = &tex_sky_box;
+
 	//光源
 	Light point_light_right;
 	point_light_right.pos = { 3,3,-3,1 };
@@ -144,7 +166,7 @@ int main()
 		float current_frame = time_get();
 		delta_time = current_frame - last_frame;
 		last_frame = current_frame;
-		camera.speed = 0.2f;
+		camera.speed = 0.02f;
 
 		//鼠标
 		mouse_callback(camera);
@@ -194,9 +216,24 @@ int main()
 
 		matrix_set_perspective(&renderer.transform.projection, g_fov, aspect, 0.1f, 100.0f);
 
+		matrix_t model;
+
+		matrix_set_identity(&model);
+
+		renderer_sky.transform = renderer.transform;
+		renderer_sky.transform.model = model;
+		renderer_sky.transform_update();
+
+		for (int j = 0; j < 4; j++) {
+			renderer_sky.transform.view.m[3][j] = 0;
+			renderer_sky.transform.view.m[j][3] = 0;
+		}
+		renderer_sky.transform.view.m[3][3] = 1;
+		draw_light(renderer_sky);
+
+
 		renderer.view_pos = camera.pos;
 
-		matrix_t model;
 		matrix_set_identity(&model);
 		//model = matrix_scale(model, { 0.02f,0.02f,0.02f,1 });
 		//model = matrix_scale(model, { 0.5f,0.5f,0.5f,1 });
@@ -206,7 +243,6 @@ int main()
 		renderer.transform.model = model;
 		renderer.transform_update();
 		models.draw(renderer);
-		//draw_light(renderer);
 
 		//画光源
 		renderer_light.transform = renderer.transform;
