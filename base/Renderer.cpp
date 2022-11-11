@@ -656,7 +656,7 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	p2 = (v2.pos) * this->transform.model;
 	p3 = (v3.pos) * this->transform.model;
 
-	// 进行背面剔除(点的排列必须为左手螺旋后法向量朝外)
+	// 进行背面剔除(点的排列必须为逆时针)
 	vector_t p1_p2 = p2 - p1, p1_p3 = p3 - p1;
 	vector_t v_normal = vector_cross(p1_p3, p1_p2);
 	vector_t v_view = this->camera->pos - p1;
@@ -670,9 +670,9 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 	}
 
 	if (features[RENDER_FEATURE_AUTO_NORMAL]) {
-		v1.normal = v_normal;
-		v2.normal = v_normal;
-		v3.normal = v_normal;
+		v1.normal = vector_normalize(v_normal);
+		v2.normal = v1.normal;
+		v3.normal = v1.normal;
 	}
 
 	//光追

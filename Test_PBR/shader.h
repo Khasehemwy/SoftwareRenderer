@@ -53,13 +53,6 @@ inline texcoord_t Renderer_PBR::ParallaxMapping(texcoord_t texCoords, vector_t v
 	texcoord_t finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
 
 	return finalTexCoords;
-
-	//float height_scale = 0.1f;
-	//float height = 1.0f - textures["height"]->Read(texCoords.u, texCoords.v).r;
-	//texcoord_t p;
-	//p.u = viewDir.x / viewDir.z * (height * height_scale);
-	//p.v = viewDir.y / viewDir.z * (height * height_scale);
-	//return texCoords - p;
 }
 
 inline vector_t Renderer_PBR::FresnelSchlick(float cosTheta, vector_t F0)
@@ -104,10 +97,6 @@ inline float Renderer_PBR::GeometrySmith(vector_t N, vector_t V, vector_t L, flo
 
 void Renderer_PBR::VS(vertex_t* v1, vertex_t* v2, vertex_t* v3)
 {
-	if (this->render_state == RENDER_STATE_TEXTURE) {
-		v1->color = v2->color = v3->color = { 1,1,1,1 };
-	}
-
 	v1->pos = v1->pos * this->transform.model;
 	v2->pos = v2->pos * this->transform.model;
 	v3->pos = v3->pos * this->transform.model;
@@ -169,24 +158,25 @@ color_t Renderer_PBR::PS(vertex_t* v)
 {
 	vector_t V = vector_normalize(view_pos - v->pos_world);
 
-	if (textures["height"]) {
-		v->tex = ParallaxMapping(v->tex, V);
+	//if (textures["height"]) {
+	//	v->tex = ParallaxMapping(v->tex, V);
 
-		if (v->tex.u > 1 || v->tex.u < 0 || v->tex.v > 1 || v->tex.v < 0) {
-			return color_trans_1f(background);
-		}
-	}
+	//	if (v->tex.u > 1 || v->tex.u < 0 || v->tex.v > 1 || v->tex.v < 0) {
+	//		return color_trans_1f(background);
+	//	}
+	//}
 	//vector_t height = textures["height"]->Read(v->tex.u, v->tex.v).r;
 
-	//vector_t N = vector_normalize(textures["normal"]->Read(v->tex.u, v->tex.v) * this->transform.TBN * 2 - vector_t(1));
-	vector_t N = vector_normalize(textures["normal"]->Read(v->tex.u, v->tex.v) * this->transform.TBN);
+	vector_t N = vector_normalize((textures["normal"]->Read(v->tex.u, v->tex.v) * 2 - vector_t(1)) * this->transform.TBN);
+	//vector_t N = vector_normalize(textures["normal"]->Read(v->tex.u, v->tex.v) * this->transform.TBN);
 	//vector_t N = v->normal;
+	//N = N * 0.5f + vector_t(0.5);
 
 	vector_t F0 = vector_t(0.04);
 	vector_t albedo = textures["diffuse"]->Read(v->tex.u, v->tex.v);
 	//vector_t albedo(0.5f, 0.0f, 0.0f);
 	float metallic = textures["metallic"]->Read(v->tex.u, v->tex.v).r;
-	//float metallic = 0.1;
+	//float metallic = 0.5;
 	F0 = mix(F0, albedo, metallic);
 
 	vector_t Lo = vector_t(0.0);
@@ -197,12 +187,11 @@ color_t Renderer_PBR::PS(vertex_t* v)
 		vector_t H = vector_normalize(V + L);
 
 		float distance = vector_length(curLight->pos- v->pos_world);
-		float attenuation = 1.0 / (curLight->constant + curLight->linear * distance + curLight->quadratic * (distance * distance));
-		vector_t radiance = curLight->radiance * attenuation;
+		vector_t radiance = curLight->radiance * 1.0f / (distance * distance);
 
 		vector_t F = FresnelSchlick(CMID(vector_dot(H, V), 0.0, 1.0), F0);
 		float roughness = textures["roughness"]->Read(v->tex.u, v->tex.v).r;
-		//float roughness = 0.8;
+		//float roughness = 0.1;
 		float NDF = DistributionGGX(N, H, roughness);
 		float G = GeometrySmith(N, V, L, roughness);
 
@@ -223,7 +212,12 @@ color_t Renderer_PBR::PS(vertex_t* v)
 	vector_t ambient = vector_dot(vector_t(0.2) , albedo) * ao;
 	vector_t color = Lo + ambient;
 
-	//color = color / (color + vector_t(1.0));
+	color = color / (color + vector_t(1.0));
+
+	//float gamma = 2.2;
+	//color.x = pow(color.x, 1.0f / gamma);
+	//color.y = pow(color.y, 1.0f / gamma);
+	//color.z = pow(color.z, 1.0f / gamma);
 
 	color_t color_use;
 	color_use.r = color.x;
@@ -231,9 +225,14 @@ color_t Renderer_PBR::PS(vertex_t* v)
 	color_use.b = color.z;
 	color_use.a = 1;
 
-	//color_use.r = N.x;
-	//color_use.g = N.y;
-	//color_use.b = N.z;
+	//color_use.r = N.x * 0.5 + 0.5;
+	//color_use.g = N.y * 0.5 + 0.5;
+	//color_use.b = N.z * 0.5 + 0.5;
+	//color_use.a = 1;
+
+	//color_use.r = albedo.x;
+	//color_use.g = albedo.y;
+	//color_use.b = albedo.z;
 	//color_use.a = 1;
 
 	return color_use;

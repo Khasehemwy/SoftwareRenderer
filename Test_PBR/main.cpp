@@ -102,17 +102,18 @@ int main()
 	Model models("../resources/sphere/scene.gltf");
 	//Model models("../resources/room/OBJ/room.obj");
 
-	Texture tex_wooden_diffuce("../resources/cgaxis_rock_wall_with_moss_40_45_2K/diffuse.jpg");
-	Texture tex_wooden_roughness("../resources/cgaxis_rock_wall_with_moss_40_45_2K/roughness.jpg");
-	Texture tex_wooden_normal("../resources/cgaxis_rock_wall_with_moss_40_45_2K/normal.jpg");
+	std::string texture_name = "cgaxis_stained_patterned_metal_26_98_2K";
+	Texture tex_wooden_diffuce("../resources/" + texture_name + "/diffuse.jpg");
+	Texture tex_wooden_roughness("../resources/" + texture_name + "/roughness.jpg");
+	Texture tex_wooden_normal("../resources/" + texture_name + "/normal.jpg");
 	//Texture tex_wooden_diffuce("../resources/sphere/textures/Material_baseColor.png");
 	//Texture tex_wooden_roughness("../resources/sphere/textures/Material_metallicRoughness.png");
 	//Texture tex_wooden_normal("../resources/sphere/textures/Material_normal.png");
-	Texture tex_wooden_ao("../resources/cgaxis_rock_wall_with_moss_40_45_2K/ao.jpg");
-	Texture tex_wooden_height("../resources/cgaxis_rock_wall_with_moss_40_45_2K/height.jpg");
-	Texture tex_wooden_glossiness("../resources/cgaxis_rock_wall_with_moss_40_45_2K/glossiness.jpg");
-	Texture tex_wooden_metallic("../resources/cgaxis_rock_wall_with_moss_40_45_2K/metallic.jpg");
-	Texture tex_wooden_reflection("../resources/cgaxis_rock_wall_with_moss_40_45_2K/reflection.jpg");
+	Texture tex_wooden_ao("../resources/" + texture_name + "/ao.jpg");
+	Texture tex_wooden_height("../resources/" + texture_name + "/height.jpg");
+	Texture tex_wooden_glossiness("../resources/" + texture_name + "/glossiness.jpg");
+	Texture tex_wooden_metallic("../resources/" + texture_name + "/metallic.jpg");
+	Texture tex_wooden_reflection("../resources/" + texture_name + "/reflection.jpg");
 	renderer.Add_Texture("diffuse", &tex_wooden_diffuce);
 	renderer.Add_Texture("ao", &tex_wooden_ao);
 	renderer.Add_Texture("height", &tex_wooden_height);
@@ -124,8 +125,8 @@ int main()
 
 	//π‚‘¥
 	Light point_light_right;
-	point_light_right.pos = { 1,1,-8,1 };
-	point_light_right.radiance = { 7.0f,7.0f,7.0f,1 };
+	point_light_right.pos = { 3,3,-3,1 };
+	point_light_right.radiance = { 500.0f,500.0f,500.0f,1 };
 	point_light_right.light_state = LIGHT_STATE_POINT;
 	renderer.add_light(point_light_right);
 
