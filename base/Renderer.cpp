@@ -310,17 +310,20 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 				float rhwi = v1.rhw * bary.w1 + v2.rhw * bary.w2 + v3.rhw * bary.w3;
 
 				if (features[RENDER_FEATURE_DEPTH_TEST]) {
-					if(rhwi >= this->z_buffer[y][x]) {
 
-						if (features[RENDER_FEATURE_DEPTH_WRITE]) {
-							this->z_buffer[y][x] = rhwi;// 深度缓存
-						}
+					if (depth_test_state == RENDER_DEPTH_TEST_NEVER)continue;
+					if (depth_test_state == RENDER_DEPTH_TEST_LESS && rhwi <= this->z_buffer[y][x])continue;
+					if (depth_test_state == RENDER_DEPTH_TEST_GREATER && rhwi >= this->z_buffer[y][x])continue;
+					if (depth_test_state == RENDER_DEPTH_TEST_EQUAL && rhwi != this->z_buffer[y][x])continue;
 
-						this->draw_pixel(
-							x, y, 
-							color_trans_255(PS_Interpolation(&v1, &v2, &v3, bary))
-						);
+					if (features[RENDER_FEATURE_DEPTH_WRITE]) {
+						this->z_buffer[y][x] = rhwi;// 深度缓存
 					}
+
+					this->draw_pixel(
+						x, y, 
+						color_trans_255(PS_Interpolation(&v1, &v2, &v3, bary))
+					);
 				}
 				else {
 					if (features[RENDER_FEATURE_DEPTH_WRITE]) {

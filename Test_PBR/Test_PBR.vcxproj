@@ -140,6 +140,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="shader.h" />
+    <ClInclude Include="shader_irradiance.h" />
+    <ClInclude Include="shader_pbr.h" />
+    <ClInclude Include="shader_skybox.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

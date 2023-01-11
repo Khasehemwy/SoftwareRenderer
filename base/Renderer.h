@@ -21,6 +21,13 @@
 #define RENDER_FEATURE_DEPTH_WRITE 10		// 深度写入
 #define RENDER_FEATURE_DEPTH_TEST 11		// 深度测试
 
+//深度测试模式
+#define RENDER_DEPTH_TEST_ALWAYS 0
+#define RENDER_DEPTH_TEST_NEVER 1
+#define RENDER_DEPTH_TEST_LESS 2
+#define RENDER_DEPTH_TEST_EQUAL 3
+#define RENDER_DEPTH_TEST_GREATER 4
+
 //片段着色器-着色算法
 #define RENDER_SHADER_PIXEL_SCANLINE 0b1			//扫描线算法-进行片段着色,更快但不够精准
 #define RENDER_SHADER_PIXEL_BOUNDINGBOX 0b10		//边界盒算法-进行片段着色,精准但不快
@@ -72,6 +79,7 @@ public:
 	int render_shader_state = RENDER_SHADER_PIXEL_SCANLINE;	// 片段着色器算法选择
 
 	std::unordered_map<int, bool> features;	//特性
+	int depth_test_state = RENDER_DEPTH_TEST_LESS;
 
 	std::vector<const Light*>lights;
 	const Light* current_light;

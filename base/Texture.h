@@ -16,6 +16,7 @@ public:
 
 	void Set_Default_Tex();
 	color_t Read(float u, float v, int choice = 1) const;
+	void Write(float u, float v, const color_t& color);
 };
 
 class Texture_Cube{
@@ -26,4 +27,5 @@ public:
 
 	Texture_Cube(const std::array<std::filesystem::path, 6>& paths);
 	color_t Read(const vector_t& dir);
+	void Write(const vector_t& dir, const color_t& color);
 };

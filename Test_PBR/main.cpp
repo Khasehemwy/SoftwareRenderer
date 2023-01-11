@@ -6,7 +6,7 @@ float cursor_pitch = 0.0f;
 float cursor_last_x = 400, cursor_last_y = 300;
 float gl_x_offset = 90.0f;
 float gl_y_offset = 0.0f;
-float g_fov = 45.0f;
+float g_fov = radians(45.0);
 
 
 
@@ -36,14 +36,14 @@ void draw_square(Renderer& renderer, vertex_t lb, vertex_t rb, vertex_t rt, vert
 void draw_light(Renderer& renderer)
 {
 	point_t p[8];
-	p[0] = { -1,-1,-1,1 };
-	p[1] = { 1,-1,-1,1 };
-	p[2] = { 1,1,-1,1 };
-	p[3] = { -1,1,-1,1 };
-	p[4] = { -1,-1,1,1 };
-	p[5] = { 1,-1,1,1 };
-	p[6] = { 1,1,1,1 };
-	p[7] = { -1,1,1,1 };
+	p[0] = { -0.5,-0.5,-0.5,1 };
+	p[1] = { 0.5,-0.5,-0.5,1 };
+	p[2] = { 0.5,0.5,-0.5,1 };
+	p[3] = { -0.5,0.5,-0.5,1 };
+	p[4] = { -0.5,-0.5,0.5,1 };
+	p[5] = { 0.5,-0.5,0.5,1 };
+	p[6] = { 0.5,0.5,0.5,1 };
+	p[7] = { -0.5,0.5,0.5,1 };
 
 	vertex_t vert[8];
 	vert[0].color = { 20.0f,0.6f,0.6f,1 };
@@ -69,20 +69,25 @@ void draw_light(Renderer& renderer)
 int main()
 {
 	Window window;
-	window.screen_init(800, 600, _T("SoftwareRenderer - PBR"));
+	window.screen_init(600, 600, _T("SoftwareRenderer - PBR"));
 
 	Renderer_PBR renderer;
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
 	Renderer renderer_light;
 	renderer_light.init(window.screen_width, window.screen_height, window.screen_fb);
 	renderer_light.z_buffer = renderer.z_buffer;//因为深度缓存是每个Renderer独用的,但是现在想让它们一起显示.
+
 	Renderer_Skybox renderer_sky;
 	renderer_sky.init(window.screen_width, window.screen_height, window.screen_fb);
+
+	Renderer_Irradiance renderer_irradiance;
+	renderer_irradiance.init(window.screen_width, window.screen_height, window.screen_fb);
 
 	float aspect = (float)renderer.width / ((float)renderer.height);
 
 	Camera camera;
-	float posz = -3;
+	camera.fov = g_fov;
+	float posz = -4;
 	float posx = 0;
 	camera.init_target_zero({ posx,0,posz,1 });
 	camera.front = { 0,0,1,1 };
@@ -111,10 +116,19 @@ int main()
 	renderer_sky.features[RENDER_FEATURE_DEPTH_TEST] = false;
 	renderer_sky.features[RENDER_FEATURE_DEPTH_WRITE] = false;
 
+	renderer_irradiance.camera = &camera;
+	renderer_irradiance.render_state = RENDER_STATE_TEXTURE;
+	renderer_irradiance.features[RENDER_FEATURE_LIGHT] = false;
+	renderer_irradiance.features[RENDER_FEATURE_CVV_CLIP] = false;
+	renderer_irradiance.features[RENDER_FEATURE_BACK_CULLING] = false;
+	renderer_irradiance.features[RENDER_FEATURE_FACK_CULLING] = false;
+	renderer_irradiance.features[RENDER_FEATURE_DEPTH_TEST] = false;
+	renderer_irradiance.features[RENDER_FEATURE_DEPTH_WRITE] = false;
+
 	Model models("../resources/sphere/scene.gltf");
 	//Model models("../resources/room/OBJ/room.obj");
 
-	std::string texture_name = "cgaxis_stained_patterned_metal_26_98_2K";
+	std::string texture_name = "cgaxis_rock_wall_with_moss_40_45_2K";
 	Texture tex_wooden_diffuce("../resources/" + texture_name + "/diffuse.jpg");
 	Texture tex_wooden_roughness("../resources/" + texture_name + "/roughness.jpg");
 	Texture tex_wooden_normal("../resources/" + texture_name + "/normal.jpg");
@@ -138,12 +152,16 @@ int main()
 	std::array<std::filesystem::path, 6>texture_skybox_path;
 	texture_skybox_path[0] = (std::string)"../resources/" + "skybox" + "/right.png";
 	texture_skybox_path[1] = (std::string)"../resources/" + "skybox" + "/left.png";
-	texture_skybox_path[2] = (std::string)"../resources/" + "skybox" + "/top.png";
-	texture_skybox_path[3] = (std::string)"../resources/" + "skybox" + "/bottom.png";
+	texture_skybox_path[2] = (std::string)"../resources/" + "skybox" + "/bottom.png";
+	texture_skybox_path[3] = (std::string)"../resources/" + "skybox" + "/top.png";
 	texture_skybox_path[4] = (std::string)"../resources/" + "skybox" + "/front.png";
 	texture_skybox_path[5] = (std::string)"../resources/" + "skybox" + "/back.png";
 	Texture_Cube tex_sky_box(texture_skybox_path);
+	Texture_Cube tex_sky_irradiance(texture_skybox_path);
 	renderer_sky.texture_cube = &tex_sky_box;
+	renderer_irradiance.texture_cube = &tex_sky_box;
+	renderer_irradiance.texture_cube_irradiance = &tex_sky_irradiance;
+	renderer.cube_textures["irradiance"] = &tex_sky_irradiance;
 
 	//光源
 	Light point_light_right;
@@ -158,6 +176,27 @@ int main()
 
 	FPS* fps = new FPS();
 
+	{
+		matrix_t capture_views[] =
+		{
+			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(1.0f,  0.0f,  0.0f), vector_t(0.0f, -1.0f,  0.0f)),
+			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(-1.0f,  0.0f,  0.0f), vector_t(0.0f, -1.0f,  0.0f)),
+			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f,  1.0f,  0.0f), vector_t(0.0f,  0.0f,  1.0f)),
+			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f, -1.0f,  0.0f), vector_t(0.0f,  0.0f, -1.0f)),
+			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f,  0.0f,  1.0f), vector_t(0.0f, -1.0f,  0.0f)),
+			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f,  0.0f, -1.0f), vector_t(0.0f, -1.0f,  0.0f))
+		};
+
+		matrix_set_identity(&renderer_irradiance.transform.model);
+		matrix_set_perspective(&renderer_irradiance.transform.projection, radians(90.0f), 1.0f, 0.1f, 100.0f);
+		for (int i = 0; i < 6; i++) {
+			renderer_irradiance.transform.view = capture_views[i];
+			renderer_irradiance.transform_update();
+
+			draw_light(renderer_irradiance);
+		}
+	}
+
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
 		fps->Print_FPS();
 
@@ -166,7 +205,7 @@ int main()
 		float current_frame = time_get();
 		delta_time = current_frame - last_frame;
 		last_frame = current_frame;
-		camera.speed = 0.02f;
+		camera.speed = 0.5f;
 
 		//鼠标
 		mouse_callback(camera);
@@ -205,9 +244,10 @@ int main()
 			camera.pos.y = camera.pos.y - camera.speed;
 		}
 
-		if (window.screen_keys[KEY_Y]) { g_fov -= 0.04f; }
-		if (window.screen_keys[KEY_H]) { g_fov += 0.04f; }
-		g_fov = CMID(g_fov, 1.0f, 60.0f);
+		//if (window.screen_keys[KEY_Y]) { g_fov -= 0.04f; }
+		//if (window.screen_keys[KEY_H]) { g_fov += 0.04f; }
+		//g_fov = CMID(g_fov, 1.0f, 60.0f);
+		camera.fov = g_fov;
 
 		//更新摄像机
 		camera.target = camera.pos + camera.front;
@@ -217,7 +257,6 @@ int main()
 		matrix_set_perspective(&renderer.transform.projection, g_fov, aspect, 0.1f, 100.0f);
 
 		matrix_t model;
-
 		matrix_set_identity(&model);
 
 		renderer_sky.transform = renderer.transform;
