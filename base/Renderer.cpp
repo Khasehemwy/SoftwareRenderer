@@ -309,6 +309,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 
 				float rhwi = v1.rhw * bary.w1 + v2.rhw * bary.w2 + v3.rhw * bary.w3;
 
+				bool isDraw = false;
 				if (features[RENDER_FEATURE_DEPTH_TEST]) {
 
 					if (depth_test_state == RENDER_DEPTH_TEST_NEVER)continue;
@@ -320,20 +321,21 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 						this->z_buffer[y][x] = rhwi;// 深度缓存
 					}
 
-					this->draw_pixel(
-						x, y, 
-						color_trans_255(PS_Interpolation(&v1, &v2, &v3, bary))
-					);
+					isDraw = true;
 				}
 				else {
 					if (features[RENDER_FEATURE_DEPTH_WRITE]) {
 						this->z_buffer[y][x] = rhwi;// 深度缓存
 					}
 
-					this->draw_pixel(
-						x, y,
-						color_trans_255(PS_Interpolation(&v1, &v2, &v3, bary))
-					);
+					isDraw = true;
+				}
+
+				if (isDraw) {
+					color_t color = PS_Interpolation(&v1, &v2, &v3, bary);
+					if (color.a == 0.0f)continue;
+
+					this->draw_pixel(x, y, color_trans_255(color));
 				}
 			}
 		}
