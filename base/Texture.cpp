@@ -88,10 +88,12 @@ void Texture::Load(std::filesystem::path path)
 			}
 		}
 
+		isLoaded = true;
 		stbi_image_free(data);
 	}
 	else
 	{
+		isLoaded = false;
 		std::cout << "Texture failed to load at path: " << path << std::endl;
 		stbi_image_free(data);
 	}

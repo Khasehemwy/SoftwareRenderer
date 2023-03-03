@@ -6,6 +6,8 @@ private:
 	void Load(std::filesystem::path path);
 
 public:
+	bool isLoaded = false;
+
 	int width = 1024;
 	int height = 1024;
 	color_t** texture;
