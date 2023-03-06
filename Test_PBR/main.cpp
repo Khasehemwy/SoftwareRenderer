@@ -1,6 +1,9 @@
 #include"Includes.h"
 #include"shader.h"
 
+#define DRAW_SKYBOX
+#define DRAW_MODEL
+
 float cursor_yaw = 0.0f;
 float cursor_pitch = 0.0f;
 float cursor_last_x = 400, cursor_last_y = 300;
@@ -23,12 +26,13 @@ void mouse_callback(Camera& camera)
 	camera.front = vector_normalize(front);
 }
 
-void draw_square(Renderer& renderer, vertex_t lb, vertex_t rb, vertex_t rt, vertex_t lt)
+void draw_square(Renderer& renderer, vertex_t lb, vertex_t rb, vertex_t rt, vertex_t lt, vector_t normal = { 0,0,0,0 })
 {
 	lb.tex = { 0,1 };
 	rb.tex = { 1,1 };
 	rt.tex = { 1,0 };
 	lt.tex = { 0,0 };
+	lb.normal = rb.normal = rt.normal = lt.normal = normal;
 	renderer.display_primitive(lb, rb, rt);
 	renderer.display_primitive(rt, lt, lb);
 }
@@ -66,6 +70,31 @@ void draw_light(Renderer& renderer)
 	draw_square(renderer, vert[4], vert[7], vert[6], vert[5]);
 }
 
+void draw_skybox(Renderer& renderer)
+{
+	point_t p[8];
+	p[0] = { -0.5,-0.5,-0.5,1 };
+	p[1] = { 0.5,-0.5,-0.5,1 };
+	p[2] = { 0.5,0.5,-0.5,1 };
+	p[3] = { -0.5,0.5,-0.5,1 };
+	p[4] = { -0.5,-0.5,0.5,1 };
+	p[5] = { 0.5,-0.5,0.5,1 };
+	p[6] = { 0.5,0.5,0.5,1 };
+	p[7] = { -0.5,0.5,0.5,1 };
+
+	vertex_t vert[8];
+	for (int i = 0; i < 8; i++) {
+		vert[i].pos = p[i];
+	}
+
+	draw_square(renderer, vert[0], vert[1], vert[2], vert[3]);
+	draw_square(renderer, vert[1], vert[5], vert[6], vert[2]);
+	draw_square(renderer, vert[0], vert[3], vert[7], vert[4]);
+	draw_square(renderer, vert[0], vert[4], vert[5], vert[1]);
+	draw_square(renderer, vert[3], vert[2], vert[6], vert[7]);
+	draw_square(renderer, vert[4], vert[7], vert[6], vert[5]);
+}
+
 int main()
 {
 	Window window;
@@ -79,9 +108,6 @@ int main()
 
 	Renderer_Skybox renderer_sky;
 	renderer_sky.init(window.screen_width, window.screen_height, window.screen_fb);
-
-	Renderer_Irradiance renderer_irradiance;
-	renderer_irradiance.init(window.screen_width, window.screen_height, window.screen_fb);
 
 	float aspect = (float)renderer.width / ((float)renderer.height);
 
@@ -115,20 +141,14 @@ int main()
 	renderer_sky.features[RENDER_FEATURE_FACK_CULLING] = false;
 	renderer_sky.features[RENDER_FEATURE_DEPTH_TEST] = false;
 	renderer_sky.features[RENDER_FEATURE_DEPTH_WRITE] = false;
-
-	renderer_irradiance.camera = &camera;
-	renderer_irradiance.render_state = RENDER_STATE_TEXTURE;
-	renderer_irradiance.features[RENDER_FEATURE_LIGHT] = false;
-	renderer_irradiance.features[RENDER_FEATURE_CVV_CLIP] = false;
-	renderer_irradiance.features[RENDER_FEATURE_BACK_CULLING] = false;
-	renderer_irradiance.features[RENDER_FEATURE_FACK_CULLING] = false;
-	renderer_irradiance.features[RENDER_FEATURE_DEPTH_TEST] = false;
-	renderer_irradiance.features[RENDER_FEATURE_DEPTH_WRITE] = false;
+	//renderer_sky.features[RENDER_FEATURE_AUTO_NORMAL] = false;
 
 	Model models("../resources/sphere/scene.gltf");
 	//Model models("../resources/room/OBJ/room.obj");
 
-	std::string texture_name = "cgaxis_rock_wall_with_moss_40_45_2K";
+	std::string texture_name = "cgaxis_scratched_golden_metal_26_05_2K";
+	renderer.enable_gamma = true;
+
 	Texture tex_wooden_diffuce("../resources/" + texture_name + "/diffuse.jpg");
 	Texture tex_wooden_roughness("../resources/" + texture_name + "/roughness.jpg");
 	Texture tex_wooden_normal("../resources/" + texture_name + "/normal.jpg");
@@ -150,51 +170,79 @@ int main()
 	renderer.Add_Texture("roughness", &tex_wooden_roughness);
 
 	std::array<std::filesystem::path, 6>texture_skybox_path;
-	texture_skybox_path[0] = (std::string)"../resources/" + "skybox" + "/right.png";
-	texture_skybox_path[1] = (std::string)"../resources/" + "skybox" + "/left.png";
-	texture_skybox_path[2] = (std::string)"../resources/" + "skybox" + "/bottom.png";
-	texture_skybox_path[3] = (std::string)"../resources/" + "skybox" + "/top.png";
-	texture_skybox_path[4] = (std::string)"../resources/" + "skybox" + "/front.png";
-	texture_skybox_path[5] = (std::string)"../resources/" + "skybox" + "/back.png";
+	std::array<std::filesystem::path, 6>texture_irradiance_path;
+	std::array<std::array<std::filesystem::path, 6>, 5>texture_environment_path;
+	std::string texture_skybox_name = "sky2";
+
+	texture_skybox_path[0] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/main/px.png";
+	texture_skybox_path[1] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/main/nx.png";
+	texture_skybox_path[2] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/main/ny.png";
+	texture_skybox_path[3] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/main/py.png";
+	texture_skybox_path[4] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/main/pz.png";
+	texture_skybox_path[5] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/main/nz.png";
+
+	texture_irradiance_path[0] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/irradiance/px.hdr";
+	texture_irradiance_path[1] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/irradiance/nx.hdr";
+	texture_irradiance_path[2] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/irradiance/ny.hdr";
+	texture_irradiance_path[3] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/irradiance/py.hdr";
+	texture_irradiance_path[4] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/irradiance/pz.hdr";
+	texture_irradiance_path[5] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/irradiance/nz.hdr";
+
+	for (int i = 0; i < 5; i++) {
+		std::string mipLevelStr = "";
+		if (i > 0) { mipLevelStr += std::to_string(i); }
+		texture_environment_path[i][0] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/prefilter/px" + mipLevelStr + ".hdr";
+		texture_environment_path[i][1] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/prefilter/nx" + mipLevelStr + ".hdr";
+		texture_environment_path[i][2] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/prefilter/ny" + mipLevelStr + ".hdr";
+		texture_environment_path[i][3] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/prefilter/py" + mipLevelStr + ".hdr";
+		texture_environment_path[i][4] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/prefilter/pz" + mipLevelStr + ".hdr";
+		texture_environment_path[i][5] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/prefilter/nz" + mipLevelStr + ".hdr";
+
+		renderer.cube_textures["environment" + std::to_string(i)] = new Texture_Cube(texture_environment_path[i]);
+	}
+
 	Texture_Cube tex_sky_box(texture_skybox_path);
-	Texture_Cube tex_sky_irradiance(texture_skybox_path);
+	Texture_Cube tex_sky_irradiance(texture_irradiance_path);
+	Texture tex_brdf_lut("../resources/skybox/BRDF_LUT.png");
+
 	renderer_sky.texture_cube = &tex_sky_box;
-	renderer_irradiance.texture_cube = &tex_sky_box;
-	renderer_irradiance.texture_cube_irradiance = &tex_sky_irradiance;
 	renderer.cube_textures["irradiance"] = &tex_sky_irradiance;
+	renderer.Add_Texture("BRDF_LUT", &tex_brdf_lut);
+
 
 	//光源
 	Light point_light_right;
 	point_light_right.pos = { 3,3,-3,1 };
-	point_light_right.radiance = { 500.0f,500.0f,500.0f,1 };
+	point_light_right.radiance = { 300.0f,300.0f,300.0f,1 };
 	point_light_right.light_state = LIGHT_STATE_POINT;
 	renderer.add_light(point_light_right);
-
+	
 	//时间
 	float delta_time = 0.0f;
 	float last_frame = 0.0f;
 
 	FPS* fps = new FPS();
 
+	// generate irradiance map
 	{
-		matrix_t capture_views[] =
-		{
-			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(1.0f,  0.0f,  0.0f), vector_t(0.0f, -1.0f,  0.0f)),
-			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(-1.0f,  0.0f,  0.0f), vector_t(0.0f, -1.0f,  0.0f)),
-			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f,  1.0f,  0.0f), vector_t(0.0f,  0.0f,  1.0f)),
-			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f, -1.0f,  0.0f), vector_t(0.0f,  0.0f, -1.0f)),
-			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f,  0.0f,  1.0f), vector_t(0.0f, -1.0f,  0.0f)),
-			matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f,  0.0f, -1.0f), vector_t(0.0f, -1.0f,  0.0f))
-		};
+		//matrix_t capture_views[] =
+		//{
+		//	matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(1.0f,  0.0f,  0.0f), vector_t(0.0f, -1.0f,  0.0f)),
+		//	matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(-1.0f,  0.0f,  0.0f), vector_t(0.0f, -1.0f,  0.0f)),
+		//	matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f,  1.0f,  0.0f), vector_t(0.0f,  0.0f,  1.0f)),
+		//	matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f, -1.0f,  0.0f), vector_t(0.0f,  0.0f, -1.0f)),
+		//	matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f,  0.0f,  1.0f), vector_t(0.0f, -1.0f,  0.0f)),
+		//	matrix_lookat(vector_t(0.0f, 0.0f, 0.0f), vector_t(0.0f,  0.0f, -1.0f), vector_t(0.0f, -1.0f,  0.0f))
+		//};
 
-		matrix_set_identity(&renderer_irradiance.transform.model);
-		matrix_set_perspective(&renderer_irradiance.transform.projection, radians(90.0f), 1.0f, 0.1f, 100.0f);
-		for (int i = 0; i < 6; i++) {
-			renderer_irradiance.transform.view = capture_views[i];
-			renderer_irradiance.transform_update();
+		//matrix_set_identity(&renderer_irradiance.transform.model);
+		//matrix_set_perspective(&renderer_irradiance.transform.projection, radians(90.0f), 1.0f, 0.1f, 100.0f);
+		//for (int i = 0; i < 6; i++) {
+		//	renderer_irradiance.transform.view = capture_views[i];
+		//	renderer_irradiance.transform_update();
 
-			draw_light(renderer_irradiance);
-		}
+		//	draw_light(renderer_irradiance);
+		//}
 	}
 
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
@@ -268,7 +316,11 @@ int main()
 			renderer_sky.transform.view.m[j][3] = 0;
 		}
 		renderer_sky.transform.view.m[3][3] = 1;
-		draw_light(renderer_sky);
+
+#ifdef DRAW_SKYBOX
+		draw_skybox(renderer_sky);
+#endif // DRAW_SKYBOX
+
 
 
 		renderer.view_pos = camera.pos;
@@ -281,7 +333,11 @@ int main()
 		//model = matrix_translate(model, { 0.0f,-1.5f,0.0f,1 });
 		renderer.transform.model = model;
 		renderer.transform_update();
+
+#ifdef DRAW_MODEL
 		models.draw(renderer);
+#endif // DRAW_MODEL
+
 
 		//画光源
 		renderer_light.transform = renderer.transform;
