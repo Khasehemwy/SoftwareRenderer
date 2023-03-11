@@ -2,6 +2,16 @@
 #include"Includes.h"
 
 #define PI				3.1415926535898f
+#define KEY_0                  48
+#define KEY_1                  49
+#define KEY_2                  50
+#define KEY_3                  51
+#define KEY_4                  52
+#define KEY_5                  53
+#define KEY_6                  54
+#define KEY_7                  55
+#define KEY_8                  56
+#define KEY_9                  57
 #define KEY_A                  65
 #define KEY_B                  66
 #define KEY_C                  67
