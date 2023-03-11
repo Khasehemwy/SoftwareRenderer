@@ -146,7 +146,7 @@ int main()
 	Model models("../resources/sphere/scene.gltf");
 	//Model models("../resources/room/OBJ/room.obj");
 
-	std::string texture_name = "cgaxis_scratched_golden_metal_26_05_2K";
+	std::string texture_name = "cgaxis_stained_patterned_metal_26_98_2K";
 	renderer.enable_gamma = true;
 
 	Texture tex_wooden_diffuce("../resources/" + texture_name + "/diffuse.jpg");
@@ -213,9 +213,15 @@ int main()
 	//光源
 	Light point_light_right;
 	point_light_right.pos = { 3,3,-3,1 };
-	point_light_right.radiance = { 300.0f,300.0f,300.0f,1 };
+	point_light_right.radiance = { 500.0f,500.0f,500.0f,1 };
 	point_light_right.light_state = LIGHT_STATE_POINT;
 	renderer.add_light(point_light_right);
+
+	Light point_light_left;
+	point_light_left.pos = { -5,2,-0.5,1 };
+	point_light_left.radiance = { 100.0f,100.0f,100.0f,1 };
+	point_light_left.light_state = LIGHT_STATE_POINT;
+	renderer.add_light(point_light_left);
 	
 	//时间
 	float delta_time = 0.0f;
@@ -262,9 +268,6 @@ int main()
 		window.screen_dispatch();
 		renderer.clear();
 
-		if (window.screen_keys[KEY_J]) angle += 0.01f;
-		if (window.screen_keys[KEY_L]) angle -= 0.01f;
-
 		float head_speed = 8;
 		if (window.screen_keys[VK_LEFT]) { gl_x_offset = head_speed * camera.speed; }
 		if (window.screen_keys[VK_RIGHT]) { gl_x_offset = -head_speed * camera.speed; }
@@ -290,6 +293,27 @@ int main()
 		}
 		if (window.screen_keys[KEY_E]) {
 			camera.pos.y = camera.pos.y - camera.speed;
+		}
+
+		if (window.screen_keys[KEY_G]) {
+			renderer.enable_gamma = renderer.enable_gamma ? false : true;
+		}
+
+		if (window.screen_keys[KEY_9]) {
+			point_light_right.radiance = point_light_right.radiance + color_t(100);
+		}
+		if (window.screen_keys[KEY_0]) {
+			point_light_right.radiance = point_light_right.radiance - color_t(100);
+		}
+		if (window.screen_keys[KEY_1]) {
+			point_light_left.radiance = point_light_left.radiance + color_t(100);
+		}
+		if (window.screen_keys[KEY_2]) {
+			point_light_left.radiance = point_light_left.radiance - color_t(100);
+		}
+
+		if (window.screen_keys[KEY_Z]) {
+			renderer.only_albedo = renderer.only_albedo ? false : true;
 		}
 
 		//if (window.screen_keys[KEY_Y]) { g_fov -= 0.04f; }

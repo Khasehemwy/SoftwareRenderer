@@ -13,6 +13,9 @@ class Renderer_PBR :public Renderer {
 public:
 	bool enable_gamma = true;
 	bool enable_height_texture = false;
+	bool only_albedo = false;
+
+	float gamma = 2.2;
 	point_t view_pos;
 	std::unordered_map<std::string, Texture_Cube*> cube_textures;
 
@@ -191,13 +194,30 @@ color_t Renderer_PBR::PS(vertex_t* v)
 	vector_t albedo = textures["diffuse"]->Read(v->tex.u, v->tex.v);
 	//vector_t albedo(0.5f, 0.0f, 0.0f);
 	if (enable_gamma) {
-		albedo.x *= 2.2;
-		albedo.y *= 2.2;
-		albedo.z *= 2.2;
+		albedo.x = pow(albedo.x, gamma);
+		albedo.y = pow(albedo.y, gamma);
+		albedo.z = pow(albedo.z, gamma);
+	}
+
+	if (only_albedo) {
+		color_t color;
+		color.r = albedo.x;
+		color.g = albedo.y;
+		color.b = albedo.z;
+		color.a = 1;
+
+		if (enable_gamma)
+		{
+			color.r = pow(color.r, 1.0f / gamma);
+			color.g = pow(color.g, 1.0f / gamma);
+			color.b = pow(color.b, 1.0f / gamma);
+		}
+
+		return color;
 	}
 
 	float metallic = textures["metallic"]->Read(v->tex.u, v->tex.v).r;
-	//float metallic = 0.5;
+	//float metallic = 0;
 	float roughness = textures["roughness"]->Read(v->tex.u, v->tex.v).r;
 
 	float ao = textures["ao"]->Read(v->tex.u, v->tex.v).r;
@@ -243,7 +263,7 @@ color_t Renderer_PBR::PS(vertex_t* v)
 		vector_t H = vector_normalize(V + L);
 
 		float distance = vector_length(curLight->pos - v->pos_world);
-		vector_t radiance = curLight->radiance * 1.0f / (distance * distance);
+		vector_t radiance = curLight->radiance / (distance * distance + 0.0001);
 
 		//float roughness = 0.1;
 		float NDF = DistributionGGX(N, H, roughness);
@@ -283,10 +303,9 @@ color_t Renderer_PBR::PS(vertex_t* v)
 
 	if (enable_gamma)
 	{
-		float gamma = 2.2;
-		color.x = powf(color.x, 1.0f / gamma);
-		color.y = powf(color.y, 1.0f / gamma);
-		color.z = powf(color.z, 1.0f / gamma);
+		color.x = pow(color.x, 1.0f / gamma);
+		color.y = pow(color.y, 1.0f / gamma);
+		color.z = pow(color.z, 1.0f / gamma);
 	}
 
 	color_t color_use;
