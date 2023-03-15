@@ -1,5 +1,5 @@
 ﻿#include "Renderer.h"
-#pragma warning (disable:4996);
+#pragma warning (disable:4996)
 
 Renderer::Renderer()
 {
@@ -308,36 +308,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 					v2.pos, 
 					v3.pos);
 
-				float rhwi = v1.rhw * bary.w1 + v2.rhw * bary.w2 + v3.rhw * bary.w3;
-
-				bool isDraw = false;
-				if (features[RENDER_FEATURE_DEPTH_TEST]) {
-
-					if (depth_test_state == RENDER_DEPTH_TEST_NEVER)continue;
-					if (depth_test_state == RENDER_DEPTH_TEST_LESS && rhwi <= this->z_buffer[y][x])continue;
-					if (depth_test_state == RENDER_DEPTH_TEST_GREATER && rhwi >= this->z_buffer[y][x])continue;
-					if (depth_test_state == RENDER_DEPTH_TEST_EQUAL && rhwi != this->z_buffer[y][x])continue;
-
-					if (features[RENDER_FEATURE_DEPTH_WRITE]) {
-						this->z_buffer[y][x] = rhwi;// 深度缓存
-					}
-
-					isDraw = true;
-				}
-				else {
-					if (features[RENDER_FEATURE_DEPTH_WRITE]) {
-						this->z_buffer[y][x] = rhwi;// 深度缓存
-					}
-
-					isDraw = true;
-				}
-
-				if (isDraw) {
-					color_t color = PS_Interpolation(&v1, &v2, &v3, bary);
-					if (color.a == 0.0f)continue;
-
-					this->draw_pixel(x, y, color_trans_255(color));
-				}
+				Draw_Fragment(&v1, &v2, &v3, bary, x, y);
 			}
 		}
 	}
@@ -526,34 +497,24 @@ bool PointInTriangle(const point_t &pt, const point_t& v1, const point_t& v2, co
 }
 void Renderer::draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
 {
-	//TODO
-	//没有颜色插值
-	float r, g, b;
-	r = v1.color.r;
-	g = v1.color.g;
-	b = v1.color.b;
-	int R = (int)(r * 255.0f);
-	int G = (int)(g * 255.0f);
-	int B = (int)(b * 255.0f);
-	R = CMID(R, 0, 255);
-	G = CMID(G, 0, 255);
-	B = CMID(B, 0, 255);
-	UINT color = (R << 16) | (G << 8) | (B);
-
 	int maxX = max(v1.pos.x, max(v2.pos.x, v3.pos.x));
 	int minX = min(v1.pos.x, min(v2.pos.x, v3.pos.x));
 	int maxY = max(v1.pos.y, max(v2.pos.y, v3.pos.y));
 	int minY = min(v1.pos.y, min(v2.pos.y, v3.pos.y));
 
-	vector_t vec1 = v2.pos - v1.pos;
-	vector_t vec2 = v3.pos - v1.pos;
-
 	for (int y = minY; y <= maxY; y++) {
 		for (int x = minX; x <= maxX; x++) {
+			//用重心插值获取其他属性
+			barycentric_t bary = Get_Barycentric(
+				{ (float)x , (float)y , 0 , 0 },
+				v1.pos,
+				v2.pos,
+				v3.pos);
+
 			point_t p; p.x = x; p.y = y;
 			if(PointInTriangle(p,v1.pos,v2.pos,v3.pos))
 			{ /* inside triangle */
-				this->draw_pixel(x, y, color);
+				Draw_Fragment(&v1, &v2, &v3, bary, x, y);
 			}
 		}
 	}
@@ -654,6 +615,44 @@ color_t Renderer::Calculate_Lighting(vertex_t& v, const Light* light, bool in_sh
 		}
 	}
 	return color;
+}
+
+void Renderer::Draw_Fragment(const vertex_t * v1, const vertex_t * v2, const vertex_t * v3, barycentric_t bary, int x, int y)
+{
+	float rhwi = v1->rhw * bary.w1 + v2->rhw * bary.w2 + v3->rhw * bary.w3;
+
+	bool isDraw = false;
+	if (features[RENDER_FEATURE_DEPTH_TEST]) {
+
+		if (depth_test_state == RENDER_DEPTH_TEST_NEVER)return;
+		if (depth_test_state == RENDER_DEPTH_TEST_LESS && rhwi <= this->z_buffer[y][x])return;
+		if (depth_test_state == RENDER_DEPTH_TEST_GREATER && rhwi >= this->z_buffer[y][x])return;
+		if (depth_test_state == RENDER_DEPTH_TEST_EQUAL && rhwi != this->z_buffer[y][x])return;
+
+		if (features[RENDER_FEATURE_DEPTH_WRITE]) {
+			this->z_buffer[y][x] = rhwi;// 深度缓存
+		}
+
+		isDraw = true;
+	}
+	else {
+		if (features[RENDER_FEATURE_DEPTH_WRITE]) {
+			this->z_buffer[y][x] = rhwi;// 深度缓存
+		}
+
+		isDraw = true;
+	}
+
+	if (isDraw) {
+		vertex_t v1_copy = *v1;
+		vertex_t v2_copy = *v2;
+		vertex_t v3_copy = *v3;
+
+		color_t color = PS_Interpolation(&v1_copy, &v2_copy, &v3_copy, bary);
+		if (color.a == 0.0f)return;
+
+		this->draw_pixel(x, y, color_trans_255(color));
+	}
 }
 
 //绘制原始三角形

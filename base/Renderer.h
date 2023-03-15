@@ -42,6 +42,9 @@ private:
 	void draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3);
 	void Phong_Shading(vertex_t& v, bool in_shadow);
 	color_t Calculate_Lighting(vertex_t& v, const Light* light, bool in_shadow = false);
+
+	void Draw_Fragment(const vertex_t * v1, const vertex_t * v2, const vertex_t * v3, barycentric_t bary, int x, int y);
+
 	int Rendering_RayTracing();
 	color_t Ray_Tracing(const ray_t& ray, int depth, float& dis);
 	color_t Radiance(const ray_t& ray, int depth);
