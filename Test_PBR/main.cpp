@@ -95,10 +95,21 @@ void draw_skybox(Renderer& renderer)
 	draw_square(renderer, vert[4], vert[7], vert[6], vert[5]);
 }
 
+void SetTexturesByName(Renderer& renderer, std::map<std::string, std::array < Texture*, 7 >>texs,std::string tex_name)
+{
+	renderer.Set_Texture("diffuse", texs[tex_name][0]);
+	renderer.Set_Texture("ao", texs[tex_name][1]);
+	renderer.Set_Texture("height", texs[tex_name][2]);
+	renderer.Set_Texture("glossiness", texs[tex_name][3]);
+	renderer.Set_Texture("metallic", texs[tex_name][4]);
+	renderer.Set_Texture("normal", texs[tex_name][5]);
+	renderer.Set_Texture("roughness", texs[tex_name][6]);
+}
+
 int main()
 {
 	Window window;
-	window.screen_init(600, 600, _T("SoftwareRenderer - PBR"));
+	window.screen_init(1200, 600, _T("SoftwareRenderer - PBR"));
 
 	Renderer_PBR renderer;
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
@@ -146,28 +157,31 @@ int main()
 	Model models("../resources/sphere/scene.gltf");
 	//Model models("../resources/room/OBJ/room.obj");
 
-	std::string texture_name = "cgaxis_stained_patterned_metal_26_98_2K";
+	std::map<std::string, std::array < Texture*, 7 >>texs_sphere;
+	std::string texture_name;
+	const int box_num = 6;
 	renderer.enable_gamma = true;
 
-	Texture tex_wooden_diffuce("../resources/" + texture_name + "/diffuse.jpg");
-	Texture tex_wooden_roughness("../resources/" + texture_name + "/roughness.jpg");
-	Texture tex_wooden_normal("../resources/" + texture_name + "/normal.jpg");
-	//Texture tex_wooden_diffuce("../resources/sphere/textures/Material_baseColor.png");
-	//Texture tex_wooden_roughness("../resources/sphere/textures/Material_metallicRoughness.png");
-	//Texture tex_wooden_normal("../resources/sphere/textures/Material_normal.png");
-	Texture tex_wooden_ao("../resources/" + texture_name + "/ao.jpg");
-	Texture tex_wooden_height("../resources/" + texture_name + "/height.jpg");
-	Texture tex_wooden_glossiness("../resources/" + texture_name + "/glossiness.jpg");
-	Texture tex_wooden_metallic("../resources/" + texture_name + "/metallic.jpg");
-	Texture tex_wooden_reflection("../resources/" + texture_name + "/reflection.jpg");
-	renderer.Add_Texture("diffuse", &tex_wooden_diffuce);
-	renderer.Add_Texture("ao", &tex_wooden_ao);
-	renderer.Add_Texture("height", &tex_wooden_height);
-	renderer.Add_Texture("glossiness", &tex_wooden_glossiness);
-	renderer.Add_Texture("metallic", &tex_wooden_metallic);
-	renderer.Add_Texture("normal", &tex_wooden_normal);
-	renderer.Add_Texture("reflection", &tex_wooden_reflection);
-	renderer.Add_Texture("roughness", &tex_wooden_roughness);
+	std::string texture_names[box_num] = {
+		"cgaxis_grey_and_orange_marble_23_84",
+		"cgaxis_cow_fur_37_08",
+		"cgaxis_stained_patterned_metal_26_98",
+		"cgaxis_rock_wall_with_moss_40_45",
+		"cgaxis_scratched_golden_metal_26_05",
+		"cgaxis_raw_cracked_white_concrete_46_42",
+	};
+
+	for (int i = 0; i < box_num; i++) {
+		texture_name = texture_names[i];
+		texs_sphere[texture_name][0] = new Texture("../resources/" + texture_name + "/diffuse.jpg");
+		texs_sphere[texture_name][1] = new Texture("../resources/" + texture_name + "/ao.jpg");
+		texs_sphere[texture_name][2] = new Texture("../resources/" + texture_name + "/height.jpg");
+		texs_sphere[texture_name][3] = new Texture("../resources/" + texture_name + "/glossiness.jpg");
+		texs_sphere[texture_name][4] = new Texture("../resources/" + texture_name + "/metallic.jpg");
+		texs_sphere[texture_name][5] = new Texture("../resources/" + texture_name + "/normal.jpg");
+		texs_sphere[texture_name][6] = new Texture("../resources/" + texture_name + "/roughness.jpg");
+	}
+
 
 	std::array<std::filesystem::path, 6>texture_skybox_path;
 	std::array<std::filesystem::path, 6>texture_irradiance_path;
@@ -207,18 +221,18 @@ int main()
 
 	renderer_sky.texture_cube = &tex_sky_box;
 	renderer.cube_textures["irradiance"] = &tex_sky_irradiance;
-	renderer.Add_Texture("BRDF_LUT", &tex_brdf_lut);
+	renderer.Set_Texture("BRDF_LUT", &tex_brdf_lut);
 
 
 	//光源
 	Light point_light_right;
-	point_light_right.pos = { 3,3,-3,1 };
+	point_light_right.pos = { 4,1,-3,1 };
 	point_light_right.radiance = { 500.0f,500.0f,500.0f,1 };
 	point_light_right.light_state = LIGHT_STATE_POINT;
 	renderer.add_light(point_light_right);
 
 	Light point_light_left;
-	point_light_left.pos = { -5,2,-0.5,1 };
+	point_light_left.pos = { -5,0,-0.5,1 };
 	point_light_left.radiance = { 100.0f,100.0f,100.0f,1 };
 	point_light_left.light_state = LIGHT_STATE_POINT;
 	renderer.add_light(point_light_left);
@@ -325,6 +339,7 @@ int main()
 		camera.target = camera.pos + camera.front;
 		matrix_t view = camera.set_lookat(camera.pos, camera.target, camera.up);
 		renderer.transform.view = view;
+		renderer.view_pos = camera.pos;
 
 		matrix_set_perspective(&renderer.transform.projection, g_fov, aspect, 0.1f, 100.0f);
 
@@ -346,31 +361,42 @@ int main()
 #endif // DRAW_SKYBOX
 
 
+		vector_t translates[6] = {
+			{ -1.3,0.6,0,1 },
+			{ 0,0.6,0,1 },
+			{ 1.3,0.6,0,1 },
+			{ -1.3,-0.6,0,1 },
+			{ 0,-0.6,0,1 },
+			{ 1.3,-0.6,0,1 }
+		};
 
-		renderer.view_pos = camera.pos;
+		for (int i = 0; i < box_num; i++) {
+			//画球体
 
-		matrix_set_identity(&model);
-		//model = matrix_scale(model, { 0.02f,0.02f,0.02f,1 });
-		//model = matrix_scale(model, { 0.5f,0.5f,0.5f,1 });
-		model = model * matrix_rotate_build(radians(90), { 1.0f,0.0f,0.0f,1 });
-		//model = model * matrix_rotate_build(radians(30), { 0.0f,1.0f,0.0f,1 });
-		//model = matrix_translate(model, { 0.0f,-1.5f,0.0f,1 });
-		renderer.transform.model = model;
-		renderer.transform_update();
+			matrix_set_identity(&model);
+			//model = matrix_scale(model, { 0.02f,0.02f,0.02f,1 });
+			model = matrix_scale(model, { 0.5f,0.5f,0.5f,1 });
+			model = model * matrix_rotate_build(radians(90), { 1.0f,0.0f,0.0f,1 });
+			model = matrix_translate(model, translates[i]);
+			//model = model * matrix_rotate_build(radians(30), { 0.0f,1.0f,0.0f,1 });
+			//model = matrix_translate(model, { 0.0f,-1.5f,0.0f,1 });
+			renderer.transform.model = model;
+			renderer.transform_update();
 
 #ifdef DRAW_MODEL
-		models.draw(renderer);
+			SetTexturesByName(renderer, texs_sphere, texture_names[i]);
+			models.draw(renderer);
 #endif // DRAW_MODEL
-
+		}
 
 		//画光源
-		renderer_light.transform = renderer.transform;
-		matrix_set_identity(&model);
-		model = matrix_scale(model, { 0.2,0.2,0.2,1 });
-		model = matrix_translate(model, point_light_right.pos);
-		renderer_light.transform.model = model;
-		renderer_light.transform_update();
-		draw_light(renderer_light);
+		//renderer_light.transform = renderer.transform;
+		//matrix_set_identity(&model);
+		//model = matrix_scale(model, { 0.2,0.2,0.2,1 });
+		//model = matrix_translate(model, point_light_right.pos);
+		//renderer_light.transform.model = model;
+		//renderer_light.transform_update();
+		//draw_light(renderer_light);
 
 		renderer.draw_line(10, 10, 20, 10, 0x0);
 		renderer.draw_line(10, 10, 10, 20, 0x0);
