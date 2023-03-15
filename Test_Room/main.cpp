@@ -102,7 +102,7 @@ int main()
 	//Model models("../resources/room/OBJ/room.obj");
 
 	Texture tex_wooden("../resources/textures/patterned_wooden_wall_panels_48_05_diffuse.jpg");
-	renderer.Add_Texture("dirty", &tex_wooden);
+	renderer.Set_Texture("dirty", &tex_wooden);
 
 	//นโิด
 	Light point_light;

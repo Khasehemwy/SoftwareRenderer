@@ -94,7 +94,7 @@ public:
 	void destroy();
 	void clear();
 
-	void Add_Texture(std::string name, const Texture* tex);
+	void Set_Texture(std::string name, const Texture* tex);
 
 	void add_light(const Light& light);
 

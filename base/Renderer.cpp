@@ -89,10 +89,9 @@ void Renderer::clear()
 	}
 }
 
-void Renderer::Add_Texture(std::string name, const Texture* tex)
+void Renderer::Set_Texture(std::string name, const Texture* tex)
 {
-	assert(!textures[name]);
-
+	if (!tex) return;
 	if (!tex->isLoaded)return;
 
 	int w = tex->width;

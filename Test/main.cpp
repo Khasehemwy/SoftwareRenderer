@@ -192,8 +192,8 @@ int main()
 
 	Texture texture("../resources/textures/patterned_wooden_wall_panels_48_05_diffuse.jpg");
 	//texture.init();
-	renderer.Add_Texture("Default", &texture);
-	renderer_ground.Add_Texture("Default", &texture);
+	renderer.Set_Texture("Default", &texture);
+	renderer_ground.Set_Texture("Default", &texture);
 
 	Light dir_light;
 	dir_light.pos = { 14,10,10,1 };
