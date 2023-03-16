@@ -94,6 +94,7 @@ inline UINT32 color_trans_255(const color_t &color) {
 	return (UINT32)((A << 24) | (R << 16) | (G << 8) | (B));
 }
 
+//ARGB
 inline color_t color_trans_1f(const UINT32& color) {
 	int x = 0b11111111;
 	float R = CMID((float)((color & (x << 16)) >> 16) / 255.0f, 0.0f, 1.0f);
