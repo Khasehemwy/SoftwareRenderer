@@ -10,6 +10,7 @@ Texture::Texture(int width, int height):
 	height(height)
 {
 	texture = create_2D_array<color_t>(width, height);
+	isLoaded = true;
 }
 
 Texture::~Texture()
