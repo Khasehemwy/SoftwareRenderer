@@ -88,6 +88,7 @@ void draw_box(Renderer& renderer)
 	vert[7].color = color_trans_1f(0xDCCCE4);
 	for (int i = 0; i < 8; i++) {
 		vert[i].pos = p[i] * 0.5;
+		vert[i].color.a = 1;
 	}
 
 	draw_square_out(renderer, vert[0], vert[1], vert[2], vert[3]);
@@ -121,6 +122,7 @@ void draw_box_no_front(Renderer& renderer)
 	vert[7].color = color_trans_1f(0xFF969F);
 	for (int i = 0; i < 8; i++) {
 		vert[i].pos = p[i] * 0.5;
+		vert[i].color.a = 1;
 	}
 
 	//draw_square(renderer, vert[0], vert[1], vert[2], vert[3]);
@@ -204,7 +206,7 @@ void Draw_Scene(Renderer& renderer, Light& point_light)
 int main()
 {
 	Window window;
-	window.screen_init(30, 30, _T("SoftwareRenderer - WASD移动,方向键视角,J/L旋转方块."));
+	window.screen_init(300, 300, _T("SoftwareRenderer - WASD移动,方向键视角,J/L旋转方块."));
 
 	Renderer renderer;
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
@@ -230,12 +232,12 @@ int main()
 	renderer.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
 	renderer.Set_Feature(RENDER_FEATURE_FACK_CULLING, false);
 	renderer.Set_Feature(RENDER_FEATURE_CVV_CLIP, false);
-	//renderer.Set_Feature(RENDER_FEATURE_SHADOW, false);
+	renderer.Set_Feature(RENDER_FEATURE_SHADOW, false);
 	//renderer.Set_Feature(RENDER_FEATURE_LIGHT, false);
 	//renderer.Set_Feature(RENDER_FEATURE_LIGHT_PHONG, false);
 	//renderer.Set_Feature(RENDER_FEATURE_RAY_TRACING, true);
 	//renderer.raytracing_max_depth = 16;
-	//renderer.raytracing_samples_num = 512;
+	renderer.raytracing_samples_num = 16;
 
 	//renderer-ground
 	renderer_ground.camera = &camera;
@@ -252,10 +254,9 @@ int main()
 	renderer_light.Set_Feature(RENDER_FEATURE_SHADOW, false);
 
 
-	Texture texture;
-	texture.Set_Default_Tex();
-	renderer.set_texture(texture);
-	renderer_ground.set_texture(texture);
+	Texture texture(512, 512);
+	renderer.Set_Texture("default", &texture);
+	renderer_ground.Set_Texture("default", &texture);
 
 	Light dir_light;
 	dir_light.pos = { 14,10,10,1 };
@@ -452,6 +453,7 @@ int main()
 		renderer.draw_line(10, 10, 20, 10, 0x0);
 		renderer.draw_line(10, 10, 10, 20, 0x0);
 
+		renderer.triangles.clear();
 
 		window.screen_update();
 
