@@ -495,7 +495,7 @@ bool PointInTriangle(const point_t &pt, const point_t& v1, const point_t& v2, co
 	//if (w.w1 > 0 && w.w1 < 1 && w.w2>0 && w.w2 < 1 && w.w3>0 && w.w3 < 1) { return true; }
 	//else return false;
 }
-void Renderer::draw_triangle_BoundingBox(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
+void Renderer::draw_triangle_EdgeEquation(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
 {
 	int maxX = max(v1.pos.x, max(v2.pos.x, v3.pos.x));
 	int minX = min(v1.pos.x, min(v2.pos.x, v3.pos.x));
@@ -738,8 +738,8 @@ int Renderer::display_primitive(vertex_t v1, vertex_t v2, vertex_t v3)
 			if (features[RENDER_FEATURE_SHADOW]) { this->draw_triangle(v1, v2, v3); }
 			else { this->draw_triangle(v1, v2, v3); }
 		}
-		else if (render_shader_state == RENDER_SHADER_PIXEL_BOUNDINGBOX) {
-			this->draw_triangle_BoundingBox(v1, v2, v3);
+		else if (render_shader_state == RENDER_SHADER_PIXEL_EDGEEQUATION) {
+			this->draw_triangle_EdgeEquation(v1, v2, v3);
 		}
 	}
 

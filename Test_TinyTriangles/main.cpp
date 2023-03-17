@@ -51,7 +51,7 @@ int main()
 	renderer.features[RENDER_FEATURE_CVV_CLIP] = true;
 	//renderer.render_state = RENDER_STATE_TEXTURE;
 	renderer.features[RENDER_FEATURE_BACK_CULLING] = true;
-	renderer.render_shader_state = RENDER_SHADER_PIXEL_BOUNDINGBOX;
+	renderer.render_shader_state = RENDER_SHADER_PIXEL_EDGEEQUATION;
 
 	Model models("../resources/Candle_Holder/Candle_Holder.fbx");
 
