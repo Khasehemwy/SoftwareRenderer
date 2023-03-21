@@ -27,7 +27,7 @@ void mouse_callback(Camera& camera)
 int main()
 {
 	Window window;
-	window.screen_init(600, 600, _T("SoftwareRenderer - PBR"));
+	window.screen_init(512, 512, _T("SoftwareRenderer - Tiny"));
 
 	Renderer_Rasterization renderer;
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
@@ -38,7 +38,7 @@ int main()
 	camera.fov = g_fov;
 	float posz = -4;
 	float posx = 0;
-	camera.init_target_zero({ posx,0,posz,1 });
+	camera.init_target_zero({ posx,0.5,posz,1 });
 	camera.front = { 0,0,1,1 };
 
 	float angle = 0;
@@ -51,7 +51,7 @@ int main()
 	renderer.features[RENDER_FEATURE_CVV_CLIP] = true;
 	//renderer.render_state = RENDER_STATE_TEXTURE;
 	renderer.features[RENDER_FEATURE_BACK_CULLING] = true;
-	renderer.render_shader_state = RENDER_SHADER_PIXEL_EDGEEQUATION;
+	//renderer.render_shader_state = RENDER_SHADER_PIXEL_EDGEEQUATION;
 
 	Model models("../resources/Candle_Holder/Candle_Holder.fbx");
 
@@ -63,6 +63,9 @@ int main()
 
 	while (window.screen_exit[0] == 0 && window.screen_keys[VK_ESCAPE] == 0) {
 		fps->Print_FPS();
+
+		//std::thread t_operation([&]() {std::cout << camera.pos.x << "," << camera.pos.y << "," << camera.pos.z <<"\n"; });
+		//t_operation.detach();
 
 		//时间,使移动速度不受帧率变化
 		//不好用,暂时舍弃
@@ -119,10 +122,10 @@ int main()
 
 		matrix_t model;
 
-		for (int i = -2; i <= 2; i++) {
-			for (int j = -2; j <= 2; j++) {
+		for (int i = 1; i <= 1; i++) {
+			for (int j = 1; j <= 1; j++) {
 				matrix_set_identity(&model);
-				model = matrix_scale(model, { 0.001f,0.001f,0.001f,1 });
+				model = matrix_scale(model, { 0.002f,0.002f,0.002f,1 });
 				model = matrix_translate(model, { i / 2.0f,j / 2.0f,0.0f,1 });
 				renderer.transform.model = model;
 				renderer.transform_update();
