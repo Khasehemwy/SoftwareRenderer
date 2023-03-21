@@ -497,10 +497,10 @@ bool PointInTriangle(const point_t &pt, const point_t& v1, const point_t& v2, co
 }
 void Renderer::draw_triangle_EdgeEquation(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
 {
-	int maxX = min(max_clip_x, max(v1.pos.x, max(v2.pos.x, v3.pos.x)));
-	int minX = max(min_clip_x, min(v1.pos.x, min(v2.pos.x, v3.pos.x)));
-	int maxY = min(max_clip_y, max(v1.pos.y, max(v2.pos.y, v3.pos.y)));
-	int minY = max(min_clip_y, min(v1.pos.y, min(v2.pos.y, v3.pos.y)));
+	int maxX = min(ceil(max_clip_x - 1), max(ceil(v1.pos.x), max(ceil(v2.pos.x), ceil(v3.pos.x))));
+	int minX = max(floor(min_clip_x), min(floor(v1.pos.x), min(floor(v2.pos.x), floor(v3.pos.x))));
+	int maxY = min(ceil(max_clip_y - 1), max(ceil(v1.pos.y), max(ceil(v2.pos.y), ceil(v3.pos.y))));
+	int minY = max(floor(min_clip_y), min(floor(v1.pos.y), min(floor(v2.pos.y), floor(v3.pos.y))));
 
 	for (int y = minY; y <= maxY; y++) {
 		for (int x = minX; x <= maxX; x++) {
