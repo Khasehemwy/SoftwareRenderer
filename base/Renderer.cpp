@@ -513,8 +513,7 @@ void Renderer::draw_triangle_EdgeEquation(const vertex_t& v1, const vertex_t& v2
 				v2.pos,
 				v3.pos);
 
-			point_t p; p.x = x; p.y = y;
-			if(PointInTriangle(p,v1.pos,v2.pos,v3.pos))
+			if (bary.w1 >= 0 && bary.w2 >= 0 && bary.w3 >= 0)
 			{ /* inside triangle */
 				Draw_Fragment(&v1, &v2, &v3, bary, x, y);
 			}
