@@ -1,24 +1,39 @@
 #include"Includes.h"
 
-void Renderer::draw_triangle_EdgeEquation(const vertex_t& v1, const vertex_t& v2, const vertex_t& v3)
+int Renderer::Rendering_RayTracing()
 {
-	int maxX = max(v1.pos.x, max(v2.pos.x, v3.pos.x));
-	int minX = min(v1.pos.x, min(v2.pos.x, v3.pos.x));
-	int maxY = max(v1.pos.y, max(v2.pos.y, v3.pos.y));
-	int minY = min(v1.pos.y, min(v2.pos.y, v3.pos.y));
+	color_t color_tmp = { 0,0,0,1 }, color = { 0,0,0,1 };
+	matrix_t camera_to_world = matrix_get_inverse(this->transform.view);
+	float scale = tan(radians(camera->fov * 0.5f));
+	float aspect = width / height;
 
-	for (int y = minY; y <= maxY; y++) {
-		for (int x = minX; x <= maxX; x++) {
-			//用重心插值获取其他属性
-			barycentric_t bary = Get_Barycentric(
-				{ (float)x , (float)y , 0 , 0 },
-				v1.pos,
-				v2.pos,
-				v3.pos);
+	for (unsigned int y = 0; y < height; y++) {
+		for (unsigned int x = 0; x < width; x++) {
+			color = { 0,0,0,1 };
+			for (unsigned sy = 0; sy < 2; sy++) { // 2x2子像素
+				for (unsigned int sx = 0; sx < 2; sx++) {
+					color_tmp = { 0,0,0,1 };
+					for (int s = 0; s < raytracing_samples_num; s++) {
+						float dx = rand_lr(0.0f, 1.0f) - 0.5f;//随机偏移
+						float dy = rand_lr(0.0f, 1.0f) - 0.5f;
 
-			if (bary.w1 >= 0 && bary.w2 >= 0 && bary.w3 >= 0) {
-				Draw_Fragment(&v1, &v2, &v3, bary, x, y);
+						float px = ((2 * (x + 0.5 + (sx - 0.5 + dx)) / width - 1)) * aspect * scale;
+						float py = ((1 - 2 * (y + 0.5 + (sy - 0.5 + dy)) / height)) * scale;
+						point_t pixel_pos = vector_t(px, py, 0.76, 1) * camera_to_world;
+
+						vector_t view_dir = vector_normalize(pixel_pos - camera->pos);
+
+						float tmp_f = 0.0f;
+						color_tmp = color_tmp +
+							Ray_Tracing({ camera->pos, view_dir }, 0, tmp_f) * (1.0 / raytracing_samples_num);
+					}
+					color = color + color_tmp * 0.25;
+				}
 			}
+
+			this->draw_pixel(x, y, color_trans_255(color));
 		}
 	}
+
+	return 0;
 }

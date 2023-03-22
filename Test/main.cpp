@@ -169,7 +169,7 @@ int main()
 	//renderer.render_state = RENDER_STATE_WIREFRAME;
 	//renderer.render_state = RENDER_STATE_COLOR;
 	renderer.render_state = RENDER_STATE_TEXTURE;
-	//renderer.render_shader_state = RENDER_SHADER_PIXEL_BOUNDINGBOX;
+	//renderer.render_shader_state = RENDER_SHADER_PIXEL_EDGEEQUATION;
 	//renderer.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
 	//renderer.Set_Feature(RENDER_FEATURE_FACK_CULLING, true);
 	//renderer.Set_Feature(RENDER_FEATURE_LIGHT, false);

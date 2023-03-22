@@ -51,7 +51,7 @@ int main()
 	renderer.features[RENDER_FEATURE_CVV_CLIP] = true;
 	//renderer.render_state = RENDER_STATE_TEXTURE;
 	renderer.features[RENDER_FEATURE_BACK_CULLING] = true;
-	//renderer.render_shader_state = RENDER_SHADER_PIXEL_EDGEEQUATION;
+	renderer.render_shader_state = RENDER_SHADER_PIXEL_EDGEEQUATION;
 
 	Model models("../resources/Candle_Holder/Candle_Holder.fbx");
 
@@ -122,8 +122,8 @@ int main()
 
 		matrix_t model;
 
-		for (int i = 1; i <= 1; i++) {
-			for (int j = 1; j <= 1; j++) {
+		for (int i = -2; i <= 2; i++) {
+			for (int j = -2; j <= 2; j++) {
 				matrix_set_identity(&model);
 				model = matrix_scale(model, { 0.002f,0.002f,0.002f,1 });
 				model = matrix_translate(model, { i / 2.0f,j / 2.0f,0.0f,1 });

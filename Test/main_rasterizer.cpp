@@ -159,12 +159,12 @@ void draw_light(Renderer& renderer)
 		vert[i].emissivity = color_t(12, 12, 12, 1);
 	}
 
-	draw_square_out(renderer, vert[0], vert[1], vert[2], vert[3]);
-	draw_square_out(renderer, vert[1], vert[5], vert[6], vert[2]);
-	draw_square_out(renderer, vert[0], vert[3], vert[7], vert[4]);
-	draw_square_out(renderer, vert[0], vert[4], vert[5], vert[1]);
-	draw_square_out(renderer, vert[3], vert[2], vert[6], vert[7]);
-	draw_square_out(renderer, vert[4], vert[7], vert[6], vert[5]);
+	draw_square_out(renderer, vert[3], vert[2], vert[1], vert[0]);
+	draw_square_out(renderer, vert[2], vert[6], vert[5], vert[1]);
+	draw_square_out(renderer, vert[4], vert[7], vert[3], vert[0]);
+	draw_square_out(renderer, vert[1], vert[5], vert[4], vert[0]);
+	draw_square_out(renderer, vert[7], vert[6], vert[2], vert[3]);
+	draw_square_out(renderer, vert[5], vert[6], vert[7], vert[4]);
 }
 
 void Draw_Scene(Renderer& renderer, Light& point_light)
@@ -213,7 +213,7 @@ int main()
 
 	Camera camera;
 	float posz = -28;
-	float posx = -0.1;
+	float posx = 0;
 	camera.init_target_zero({ posx,0,posz,1 });
 	camera.front = { 0,0,1,1 };
 
@@ -222,12 +222,12 @@ int main()
 	renderer.render_state = RENDER_STATE_COLOR;
 	//renderer.render_state = RENDER_STATE_TEXTURE;
 	//renderer.render_state = RENDER_STATE_DEEP;
-	renderer.render_shader_state = RENDER_SHADER_PIXEL_EDGEEQUATION;
-	//renderer.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
+	//renderer.render_shader_state = RENDER_SHADER_PIXEL_EDGEEQUATION;
+	renderer.Set_Feature(RENDER_FEATURE_BACK_CULLING, false);
 	renderer.Set_Feature(RENDER_FEATURE_FACK_CULLING, false);
 	renderer.Set_Feature(RENDER_FEATURE_CVV_CLIP, false);
 	renderer.Set_Feature(RENDER_FEATURE_SHADOW, false);
-	renderer.Set_Feature(RENDER_FEATURE_LIGHT, false);
+	//renderer.Set_Feature(RENDER_FEATURE_LIGHT, false);
 	//renderer.Set_Feature(RENDER_FEATURE_LIGHT_PHONG, false);
 	//renderer.Set_Feature(RENDER_FEATURE_RAY_TRACING, true);
 	//renderer.raytracing_max_depth = 16;
