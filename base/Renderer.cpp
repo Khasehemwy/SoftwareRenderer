@@ -257,6 +257,9 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 
 	//垂直裁剪
 	if (y1f < min_clip_y) { return; }
+	if (y1f >= max_clip_y) { y1f = max_clip_y - 1; }
+
+	if (y0f >= max_clip_y) { return; }
 	if (y0f < min_clip_y) {
 		float dy = min_clip_y - y0f;
 		xl += dxdy_l * dy;
@@ -265,6 +268,7 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 	}
 	y0 = (int)(ceil(y0f));
 	y1 = (int)(ceil(y1f));
+
 	//修正(浮点数转换整数需要修正)
 	float delta = y0 - y0f;
 	xl += delta * dxdy_l;
@@ -276,7 +280,6 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 
 	//从上往下绘制
 	for (int y = y0; y < y1; y++) {
-		if (y >= max_clip_y)break;
 		float dx = xr - xl;
 
 		float xli = xl, xri = xr;
@@ -286,19 +289,18 @@ void Renderer::draw_triangle_StandardAlgorithm(const vertex_t& top, const vertex
 
 		//水平裁剪
 		if (xri < min_clip_x) { continue; }
-		if (xli < min_clip_x) {
-			float dx = min_clip_x - xli;
+		if (xri >= max_clip_x) { xri = max_clip_x - 1; }
 
+		if (xli >= max_clip_x) { continue; }
+		if (xli < min_clip_x) {
 			xli = min_clip_x;
 		}
 
 		//修正
 		int x0 = (int)ceil(xli);
 		int x1 = (int)ceil(xri);
-		float delta = x0 - xli;
 
 		for (int x = x0; x <= x1; x++) {
-			if (x >= max_clip_x)break;
 			if (x >= 0 && y >= 0) {
 
 				//用重心插值获取其他属性
