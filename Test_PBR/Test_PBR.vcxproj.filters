@@ -27,9 +27,15 @@
     <ClInclude Include="shader_irradiance.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="shader_only_direct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main_direct.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
