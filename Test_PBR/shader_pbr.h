@@ -268,7 +268,7 @@ color_t Renderer_PBR::PS(vertex_t* v)
 		//float roughness = 0.1;
 		float NDF = DistributionGGX(N, H, roughness);
 		float G = GeometrySmith(N, V, L, roughness);
-		vector_t F = fresnelSchlick(max(vector_dot(N, V), 0.0f), F0);
+		vector_t F = fresnelSchlick(max(vector_dot(H, V), 0.0f), F0);
 
 		vector_t numerator = NDF * G * F;
 		float denominator = 4.0 * max(vector_dot(N, V), 0.0f) * max(vector_dot(N, L), 0.0f) + 0.0001;

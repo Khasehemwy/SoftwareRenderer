@@ -13,6 +13,7 @@ class Renderer_PBR :public Renderer {
 public:
 	bool enable_gamma = true;
 	bool enable_height_texture = false;
+	bool enable_hdr = true;
 	bool only_albedo = false;
 
 	float gamma = 2.2;
@@ -226,6 +227,35 @@ color_t Renderer_PBR::PS(vertex_t* v)
 	vector_t F0 = vector_t(0.04);
 	F0 = mix(F0, albedo, metallic);
 
+	int prefilteredLod = round(roughness * MAX_REFLECTION_LOD);
+	vector_t prefilteredColor;
+	switch (prefilteredLod)
+	{
+	case 0:
+		prefilteredColor = cube_textures["environment0"]->Read(R);
+		break;
+
+	case 1:
+		prefilteredColor = cube_textures["environment1"]->Read(R);
+		break;
+
+	case 2:
+		prefilteredColor = cube_textures["environment2"]->Read(R);
+		break;
+
+	case 3:
+		prefilteredColor = cube_textures["environment3"]->Read(R);
+		break;
+
+	case 4:
+		prefilteredColor = cube_textures["environment4"]->Read(R);
+		break;
+
+	default:
+		prefilteredColor = cube_textures["environment0"]->Read(R);
+		break;
+	}
+
 	vector_t Lo = vector_t(0.0);
 	for (int i = 0; i < lights.size(); i++) {
 		const Light* curLight = lights[i];
@@ -239,7 +269,7 @@ color_t Renderer_PBR::PS(vertex_t* v)
 		//float roughness = 0.1;
 		float NDF = DistributionGGX(N, H, roughness);
 		float G = GeometrySmith(N, V, L, roughness);
-		vector_t F = fresnelSchlick(max(vector_dot(H, V), 0.0f), F0);
+		vector_t F = fresnelSchlick(max(vector_dot(N, V), 0.0f), F0);
 
 		vector_t numerator = NDF * G * F;
 		float denominator = 4.0 * max(vector_dot(N, V), 0.0f) * max(vector_dot(N, L), 0.0f) + 0.0001;
@@ -253,11 +283,26 @@ color_t Renderer_PBR::PS(vertex_t* v)
 		Lo = Lo + (kD * albedo / PI + specular) * radiance * NdotL;
 	}
 
-	vector_t ambient = vector_t(0.06) * albedo * ao;
+	vector_t F = fresnelSchlickRoughness(max(vector_dot(N, V), 0.0f), F0, roughness);
+	//vector_t F = fresnelSchlick(CMID(vector_dot(H, V), 0.0, 1.0), F0);
+
+	vector_t kS = F;
+	vector_t kD = 1.0 - kS;
+	kD = kD * (1.0 - metallic);
+
+	vector_t irradiance = cube_textures["irradiance"]->Read(N);
+	vector_t diffuse = irradiance * albedo;
+
+	vector_t env_BRDF = textures["BRDF_LUT"]->Read(CMID(vector_dot(N, V), 0.0, 1.0), roughness);
+	vector_t specular = prefilteredColor * (F * env_BRDF.x + env_BRDF.y);
+
+	vector_t ambient = (kD * diffuse + specular) * ao;
 	//vector_t ambient = vector_dot(vector_t(0.2), albedo) * ao;
 
 	vector_t color = Lo + ambient;
-	color = color / (color + vector_t(1.0));
+	if (enable_hdr) {
+		color = color / (color + vector_t(1.0));
+	}
 
 	if (enable_gamma)
 	{
