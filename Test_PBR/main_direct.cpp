@@ -227,7 +227,7 @@ int main()
 
 	//นโิด
 	Light point_light_right;
-	point_light_right.pos = { 0,0,3,1 };
+	point_light_right.pos = { 4,1,-3,1 };
 	point_light_right.radiance = { 500.0f,500.0f,500.0f,1 };
 	point_light_right.light_state = LIGHT_STATE_POINT;
 	renderer.add_light(point_light_right);
