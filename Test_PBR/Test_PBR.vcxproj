@@ -144,6 +144,7 @@
     <ClInclude Include="shader.h" />
     <ClInclude Include="shader_gamma.h" />
     <ClInclude Include="shader_hdr.h" />
+    <ClInclude Include="shader_indirect_diffuse.h" />
     <ClInclude Include="shader_irradiance.h" />
     <ClInclude Include="shader_only_direct.h" />
     <ClInclude Include="shader_pbr.h" />
@@ -151,7 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="main_direct.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -162,6 +163,7 @@
     <ClCompile Include="main_hdr.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="main_indirect_diffuse.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
