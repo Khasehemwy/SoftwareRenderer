@@ -187,7 +187,7 @@ color_t Renderer_PBR::PS(vertex_t* v)
 	//vector_t N = v->normal;
 	//N = N * 0.5f + vector_t(0.5);
 
-	vector_t R = vector_reflect(V, N);
+	vector_t R = vector_reflect(-V, N);
 
 
 	// Gamma correction
@@ -217,8 +217,9 @@ color_t Renderer_PBR::PS(vertex_t* v)
 	}
 
 	float metallic = textures["metallic"]->Read(v->tex.u, v->tex.v).r;
-	//float metallic = 0;
+	//float metallic = 1;
 	float roughness = textures["roughness"]->Read(v->tex.u, v->tex.v).r;
+	//float roughness = 0;
 
 	float ao = textures["ao"]->Read(v->tex.u, v->tex.v).r;
 	//float ao = 1;
@@ -231,27 +232,27 @@ color_t Renderer_PBR::PS(vertex_t* v)
 	switch (prefilteredLod)
 	{
 		case 0:
-			prefilteredColor = cube_textures["environment0"]->Read(R);
+			prefilteredColor = cube_textures["environment0"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 
 		case 1:
-			prefilteredColor = cube_textures["environment1"]->Read(R);
+			prefilteredColor = cube_textures["environment1"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 
 		case 2:
-			prefilteredColor = cube_textures["environment2"]->Read(R);
+			prefilteredColor = cube_textures["environment2"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 
 		case 3:
-			prefilteredColor = cube_textures["environment3"]->Read(R);
+			prefilteredColor = cube_textures["environment3"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 
 		case 4:
-			prefilteredColor = cube_textures["environment4"]->Read(R);
+			prefilteredColor = cube_textures["environment4"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 
 		default:
-			prefilteredColor = cube_textures["environment0"]->Read(R);
+			prefilteredColor = cube_textures["environment0"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 	}
 
@@ -289,7 +290,7 @@ color_t Renderer_PBR::PS(vertex_t* v)
 	vector_t kD = 1.0 - kS;
 	kD = kD * (1.0 - metallic);
 
-	vector_t irradiance = cube_textures["irradiance"]->Read(N);
+	vector_t irradiance = cube_textures["irradiance"]->Read({ N.x,-N.y,N.z,1 });
 	vector_t diffuse = irradiance * albedo;
 
 	vector_t env_BRDF = textures["BRDF_LUT"]->Read(CMID(vector_dot(N, V), 0.0, 1.0), roughness);
