@@ -187,8 +187,6 @@ color_t Renderer_PBR::PS(vertex_t* v)
 	//vector_t N = v->normal;
 	//N = N * 0.5f + vector_t(0.5);
 
-	vector_t R = vector_reflect(V, N);
-
 
 	// Gamma correction
 	vector_t albedo = textures["diffuse"]->Read(v->tex.u, v->tex.v);
