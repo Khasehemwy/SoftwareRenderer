@@ -1,6 +1,6 @@
 #include"Includes.h"
 #include"shader_skybox.h"
-#include"shader_hdr.h"
+#include"shader_diff_roughness.h"
 
 #define DRAW_SKYBOX
 #define DRAW_MODEL
@@ -11,6 +11,7 @@ float cursor_last_x = 400, cursor_last_y = 300;
 float gl_x_offset = 90.0f;
 float gl_y_offset = 0.0f;
 float g_fov = radians(45.0);
+vector_t front;
 
 
 
@@ -20,7 +21,6 @@ void mouse_callback(Camera& camera)
 	cursor_pitch += gl_y_offset;
 	if (cursor_pitch > 89.0f) { cursor_pitch = 89.0f; }
 	if (cursor_pitch < -89.0f) { cursor_pitch = -89.0f; }
-	vector_t front;
 	front.x = cos(radians(cursor_pitch)) * cos(radians(cursor_yaw));
 	front.y = sin(radians(cursor_pitch));
 	front.z = cos(radians(cursor_pitch)) * sin(radians(cursor_yaw));
@@ -128,7 +128,8 @@ int main()
 	float posz = -4;
 	float posx = 0;
 	camera.init_target_zero({ posx,0,posz,1 });
-	camera.front = { 0,0,1,1 };
+	front = { 0,0,1,1 };
+	camera.front = front;
 
 	float angle = 0;
 	vector_t rotate_axis = { 1,-0.5,0.5,1 };
@@ -195,6 +196,12 @@ int main()
 	texture_skybox_path[3] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/main/py.png";
 	texture_skybox_path[4] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/main/pz.png";
 	texture_skybox_path[5] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/main/nz.png";
+	for (int i = 0; i < 6; i++) {
+		if (!std::filesystem::exists(texture_skybox_path[i])) {
+			texture_skybox_path[i] = texture_skybox_path[i].string().substr(0, texture_skybox_path[i].string().size() - 3) + "hdr";
+			renderer_sky.isHDR = true;
+		}
+	}
 
 	texture_irradiance_path[0] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/irradiance/px.hdr";
 	texture_irradiance_path[1] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/irradiance/nx.hdr";
@@ -385,13 +392,8 @@ int main()
 			renderer.transform_update();
 
 #ifdef DRAW_MODEL
-			SetTexturesByName(renderer, texs_sphere, texture_names[i % 3 + 3]);
-			if (i > 2) {
-				renderer.enable_hdr = false;
-			}
-			else {
-				renderer.enable_hdr = true;
-			}
+			SetTexturesByName(renderer, texs_sphere, texture_names[4]);
+			renderer.roughness_custom = (float)i / box_num;
 			models.draw(renderer);
 #endif // DRAW_MODEL
 		}

@@ -39,6 +39,9 @@
     <ClInclude Include="shader_indirect_diffuse.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="shader_diff_roughness.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -54,6 +57,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="main_indirect_diffuse.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main_diff_roughness.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
