@@ -30,10 +30,30 @@ void Texture::Set_Default_Tex()
 
 void Texture::Load(std::filesystem::path path)
 {
+	std::string file_extention = path.extension().string();
+	for (int i = 0; i < file_extention.size(); i++) {
+		file_extention[i] = std::tolower(file_extention[i]);
+	}
+
+	isLoaded = false;
+	if (file_extention == ".hdr") {
+		LoadHdrImage(path);
+	}
+	else {
+		LoadLdrImage(path);
+	}
+
+	if (!isLoaded) {
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+	}
+}
+
+void Texture::LoadLdrImage(std::filesystem::path path)
+{
 	int width, height, nrComponents;
 	unsigned char* data = stbi_load(
-		path.string().c_str(), 
-		&width, &height, 
+		path.string().c_str(),
+		&width, &height,
 		&nrComponents, 0);
 
 	if (data)
@@ -92,11 +112,71 @@ void Texture::Load(std::filesystem::path path)
 		isLoaded = true;
 		stbi_image_free(data);
 	}
-	else
+}
+
+void Texture::LoadHdrImage(std::filesystem::path path)
+{
+	int width, height, nrComponents;
+	float* data_f = stbi_loadf(
+		path.string().c_str(),
+		&width, &height,
+		&nrComponents, 0);
+
+	if (data_f)
 	{
-		isLoaded = false;
-		std::cout << "Texture failed to load at path: " << path << std::endl;
-		stbi_image_free(data);
+		if (texture) {
+			delete[] texture;
+		}
+
+		this->width = width;
+		this->height = height;
+		texture = create_2D_array<color_t>(width, height);
+
+		if (nrComponents == 1) {
+			// RED
+			color_t color;
+			int data_index = 0;
+			for (int j = 0; j < height; j++) {
+				for (int i = 0; i < width; i++) {
+					color.r = (float)data_f[data_index++];
+					color.g = 0;
+					color.b = 0;
+					color.a = 1;
+					this->texture[j][i] = color;
+				}
+			}
+		}
+		else if (nrComponents == 3) {
+			// RGB
+			color_t color;
+			int data_index = 0;
+			for (int j = 0; j < height; j++) {
+				for (int i = 0; i < width; i++) {
+					color.r = (float)data_f[data_index++];
+					color.g = (float)data_f[data_index++];
+					color.b = (float)data_f[data_index++];
+					color.a = 1;
+					this->texture[j][i] = color;
+				}
+			}
+		}
+		else if (nrComponents == 4) {
+			// RGBA
+			color_t color;
+			int data_index = 0;
+			for (int j = 0; j < height; j++) {
+				for (int i = 0; i < width; i++) {
+					color.r = (float)data_f[data_index++];
+					color.g = (float)data_f[data_index++];
+					color.b = (float)data_f[data_index++];
+					color.a = (float)data_f[data_index++];
+					this->texture[j][i] = color;
+				}
+			}
+		}
+
+		isLoaded = true;
+		stbi_image_free(data_f);
 	}
 }
 

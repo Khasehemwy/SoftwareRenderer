@@ -5,6 +5,9 @@ class Texture {
 private:
 	void Load(std::filesystem::path path);
 
+	void LoadLdrImage(std::filesystem::path path);
+	void LoadHdrImage(std::filesystem::path path);
+
 public:
 	bool isLoaded = false;
 
