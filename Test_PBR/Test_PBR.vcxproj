@@ -145,6 +145,7 @@
     <ClInclude Include="shader_diff_roughness.h" />
     <ClInclude Include="shader_gamma.h" />
     <ClInclude Include="shader_hdr.h" />
+    <ClInclude Include="shader_indirect.h" />
     <ClInclude Include="shader_indirect_diffuse.h" />
     <ClInclude Include="shader_irradiance.h" />
     <ClInclude Include="shader_only_direct.h" />
@@ -167,8 +168,9 @@
     <ClCompile Include="main_hdr.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="main_indirect.cpp" />
     <ClCompile Include="main_indirect_diffuse.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
