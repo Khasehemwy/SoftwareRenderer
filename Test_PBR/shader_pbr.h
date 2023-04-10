@@ -232,27 +232,27 @@ color_t Renderer_PBR::PS(vertex_t* v)
 	switch (prefilteredLod)
 	{
 		case 0:
-			prefilteredColor = cube_textures["environment0"]->Read({ R.x,-R.y,R.z,1 });
+			prefilteredColor = cube_textures["prefilterMap0"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 
 		case 1:
-			prefilteredColor = cube_textures["environment1"]->Read({ R.x,-R.y,R.z,1 });
+			prefilteredColor = cube_textures["prefilterMap1"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 
 		case 2:
-			prefilteredColor = cube_textures["environment2"]->Read({ R.x,-R.y,R.z,1 });
+			prefilteredColor = cube_textures["prefilterMap2"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 
 		case 3:
-			prefilteredColor = cube_textures["environment3"]->Read({ R.x,-R.y,R.z,1 });
+			prefilteredColor = cube_textures["prefilterMap3"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 
 		case 4:
-			prefilteredColor = cube_textures["environment4"]->Read({ R.x,-R.y,R.z,1 });
+			prefilteredColor = cube_textures["prefilterMap4"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 
 		default:
-			prefilteredColor = cube_textures["environment0"]->Read({ R.x,-R.y,R.z,1 });
+			prefilteredColor = cube_textures["prefilterMap0"]->Read({ R.x,-R.y,R.z,1 });
 			break;
 	}
 

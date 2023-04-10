@@ -172,23 +172,65 @@ void Renderer_PBR::VS(vertex_t* v1, vertex_t* v2, vertex_t* v3)
 color_t Renderer_PBR::PS(vertex_t* v)
 {
 	vector_t V = vector_normalize(view_pos - v->pos_world);
+
+	if (enable_height_texture && textures["height"]) {
+		v->tex = ParallaxMapping(v->tex, V);
+
+		if (v->tex.u > 1 || v->tex.u < 0 || v->tex.v > 1 || v->tex.v < 0) {
+			return color_t(0, 0, 0, 0);
+		}
+	}
+	//vector_t height = textures["height"]->Read(v->tex.u, v->tex.v).r;
+
 	vector_t N = vector_normalize((textures["normal"]->Read(v->tex.u, v->tex.v) * 2 - vector_t(1)) * this->transform.TBN);
+	//vector_t N = vector_normalize(textures["normal"]->Read(v->tex.u, v->tex.v) * this->transform.TBN);
+	//vector_t N = v->normal;
+	//N = N * 0.5f + vector_t(0.5);
+
+	vector_t R = vector_reflect(-V, N);
+
 
 	// Gamma correction
 	vector_t albedo = textures["diffuse"]->Read(v->tex.u, v->tex.v);
-
+	//vector_t albedo(0.5f, 0.0f, 0.0f);
 	if (enable_gamma) {
 		albedo.x = pow(albedo.x, gamma);
 		albedo.y = pow(albedo.y, gamma);
 		albedo.z = pow(albedo.z, gamma);
 	}
 
+	if (only_albedo) {
+		color_t color;
+		color.r = albedo.x;
+		color.g = albedo.y;
+		color.b = albedo.z;
+		color.a = 1;
+
+		if (enable_gamma)
+		{
+			color.r = pow(color.r, 1.0f / gamma);
+			color.g = pow(color.g, 1.0f / gamma);
+			color.b = pow(color.b, 1.0f / gamma);
+		}
+
+		return color;
+	}
+
 	float metallic = textures["metallic"]->Read(v->tex.u, v->tex.v).r;
+	//float metallic = 1;
 	float roughness = textures["roughness"]->Read(v->tex.u, v->tex.v).r;
+	//float roughness = 0;
+
 	float ao = textures["ao"]->Read(v->tex.u, v->tex.v).r;
+	//float ao = 1;
 
 	vector_t F0 = vector_t(0.04);
 	F0 = mix(F0, albedo, metallic);
+
+	int prefilteredLod = round(roughness * MAX_REFLECTION_LOD);
+	vector_t prefilteredColor = cube_textures["prefilterMap"][prefilteredLod]->Read({R.x,-R.y,R.z,1});
+
+
 
 	vector_t Lo = vector_t(0.0);
 	for (int i = 0; i < lights.size(); i++) {
@@ -203,7 +245,7 @@ color_t Renderer_PBR::PS(vertex_t* v)
 		//float roughness = 0.1;
 		float NDF = DistributionGGX(N, H, roughness);
 		float G = GeometrySmith(N, V, L, roughness);
-		vector_t F = fresnelSchlick(max(vector_dot(N, V), 0.0f), F0);
+		vector_t F = fresnelSchlick(max(vector_dot(H, V), 0.0f), F0);
 
 		vector_t numerator = NDF * G * F;
 		float denominator = 4.0 * max(vector_dot(N, V), 0.0f) * max(vector_dot(N, L), 0.0f) + 0.0001;
@@ -217,7 +259,20 @@ color_t Renderer_PBR::PS(vertex_t* v)
 		Lo = Lo + (kD * albedo / PI + specular) * radiance * NdotL;
 	}
 
-	vector_t ambient = vector_t(0.06) * albedo * ao;
+	vector_t F = fresnelSchlickRoughness(max(vector_dot(N, V), 0.0f), F0, roughness);
+	//vector_t F = fresnelSchlick(CMID(vector_dot(H, V), 0.0, 1.0), F0);
+
+	vector_t kS = F;
+	vector_t kD = 1.0 - kS;
+	kD = kD * (1.0 - metallic);
+
+	vector_t irradiance = cube_textures["irradiance"]->Read({ N.x,-N.y,N.z,1 });
+	vector_t diffuse = irradiance * albedo;
+
+	vector_t env_BRDF = textures["BRDF_LUT"]->Read(CMID(vector_dot(N, V), 0.0, 1.0), roughness);
+	vector_t specular = prefilteredColor * (F * env_BRDF.x + env_BRDF.y);
+
+	vector_t ambient = (kD * diffuse + specular) * ao;
 	//vector_t ambient = vector_dot(vector_t(0.2), albedo) * ao;
 
 	vector_t color = Lo + ambient;

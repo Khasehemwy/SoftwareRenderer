@@ -219,7 +219,7 @@ int main()
 		texture_environment_path[i][4] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/prefilter/pz" + mipLevelStr + ".hdr";
 		texture_environment_path[i][5] = (std::string)"../resources/" + "skybox/" + texture_skybox_name + "/prefilter/nz" + mipLevelStr + ".hdr";
 
-		renderer.cube_textures["environment" + std::to_string(i)] = new Texture_Cube(texture_environment_path[i]);
+		renderer.cube_textures["prefilterMap" + std::to_string(i)] = new Texture_Cube(texture_environment_path[i]);
 	}
 
 	Texture_Cube tex_sky_box(texture_skybox_path);

@@ -27,7 +27,7 @@ void mouse_callback(Camera& camera)
 int main()
 {
 	Window window;
-	window.screen_init(512, 512, _T("SoftwareRenderer - Tiny"));
+	window.screen_init(32, 32, _T("SoftwareRenderer - Tiny"));
 
 	Renderer_Rasterization renderer;
 	renderer.init(window.screen_width, window.screen_height, window.screen_fb);
